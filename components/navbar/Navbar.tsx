@@ -5,6 +5,7 @@ import { useState, useCallback, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import NavItem from "./NavItem";
 import MobileMenu from "./MobileMenu";
+import Container from "@/components/layout/Container";
 import type { NavbarProps } from "./types";
 
 /**
@@ -60,9 +61,9 @@ export default function Navbar({
       style={{ transition: "box-shadow 300ms ease" }}
     >
       {/* ── Inner layout ─────────────────────────────────────────────── */}
-      <div
-        className="mx-auto flex h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8"
-        style={{ maxWidth: "1280px" }}
+      <Container
+        className="flex h-[72px] items-center justify-between"
+        size="lg"
       >
         {/* ── LEFT — Logo ──────────────────────────────────────────── */}
         <Link
@@ -138,7 +139,7 @@ export default function Navbar({
             <HamburgerIcon isOpen={isMobileMenuOpen} />
           </button>
         </div>
-      </div>
+      </Container>
 
       {/* ── Mobile slide-down menu ────────────────────────────────────── */}
       <MobileMenu

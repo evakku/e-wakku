@@ -11,12 +11,20 @@ export type { ContainerSize, SectionVariant, SectionBg };
 // ─── Container ────────────────────────────────────────────────────────────────
 
 export interface ContainerProps {
-  /** Content max-width: sm=768 md=1024 lg=1280 xl=1440 */
-  size?: ContainerSize;
+  /**
+   * Content max-width:
+   *   xs   = 640px  (narrow forms, modals)
+   *   sm   = 768px  (article body, narrow prose)
+   *   md   = 1024px (mid-width content)
+   *   lg   = 1280px (full-page grid — default)
+   *   xl   = 1440px (hero spans, image galleries)
+   *   full = 100%   (edge-to-edge — use with care)
+   */
+  size?: "xs" | "sm" | "md" | "lg" | "xl" | "full";
   /** Extra Tailwind classes */
   className?: string;
   children: ReactNode;
-  /** Render as a different element (default: "div") */
+  /** Render as a different HTML element (default: "div") */
   as?: "div" | "section" | "article" | "main" | "aside" | "nav" | "header" | "footer";
 }
 

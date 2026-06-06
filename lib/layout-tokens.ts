@@ -15,10 +15,12 @@ export * from "@/src/lib/tokens";
 
 /** Max-widths available on the <Container> component */
 export const containerSizes = {
-  sm: "768px",
-  md: "1024px",
-  lg: "1280px",
-  xl: "1440px",
+  xs:   "640px",
+  sm:   "768px",
+  md:   "1024px",
+  lg:   "1280px",
+  xl:   "1440px",
+  full: "100%",
 } as const;
 
 export type ContainerSize = keyof typeof containerSizes;

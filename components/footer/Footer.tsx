@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import FooterBrand from "./FooterBrand";
 import FooterLinks from "./FooterLinks";
+import Container from "@/components/layout/Container";
 import type { FooterProps } from "./types";
 
 /**
@@ -74,26 +75,23 @@ export default function Footer({
         }}
       />
 
-      {/* ── Content container ─────────────────────────────────────────── */}
-      <div
+      {/* ── Content container ───────────────────────────────────── */}
+      <Container
+        size="lg"
         className={[
-          "mx-auto w-full",
-          "max-w-[1280px]",
-          "px-4 py-8",           // mobile
-          "sm:px-6 sm:py-10",    // tablet
-          "lg:px-8 lg:py-12",    // desktop
-          "flex flex-col gap-8", // mobile: stacked
-          "md:flex-row md:items-center md:justify-between md:gap-16", // desktop: two-column
+          "py-8 sm:py-10 lg:py-12",
+          "flex flex-col gap-8",
+          "md:flex-row md:items-center md:justify-between md:gap-16",
         ].join(" ")}
       >
-        {/* ── LEFT — Brand + copyright ──────────────────────────────── */}
+        {/* ── LEFT — Brand + copyright ────────────────────────── */}
         <FooterBrand brandName={brandName} copyrightText={copyrightText}>
           {leftSlot}
         </FooterBrand>
 
-        {/* ── RIGHT — Links (+ optional slot) ──────────────────────── */}
+        {/* ── RIGHT — Links (+ optional slot) ─────────────────── */}
         <FooterLinks links={links}>{rightSlot}</FooterLinks>
-      </div>
+      </Container>
     </footer>
   );
 }
