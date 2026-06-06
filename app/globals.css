@@ -4,127 +4,602 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ═══════════════════════════════════════════════════════════════════
+   TAILWIND v4 THEME TOKENS
+   All design tokens are mapped here so Tailwind utilities resolve
+   to the E-Wakku design system rather than defaults.
+   ═══════════════════════════════════════════════════════════════════ */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
+  /* ── Fonts ─────────────────────────────────────────────────────── */
+  --font-sans:    var(--font-body);
+  --font-mono:    var(--font-body);
+  --font-heading: var(--font-heading);
+  --font-body:    var(--font-body);
+
+  /* ── Semantic colour aliases ────────────────────────────────────── */
+  --color-background:         var(--background);
+  --color-foreground:         var(--foreground);
+  --color-card:               var(--card);
+  --color-card-foreground:    var(--card-foreground);
+  --color-popover:            var(--popover);
   --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --color-primary:            var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary:          var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted:              var(--muted);
+  --color-muted-foreground:   var(--muted-foreground);
+  --color-accent:             var(--accent);
+  --color-accent-foreground:  var(--accent-foreground);
+  --color-destructive:        var(--destructive);
+  --color-border:             var(--border);
+  --color-input:              var(--input);
+  --color-ring:               var(--ring);
+
+  /* ── Sidebar (shadcn sidebar component) ─────────────────────────── */
+  --color-sidebar:                    var(--sidebar);
+  --color-sidebar-foreground:         var(--sidebar-foreground);
+  --color-sidebar-primary:            var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent:             var(--sidebar-accent);
+  --color-sidebar-accent-foreground:  var(--sidebar-accent-foreground);
+  --color-sidebar-border:             var(--sidebar-border);
+  --color-sidebar-ring:               var(--sidebar-ring);
+
+  /* ── Chart colours ──────────────────────────────────────────────── */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* ── Radius scale (base = 4 px) ─────────────────────────────────── */
+  --radius-sm:  calc(var(--radius) * 0.5);   /* 2px  */
+  --radius-md:  var(--radius);               /* 4px  */
+  --radius-lg:  calc(var(--radius) * 2);     /* 8px  */
+  --radius-xl:  calc(var(--radius) * 3);     /* 12px */
+  --radius-2xl: calc(var(--radius) * 4);     /* 16px */
+  --radius-3xl: calc(var(--radius) * 6);     /* 24px */
+  --radius-full: 9999px;                     /* avatars only */
+
+  /* ── Spacing tokens ─────────────────────────────────────────────── */
+  --spacing-px-desktop: 4rem;       /* 64px  desktop margin */
+  --spacing-px-mobile:  1.5rem;     /* 24px  mobile margin  */
+  --spacing-gutter:     2rem;       /* 32px  grid gutter    */
+  --spacing-section:    7.5rem;     /* 120px section gap    */
+  --spacing-container:  80rem;      /* 1280px max-width     */
+
+  /* ── Transitions ────────────────────────────────────────────────── */
+  --transition-fast:   150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base:   200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow:   300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 400ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* ── Paper elevation shadows ────────────────────────────────────────── */
+  --shadow-paper-sm:
+    0 1px 2px rgba(25, 28, 30, 0.04),
+    0 2px 8px rgba(25, 28, 30, 0.06);
+  --shadow-paper-md:
+    0 2px 4px rgba(25, 28, 30, 0.04),
+    0 6px 20px rgba(25, 28, 30, 0.07),
+    0 1px 2px rgba(25, 28, 30, 0.04);
+  --shadow-paper-lg:
+    0 4px 8px rgba(25, 28, 30, 0.04),
+    0 16px 40px rgba(25, 28, 30, 0.08),
+    0 2px 4px rgba(25, 28, 30, 0.04);
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   LIGHT MODE — E-WAKKU EDITORIAL PALETTE
+   ═══════════════════════════════════════════════════════════════════ */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  /* ── Page canvas ────────────────────────────────────────────────── */
+  --background:         #F7F9FB;
+  --foreground:         #191C1E;
+
+  /* ── Surfaces ───────────────────────────────────────────────────── */
+  --card:               #FFFFFF;
+  --card-foreground:    #191C1E;
+  --popover:            #FFFFFF;
+  --popover-foreground: #191C1E;
+
+  /* ── Brand ──────────────────────────────────────────────────────── */
+  --primary:            #000000;
+  --primary-foreground: #FFFFFF;
+
+  /* ── Tonal surfaces ─────────────────────────────────────────────── */
+  --secondary:          #F0F2F4;
+  --secondary-foreground: #191C1E;
+  --muted:              #F0F2F4;
+  --muted-foreground:   #45464D;
+
+  /* ── Emerald accent ─────────────────────────────────────────────── */
+  --accent:             #2B6954;
+  --accent-foreground:  #FFFFFF;
+  --accent-light:       #ADEDD3;
+
+  /* ── Feedback ───────────────────────────────────────────────────── */
+  --destructive:        #BA1A1A;
+  --success:            #2B6954;
+
+  /* ── Borders & chrome ───────────────────────────────────────────── */
+  --border:             #C6C6CD;
+  --outline:            #76777D;
+  --input:              #F0F2F4;
+  --ring:               #2B6954;
+
+  /* ── Charts ─────────────────────────────────────────────────────── */
+  --chart-1: #2B6954;
+  --chart-2: #45464D;
+  --chart-3: #76777D;
+  --chart-4: #ADEDD3;
+  --chart-5: #C6C6CD;
+
+  /* ── Shape ──────────────────────────────────────────────────────── */
+  --radius: 0.25rem; /* 4px — soft-square design language */
+
+  /* ── Sidebar ────────────────────────────────────────────────────── */
+  --sidebar:                    #FFFFFF;
+  --sidebar-foreground:         #191C1E;
+  --sidebar-primary:            #000000;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent:             #F0F2F4;
+  --sidebar-accent-foreground:  #191C1E;
+  --sidebar-border:             #C6C6CD;
+  --sidebar-ring:               #2B6954;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   DARK MODE — EDITORIAL DARK PALETTE
+   Same design language; ink reverses to cream on deep ink.
+   ═══════════════════════════════════════════════════════════════════ */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background:         #111315;
+  --foreground:         #E3E5E8;
+
+  --card:               #1A1D1F;
+  --card-foreground:    #E3E5E8;
+  --popover:            #1A1D1F;
+  --popover-foreground: #E3E5E8;
+
+  --primary:            #E3E5E8;
+  --primary-foreground: #111315;
+
+  --secondary:          #232628;
+  --secondary-foreground: #E3E5E8;
+  --muted:              #232628;
+  --muted-foreground:   #8F9094;
+
+  --accent:             #4CAF8A;
+  --accent-foreground:  #111315;
+  --accent-light:       #1A3D2E;
+
+  --destructive:        #FFB4AB;
+  --success:            #4CAF8A;
+
+  --border:             rgba(255, 255, 255, 0.08);
+  --outline:            #8F9094;
+  --input:              rgba(255, 255, 255, 0.06);
+  --ring:               #4CAF8A;
+
+  --chart-1: #4CAF8A;
+  --chart-2: #8F9094;
+  --chart-3: #C6C6CD;
+  --chart-4: #1A3D2E;
+  --chart-5: #232628;
+
+  --sidebar:                    #1A1D1F;
+  --sidebar-foreground:         #E3E5E8;
+  --sidebar-primary:            #E3E5E8;
+  --sidebar-primary-foreground: #111315;
+  --sidebar-accent:             #232628;
+  --sidebar-accent-foreground:  #E3E5E8;
+  --sidebar-border:             rgba(255, 255, 255, 0.08);
+  --sidebar-ring:               #4CAF8A;
 }
 
+/* ═══════════════════════════════════════════════════════════════════
+   BASE LAYER — Global resets & element defaults
+   ═══════════════════════════════════════════════════════════════════ */
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+  *,
+  *::before,
+  *::after {
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+    box-sizing: border-box;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
-    @apply font-sans;
+    font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100svh;
+    line-height: 1.6;
+  }
+
+  /* Noto Serif for all heading elements */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading), ui-serif, Georgia, 'Times New Roman', serif;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--foreground);
+  }
+
+  /* Editorial text selection */
+  ::selection {
+    background-color: var(--accent-light);
+    color: var(--foreground);
+  }
+
+  /* Clean link resets */
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  /* Smooth image rendering */
+  img, video {
+    max-width: 100%;
+    display: block;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TYPOGRAPHY SCALE
+   E-Wakku editorial type system — print-magazine inspired
+   ═══════════════════════════════════════════════════════════════════ */
+
+/**
+ * Display XL — Hero titles, magazine covers
+ * 64px · Noto Serif · Weight 400 · lh 1.1 · ls -0.02em
+ */
+.type-display-xl {
+  font-family: var(--font-heading), ui-serif, Georgia, serif;
+  font-size: clamp(2.5rem, 5vw + 1rem, 4rem); /* 40px → 64px */
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+/**
+ * Headline Large — Section & article headings
+ * 48px · Noto Serif · Weight 400 · lh 1.2
+ */
+.type-headline-lg {
+  font-family: var(--font-heading), ui-serif, Georgia, serif;
+  font-size: clamp(1.875rem, 3.5vw + 0.75rem, 3rem); /* 30px → 48px */
+  font-weight: 400;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+/**
+ * Headline Medium — Card & component headings
+ * 32px · Noto Serif · Weight 400 · lh 1.3
+ */
+.type-headline-md {
+  font-family: var(--font-heading), ui-serif, Georgia, serif;
+  font-size: clamp(1.375rem, 2vw + 0.5rem, 2rem); /* 22px → 32px */
+  font-weight: 400;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+/**
+ * Subheadline — Captions, lead text, UI emphasis
+ * 20px · Inter · Weight 500 · lh 1.5
+ */
+.type-subheadline {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.25rem; /* 20px */
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+}
+
+/**
+ * Body Large — Long-form editorial copy
+ * 18px · Inter · Weight 400 · lh 1.7
+ */
+.type-body-lg {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem; /* 18px */
+  font-weight: 400;
+  line-height: 1.7;
+  letter-spacing: 0;
+}
+
+/**
+ * Body Medium — Default UI text
+ * 16px · Inter · Weight 400 · lh 1.6
+ */
+.type-body-md {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem; /* 16px */
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0;
+}
+
+/**
+ * Label Caps — Metadata, categories, UI labels
+ * 12px · Inter · Weight 600 · Uppercase · ls 0.1em
+ */
+.type-label-caps {
+  font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.75rem; /* 12px */
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   LAYOUT UTILITIES
+   Container, section spacing, grid helpers
+   ═══════════════════════════════════════════════════════════════════ */
+
+/**
+ * .container-editorial
+ * 1280px max-width with responsive horizontal padding
+ */
+.container-editorial {
+  width: 100%;
+  max-width: var(--spacing-container, 80rem);
+  margin-inline: auto;
+  padding-inline: var(--spacing-px-mobile, 1.5rem);
+}
+
+@media (min-width: 768px) {
+  .container-editorial {
+    padding-inline: var(--spacing-gutter, 2rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container-editorial {
+    padding-inline: var(--spacing-px-desktop, 4rem);
+  }
+}
+
+/**
+ * .section-gap
+ * Consistent vertical breathing room between sections
+ * 120px desktop · 80px tablet · 56px mobile
+ */
+.section-gap {
+  padding-block: clamp(3.5rem, 8vw, 7.5rem); /* 56px → 120px */
+}
+
+.section-gap-top {
+  padding-block-start: clamp(3.5rem, 8vw, 7.5rem);
+}
+
+.section-gap-bottom {
+  padding-block-end: clamp(3.5rem, 8vw, 7.5rem);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ELEVATION — Paper-like depth system
+   Never heavy; always ambient and soft
+   ═══════════════════════════════════════════════════════════════════ */
+
+.shadow-paper-sm {
+  box-shadow:
+    0 1px 2px rgba(25, 28, 30, 0.04),
+    0 2px 8px rgba(25, 28, 30, 0.06);
+}
+
+.shadow-paper-md {
+  box-shadow:
+    0 2px 4px rgba(25, 28, 30, 0.04),
+    0 6px 20px rgba(25, 28, 30, 0.07),
+    0 1px 2px rgba(25, 28, 30, 0.04);
+}
+
+.shadow-paper-lg {
+  box-shadow:
+    0 4px 8px rgba(25, 28, 30, 0.04),
+    0 16px 40px rgba(25, 28, 30, 0.08),
+    0 2px 4px rgba(25, 28, 30, 0.04);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   NAVIGATION
+   Minimal sticky nav with glass effect
+   ═══════════════════════════════════════════════════════════════════ */
+
+/**
+ * .nav-glass
+ * Sticky navigation with glassmorphism — 80% white opacity + 20px blur
+ */
+.nav-glass {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: rgba(247, 249, 251, 0.80);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(198, 198, 205, 0.5);
+  transition: background-color var(--transition-base), border-color var(--transition-base);
+}
+
+.dark .nav-glass {
+  background-color: rgba(17, 19, 21, 0.80);
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+/**
+ * .nav-link
+ * Minimal nav link with animated underline in Emerald accent
+ */
+.nav-link {
+  font-family: var(--font-body), ui-sans-serif, sans-serif;
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  color: var(--muted-foreground);
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.nav-link::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: -2px;
+  height: 1px;
+  background-color: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform var(--transition-base);
+}
+
+.nav-link:hover,
+.nav-link[aria-current="page"] {
+  color: var(--foreground);
+}
+
+.nav-link:hover::after,
+.nav-link[aria-current="page"]::after {
+  transform: scaleX(1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CARD SYSTEM — Editorial card patterns
+   Tonal backgrounds · paper shadow · 4px radius
+   ═══════════════════════════════════════════════════════════════════ */
+
+.card-editorial {
+  background-color: var(--card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition:
+    box-shadow var(--transition-base),
+    transform var(--transition-base);
+}
+
+.card-editorial:hover {
+  box-shadow:
+    0 4px 8px rgba(25, 28, 30, 0.05),
+    0 12px 32px rgba(25, 28, 30, 0.09);
+  transform: translateY(-2px);
+}
+
+/* 4:5 aspect ratio image container for editorial cards */
+.card-image-45 {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background-color: var(--muted);
+}
+
+.card-image-45 img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--transition-slow);
+}
+
+.card-editorial:hover .card-image-45 img {
+  transform: scale(1.03);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORM SYSTEM — Editorial premium forms
+   Labels above · Label Caps · tonal bg · emerald focus
+   ═══════════════════════════════════════════════════════════════════ */
+
+.form-label {
+  font-family: var(--font-body), ui-sans-serif, sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.form-field {
+  width: 100%;
+  height: 3rem; /* 48px — large, premium */
+  padding-inline: 1rem;
+  background-color: var(--input);
+  border: 1px solid transparent;
+  border-radius: var(--radius);
+  font-family: var(--font-body), ui-sans-serif, sans-serif;
+  font-size: 1rem;
+  color: var(--foreground);
+  transition:
+    border-color var(--transition-fast),
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.form-field::placeholder {
+  color: var(--muted-foreground);
+  opacity: 0.7;
+}
+
+.form-field:focus {
+  background-color: var(--card);
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 20%, transparent);
+}
+
+.form-field:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Textarea variant */
+.form-field-textarea {
+  height: auto;
+  min-height: 8rem;
+  padding-block: 0.875rem;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   TRANSITIONS & MICRO-ANIMATIONS
+   ═══════════════════════════════════════════════════════════════════ */
+
+.transition-editorial {
+  transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+  transition-duration: 200ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Reduce motion for accessibility ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .card-editorial:hover {
+    transform: none;
+  }
+
+  .card-editorial:hover .card-image-45 img {
+    transform: none;
   }
 }
