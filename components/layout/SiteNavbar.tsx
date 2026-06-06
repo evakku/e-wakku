@@ -1,8 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import { UserCircle } from "lucide-react";
+import logo from "@/src/assets/logo.png";
 
 /**
  * SiteNavbar
@@ -14,9 +16,6 @@ import { UserCircle } from "lucide-react";
  *
  * This separation keeps layout.tsx a Server Component while isolating the
  * client-side routing dependency to just this file.
- *
- * To use the Navbar in a different project, copy only components/navbar/
- * and create a new wrapper like this one with project-specific configuration.
  */
 
 const NAV_LINKS = [
@@ -31,7 +30,7 @@ export default function SiteNavbar() {
 
   return (
     <Navbar
-      logo={<JournalLogo />}
+      logo={<EWakkuLogo />}
       links={[...NAV_LINKS]}
       currentPath={pathname}
       profileIcon={<UserCircle size={18} strokeWidth={1.5} aria-hidden />}
@@ -40,15 +39,16 @@ export default function SiteNavbar() {
   );
 }
 
-/* ─── Publication wordmark ──────────────────────────────────────────────── */
+/* ─── Publication logo ──────────────────────────────────────────────────── */
 
-function JournalLogo() {
+function EWakkuLogo() {
   return (
-    <span
-      className="font-heading text-[1.125rem] tracking-tight text-[#191C1E] select-none"
-      style={{ fontWeight: 400 }}
-    >
-      E-Wakku
-    </span>
+    <Image
+      src={logo}
+      alt="E-Wakku"
+      height={36}
+      priority
+      className="h-9 w-auto object-contain select-none"
+    />
   );
 }

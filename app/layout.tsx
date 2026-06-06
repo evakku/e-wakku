@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Noto_Serif } from "next/font/google";
 import "./globals.css";
 import SiteNavbar from "@/components/layout/SiteNavbar";
+import SiteFooter from "@/components/layout/SiteFooter";
 
 const inter = Inter({
   variable: "--font-body",
@@ -32,7 +33,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <SiteNavbar />
-        {children}
+        <main className="flex-1">{children}</main>
+        <SiteFooter />
       </body>
     </html>
   );
