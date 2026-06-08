@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client';
-import imageUrlBuilder from '@sanity/image-url';
+import { createImageUrlBuilder } from '@sanity/image-url';
 import type { Issue, NewsletterSettings } from '@/components/magazine/types';
 import type { AboutPageData } from '@/components/about/types';
 import { featuredIssueQuery, recentIssuesQuery, newsletterSettingsQuery, aboutPageQuery } from './queries';
@@ -22,7 +22,7 @@ export const client = createClient({
   token: undefined,
 });
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 
 /**
  * Builds a url for a Sanity image reference
