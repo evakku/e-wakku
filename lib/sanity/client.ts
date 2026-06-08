@@ -1,7 +1,8 @@
 import { createClient } from '@sanity/client';
 import imageUrlBuilder from '@sanity/image-url';
 import type { Issue, NewsletterSettings } from '@/components/magazine/types';
-import { featuredIssueQuery, recentIssuesQuery, newsletterSettingsQuery } from './queries';
+import type { AboutPageData } from '@/components/about/types';
+import { featuredIssueQuery, recentIssuesQuery, newsletterSettingsQuery, aboutPageQuery } from './queries';
 
 // Environment variables
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
@@ -101,6 +102,35 @@ const MOCK_NEWSLETTER_SETTINGS: NewsletterSettings = {
   buttonText: 'Subscribe',
 };
 
+const MOCK_ABOUT_PAGE: AboutPageData = {
+  heroTitle: "A curation of modern thought and aesthetic living.",
+  heroDescription: "The Journal was founded on the belief that amidst the noise of the digital age, there remains a profound need for quiet reflection, in-depth reporting, and visual restraint.\n\nWe publish stories that matter, presented in a space designed for focus.",
+  heroEyebrow: "EST. 2024",
+  missionTitle: "Our Mission",
+  missionDescription: "To document the intersection of culture, technology, and design through an editorial lens that values clarity over volume. We strive to provide our readers with a respite—a digital environment that feels as tactile and considered as premium print.\n\nEvery article, photograph, and layout is crafted to respect the reader's time and attention. We embrace minimalism not as an aesthetic trend, but as a functional necessity for deep reading.",
+  missionImage: "/images/media__1780745927835.png",
+  editorialBoard: [
+    {
+      name: "Sarah Jenkins",
+      role: "Editor-in-Chief",
+      photo: "/images/media__1780753392835.png",
+      bio: "Sarah has over 15 years of experience in magazine publishing, leading teams at several global culture publications."
+    },
+    {
+      name: "Marcus Chen",
+      role: "Creative Director",
+      photo: "/images/media__1780753398117.png",
+      bio: "Marcus shapes the visual identity of The Journal, combining classic typography with contemporary layout design."
+    },
+    {
+      name: "Elena Rodriguez",
+      role: "Senior Editor",
+      photo: "/images/media__1780754512680.png",
+      bio: "Elena commissions and edits long-form features, focusing on design culture, artisanal craft, and architectural history."
+    }
+  ]
+};
+
 /* ─── Client Fetch Wrappers ──────────────────────────────────────────────── */
 
 /**
@@ -159,5 +189,25 @@ export async function getNewsletterSettings(): Promise<NewsletterSettings> {
   } catch (error) {
     console.error('Failed to fetch newsletter settings from Sanity, using mock fallback:', error);
     return MOCK_NEWSLETTER_SETTINGS;
+  }
+}
+
+/**
+ * Fetches the About Page settings.
+ * Falls back to mock data if Sanity is not configured or fails.
+ */
+export async function getAboutPage(): Promise<AboutPageData> {
+  if (!isSanityConfigured) {
+    // Artificial latency for premium feel visualization in dev
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return MOCK_ABOUT_PAGE;
+  }
+
+  try {
+    const data = await client.fetch<AboutPageData | null>(aboutPageQuery);
+    return data || MOCK_ABOUT_PAGE;
+  } catch (error) {
+    console.error('Failed to fetch about page from Sanity, using mock fallback:', error);
+    return MOCK_ABOUT_PAGE;
   }
 }

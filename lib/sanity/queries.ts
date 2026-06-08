@@ -41,3 +41,22 @@ export const newsletterSettingsQuery = `
     buttonText
   }
 `;
+
+// Fetches About page content settings
+export const aboutPageQuery = `
+  *[_type == "aboutPage"][0] {
+    _id,
+    heroTitle,
+    heroDescription,
+    heroEyebrow,
+    missionTitle,
+    missionDescription,
+    missionImage,
+    editorialBoard[] {
+      name,
+      role,
+      photo,
+      bio
+    }
+  }
+`;
