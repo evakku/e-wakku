@@ -49,6 +49,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${notoSerif.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
       <body className="min-h-full">{children}</body>
     </html>
