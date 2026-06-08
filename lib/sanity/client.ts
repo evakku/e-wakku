@@ -2,7 +2,8 @@ import { createClient } from '@sanity/client';
 import { createImageUrlBuilder } from '@sanity/image-url';
 import type { Issue, NewsletterSettings } from '@/components/magazine/types';
 import type { AboutPageData } from '@/components/about/types';
-import { featuredIssueQuery, recentIssuesQuery, newsletterSettingsQuery, aboutPageQuery } from './queries';
+import type { ContactPageData } from '@/components/contact/types';
+import { featuredIssueQuery, recentIssuesQuery, newsletterSettingsQuery, aboutPageQuery, contactPageQuery } from './queries';
 
 // Environment variables
 const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
@@ -131,6 +132,17 @@ const MOCK_ABOUT_PAGE: AboutPageData = {
   ]
 };
 
+const MOCK_CONTACT_PAGE: ContactPageData = {
+  contactTitle: "Get in Touch",
+  contactDescription: "Whether you have a story pitch, a question about our archives, or simply want to say hello, we're always open to conversation.",
+  contactEmail: "hello@thejournal.com",
+  socialLinks: [
+    { label: "Twitter", url: "https://twitter.com/thejournal" },
+    { label: "LinkedIn", url: "https://linkedin.com/company/thejournal" },
+    { label: "Instagram", url: "https://instagram.com/thejournal" }
+  ]
+};
+
 /* ─── Client Fetch Wrappers ──────────────────────────────────────────────── */
 
 /**
@@ -209,5 +221,25 @@ export async function getAboutPage(): Promise<AboutPageData> {
   } catch (error) {
     console.error('Failed to fetch about page from Sanity, using mock fallback:', error);
     return MOCK_ABOUT_PAGE;
+  }
+}
+
+/**
+ * Fetches the Contact Page settings.
+ * Falls back to mock data if Sanity is not configured or fails.
+ */
+export async function getContactPage(): Promise<ContactPageData> {
+  if (!isSanityConfigured) {
+    // Artificial latency for premium feel visualization in dev
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    return MOCK_CONTACT_PAGE;
+  }
+
+  try {
+    const data = await client.fetch<ContactPageData | null>(contactPageQuery);
+    return data || MOCK_CONTACT_PAGE;
+  } catch (error) {
+    console.error('Failed to fetch contact page from Sanity, using mock fallback:', error);
+    return MOCK_CONTACT_PAGE;
   }
 }
