@@ -167,6 +167,7 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
       {/* Top bar */}
       <motion.rect
         x="3"
+        y="5"
         width="14"
         height="1.5"
         rx="0.75"
@@ -186,12 +187,14 @@ function HamburgerIcon({ isOpen }: { isOpen: boolean }) {
         height="1.5"
         rx="0.75"
         fill="#334155"
+        initial={{ opacity: 1 }}
         animate={{ opacity: isOpen ? 0 : 1 }}
         transition={{ duration: 0.15 }}
       />
       {/* Bottom bar */}
       <motion.rect
         x="3"
+        y="13.5"
         width="14"
         height="1.5"
         rx="0.75"

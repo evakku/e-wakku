@@ -43,12 +43,15 @@ export default function SiteNavbar() {
 
 function EWakkuLogo() {
   return (
-    <Image
-      src={logo}
-      alt="E-Wakku"
-      height={36}
-      priority
-      className="h-9 w-auto object-contain select-none"
-    />
+    <div className="relative h-9 w-32">
+      <Image
+        src={logo}
+        alt="E-Wakku"
+        fill
+        priority
+        sizes="128px"
+        className="object-contain select-none"
+      />
+    </div>
   );
 }
