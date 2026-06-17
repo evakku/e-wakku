@@ -21,6 +21,7 @@ import logo from "@/src/assets/logo.png";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
+  { label: "Archives", href: "/archive" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
