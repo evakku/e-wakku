@@ -43,6 +43,7 @@ export default function Navbar({
   currentPath,
   profileIcon,
   onProfileClick,
+  searchSlot,
 }: NavbarProps) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonId = useId();
@@ -74,26 +75,31 @@ export default function Navbar({
           {logo}
         </Link>
 
-        {/* ── CENTER — Desktop navigation ──────────────────────────── */}
-        <nav
-          aria-label="Main navigation"
-          className="hidden md:flex items-center gap-8"
-        >
-          <ul role="list" className="flex items-center gap-8">
-            {links.map((link) => (
-              <li key={link.href} role="none">
-                <NavItem
-                  label={link.label}
-                  href={link.href}
-                  isActive={currentPath === link.href}
-                />
-              </li>
-            ))}
-          </ul>
-        </nav>
+        {/* ── CENTER — Desktop navigation (Absolutely centered) ────── */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:block">
+          <nav aria-label="Main navigation">
+            <ul role="list" className="flex items-center gap-8">
+              {links.map((link) => (
+                <li key={link.href} role="none">
+                  <NavItem
+                    label={link.label}
+                    href={link.href}
+                    isActive={currentPath === link.href}
+                  />
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
 
-        {/* ── RIGHT — Profile button + hamburger ───────────────────── */}
-        <div className="flex items-center gap-3">
+        {/* ── RIGHT — Search + Profile + hamburger ───────────────────── */}
+        <div className="flex items-center gap-3 relative z-10">
+          {/* SEARCH SLOT — optional, desktop only, smaller size */}
+          {searchSlot && (
+            <div className="hidden lg:block w-48 mr-1">
+              {searchSlot}
+            </div>
+          )}
           {/* Profile / admin button */}
           {profileIcon && (
             <button

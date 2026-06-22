@@ -59,8 +59,35 @@ export const mockIssuesList: Issue[] = [
   }
 ];
 
+import { mockArchivesList } from "./mockArchives";
+
 export function getIssueBySlug(slug: string): Issue | undefined {
-  return mockIssuesList.find(
+  const issue = mockIssuesList.find(
     (issue) => issue.id === slug || issue.title.toLowerCase().replace(/ /g, "-") === slug
   );
+  if (issue) return issue;
+
+  const archiveItem = mockArchivesList.find(
+    (item) => item.slug === slug || item.id === slug || item.title.toLowerCase().replace(/ /g, "-") === slug
+  );
+
+  if (archiveItem) {
+    const year = archiveItem.publishedDate.split("-")[0] || "2024";
+    const dateObj = new Date(archiveItem.publishedDate);
+    const month = dateObj.toLocaleDateString("en-US", { month: "long" });
+
+    return {
+      id: archiveItem.id,
+      title: archiveItem.title,
+      issueNumber: archiveItem.category,
+      season: month.toUpperCase(),
+      year: year,
+      description: archiveItem.description,
+      coverImage: archiveItem.coverImage,
+      pdfUrl: "#",
+      pageCount: Math.ceil(parseInt(archiveItem.readTime) * 1.5) || 8,
+    };
+  }
+
+  return undefined;
 }

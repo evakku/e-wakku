@@ -28,6 +28,11 @@ export interface NavbarProps {
   profileIcon?: ReactNode;
   /** Callback fired when the profile button is clicked */
   onProfileClick?: () => void;
+  /**
+   * Optional slot rendered between the desktop nav links and the right actions.
+   * Used on /archive to inject the page-scoped search input.
+   */
+  searchSlot?: ReactNode;
 }
 
 /**

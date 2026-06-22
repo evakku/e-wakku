@@ -3,8 +3,10 @@
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
+import ArchiveSearchInput from "@/components/navbar/ArchiveSearchInput";
 import { UserCircle } from "lucide-react";
 import logo from "@/src/assets/logo.png";
+import { Suspense } from "react";
 
 /**
  * SiteNavbar
@@ -36,6 +38,11 @@ export default function SiteNavbar() {
       currentPath={pathname}
       profileIcon={<UserCircle size={18} strokeWidth={1.5} aria-hidden />}
       onProfileClick={() => router.push("/admin")}
+      searchSlot={
+        <Suspense fallback={<div className="w-full h-9" />}>
+          <ArchiveSearchInput />
+        </Suspense>
+      }
     />
   );
 }
