@@ -1,31 +1,43 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { ChevronLeft, ChevronRight, BookOpen, Inbox } from "lucide-react";
-import { Section, Container, PageHeader } from "@/components/layout";
+import { useState, useMemo, useEffect, useRef, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { Section, Container } from "@/components/layout";
 import ArchiveCard from "@/components/magazine/ArchiveCard";
-import SearchFilter, { type CategoryType } from "@/components/magazine/SearchFilter";
-import FeaturedArchive from "@/components/magazine/FeaturedArchive";
+import SearchFilter from "@/components/magazine/SearchFilter";
 import NewsletterCTA from "@/components/magazine/NewsletterCTA";
 import { mockArchivesList } from "@/data/mockArchives";
 import { staggerContainer, fadeUpVariants } from "@/lib/animations";
 
 const ITEMS_PER_PAGE = 6;
 
-export default function ArchivePage() {
+function ArchiveContent() {
   const shouldReduceMotion = useReducedMotion() ?? false;
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeCategory, setActiveCategory] = useState<CategoryType>("All");
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("q") || "";
+  
+  const [activeYear, setActiveYear] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState(1);
   const [isPageLoading, setIsPageLoading] = useState(false);
 
   const filterSectionRef = useRef<HTMLDivElement>(null);
 
-  // Reset to page 1 whenever search query or category filters change
+  // Extract all unique years from mock data
+  const years = useMemo(() => {
+    const extractedYears = mockArchivesList
+      .map(item => new Date(item.publishedDate).getFullYear().toString())
+      .filter((v, i, a) => a.indexOf(v) === i)
+      .sort((a, b) => parseInt(b) - parseInt(a)); // Descending
+    return ["All", ...extractedYears];
+  }, []);
+
+  // Reset to page 1 whenever search query or year filters change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
-  }, [searchQuery, activeCategory]);
+  }, [searchQuery, activeYear]);
 
   // Handle pagination loading effect
   const handlePageChange = (newPage: number) => {
@@ -42,45 +54,29 @@ export default function ArchivePage() {
     }, 450);
   };
 
-  // Find the featured item when there's no active search or category selection
-  const featuredItem = useMemo(() => {
-    return mockArchivesList.find(item => item.featured) || mockArchivesList[0];
-  }, []);
-
   // Filter items based on active parameters
   const filteredItems = useMemo(() => {
     return mockArchivesList.filter((item) => {
-      const matchesCategory =
-        activeCategory === "All" || item.category === activeCategory;
+      const itemYear = new Date(item.publishedDate).getFullYear().toString();
+      const matchesYear = activeYear === "All" || itemYear === activeYear;
+      
       const matchesSearch =
         item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+        
+      return matchesYear && matchesSearch;
     });
-  }, [searchQuery, activeCategory]);
-
-  // Determine if we should show the featured section at the top
-  const showFeaturedSection = useMemo(() => {
-    return !searchQuery && activeCategory === "All" && featuredItem;
-  }, [searchQuery, activeCategory, featuredItem]);
-
-  // Grid items excludes the featured item when it's highlighted at the top
-  const gridItems = useMemo(() => {
-    if (showFeaturedSection) {
-      return filteredItems.filter((item) => item.id !== featuredItem.id);
-    }
-    return filteredItems;
-  }, [filteredItems, showFeaturedSection, featuredItem]);
+  }, [searchQuery, activeYear]);
 
   // Paginated items
   const paginatedGridItems = useMemo(() => {
     const startIdx = (currentPage - 1) * ITEMS_PER_PAGE;
-    return gridItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
-  }, [gridItems, currentPage]);
+    return filteredItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+  }, [filteredItems, currentPage]);
 
   const totalPages = useMemo(() => {
-    return Math.ceil(gridItems.length / ITEMS_PER_PAGE);
-  }, [gridItems]);
+    return Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
+  }, [filteredItems]);
 
   // Structured Data (JSON-LD) for SEO
   useEffect(() => {
@@ -112,35 +108,19 @@ export default function ArchivePage() {
 
   return (
     <div className="flex flex-col w-full bg-[#F8FAFC]">
-      {/* 1. Header Section */}
-      <PageHeader
-        badge="CURATED COLLECTIONS"
-        title="Archives"
-        description="Explore our collection of articles, projects, insights, and updates."
-        align="left"
-        sectionVariant="hero"
-      />
-
-      <div ref={filterSectionRef} className="scroll-mt-24">
-        {/* 2. Main Content Container */}
+      <div ref={filterSectionRef} className="scroll-mt-24 pt-16">
         <Section variant="large" bg="transparent" className="pt-0">
           <Container size="lg">
             
-            {/* Featured Archive Item at the top */}
-            {showFeaturedSection && (
-              <FeaturedArchive item={featuredItem} />
-            )}
+            {/* Content grid below filter */}
 
-            {/* Search and Filters row */}
             <SearchFilter
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              activeCategory={activeCategory}
-              setActiveCategory={setActiveCategory}
+              years={years}
+              activeYear={activeYear}
+              setActiveYear={setActiveYear}
               totalCount={filteredItems.length}
             />
 
-            {/* Empty state when no items match search filters */}
             {filteredItems.length === 0 ? (
               <motion.div
                 initial="hidden"
@@ -159,26 +139,22 @@ export default function ArchivePage() {
                 </p>
               </motion.div>
             ) : (
-              /* Archive Grid */
               <div className="flex flex-col">
                 <motion.div
+                  key={currentPage}
                   initial="hidden"
-                  whileInView="visible"
-                  viewport={{ once: true, margin: "-40px" }}
+                  animate="visible"
                   variants={staggerContainer}
                   className={[
                     "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12 transition-opacity duration-300",
                     isPageLoading ? "opacity-40" : "opacity-100"
                   ].join(" ")}
                 >
-                  <AnimatePresence mode="popLayout">
-                    {paginatedGridItems.map((item) => (
-                      <ArchiveCard key={item.id} item={item} />
-                    ))}
-                  </AnimatePresence>
+                  {paginatedGridItems.map((item) => (
+                    <ArchiveCard key={item.id} item={item} />
+                  ))}
                 </motion.div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="mt-20 flex justify-center items-center gap-4">
                     <button
@@ -208,7 +184,6 @@ export default function ArchivePage() {
         </Section>
       </div>
 
-      {/* 3. Newsletter Section */}
       <Section variant="large" divider bg="surface">
         <Container size="lg">
           <NewsletterCTA
@@ -221,5 +196,17 @@ export default function ArchivePage() {
         </Container>
       </Section>
     </div>
+  );
+}
+
+export default function ArchivePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC]">
+        <div className="size-8 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+      </div>
+    }>
+      <ArchiveContent />
+    </Suspense>
   );
 }

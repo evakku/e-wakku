@@ -111,6 +111,146 @@ export const mockArchivesList: ArchiveItem[] = [
     publishedDate: "2023-06-15",
     readTime: "5 min read",
     slug: "typography-noto-serif-inter"
+  },
+  {
+    id: "acoustic-subtraction-quiet-room",
+    title: "Acoustic Subtraction",
+    category: "Projects",
+    description: "An architectural study on sound-dampening structures, materials, and form configurations for high-density metropolitan offices.",
+    coverImage: "/images/media__1780745927835.png",
+    publishedDate: "2023-04-10",
+    readTime: "14 min read",
+    slug: "acoustic-subtraction-quiet-room"
+  },
+  {
+    id: "tactility-matte-surfaces",
+    title: "The Tactility of Matte Surfaces",
+    category: "Blogs",
+    description: "Why physical textures and matte screen coatings create a less fatiguing, more intimate reading experience than high-gloss panels.",
+    coverImage: "/images/media__1780746202659.png",
+    publishedDate: "2023-02-18",
+    readTime: "4 min read",
+    slug: "tactility-matte-surfaces"
+  },
+  {
+    id: "visual-restraint-corporate-branding",
+    title: "Visual Restraint",
+    category: "Case Studies",
+    description: "A deep dive into how leading tech brands are scaling back their identity designs, adopting high-quality typography and muted colors.",
+    coverImage: "/images/media__1780747925013.png",
+    publishedDate: "2023-01-05",
+    readTime: "11 min read",
+    slug: "visual-restraint-corporate-branding"
+  },
+  {
+    id: "css-grid-asymmetric-layouts",
+    title: "CSS Grid Magazine Layouts",
+    category: "Tutorials",
+    description: "How to combine fractional grid rows, dynamic margins, and auto-placement rules to build print-like editorial columns online.",
+    coverImage: "/images/media__1780749147995.png",
+    publishedDate: "2022-11-28",
+    readTime: "9 min read",
+    slug: "css-grid-asymmetric-layouts"
+  },
+  {
+    id: "performance-index-turbopack",
+    title: "Performance Index",
+    category: "Updates",
+    description: "Reviewing page speed metrics and compiler latency improvements after porting E-Wakku from Webpack to Next.js Turbopack.",
+    coverImage: "/images/media__1780749166106.png",
+    publishedDate: "2022-10-15",
+    readTime: "5 min read",
+    slug: "performance-index-turbopack"
+  },
+  {
+    id: "monochrome-ink-prints",
+    title: "Monochrome & Ink",
+    category: "Projects",
+    description: "Design notes, grid drafts, and typography selection for our first limited-run physical anthology printed on recycled cotton papers.",
+    coverImage: "/images/media__1780745927835.png",
+    publishedDate: "2022-09-02",
+    readTime: "7 min read",
+    slug: "monochrome-ink-prints"
+  },
+  {
+    id: "evolution-minimalist-hardware",
+    title: "Evolution of Minimalist Hardware",
+    category: "Blogs",
+    description: "From Braun to modern-day smart devices, we trace the golden thread of structural clarity and functional simplicity.",
+    coverImage: "/images/august-2024.png",
+    publishedDate: "2022-08-21",
+    readTime: "6 min read",
+    slug: "evolution-minimalist-hardware"
+  },
+  {
+    id: "accessible-forms-semantic-html",
+    title: "Accessible Semantic Forms",
+    category: "Tutorials",
+    description: "Best practices for building custom input elements, labels, and validation helpers that remain fully accessible to screen readers.",
+    coverImage: "/images/media__1780749154417.png",
+    publishedDate: "2022-07-09",
+    readTime: "8 min read",
+    slug: "accessible-forms-semantic-html"
+  },
+  {
+    id: "modular-typography-eink",
+    title: "Modular Typography",
+    category: "Case Studies",
+    description: "How we optimized serif line height, letter spacing, and rendering scales for high-contrast, low-refresh-rate reader hardware.",
+    coverImage: "/images/media__1780749154417.png",
+    publishedDate: "2022-05-18",
+    readTime: "10 min read",
+    slug: "modular-typography-eink"
+  },
+  {
+    id: "fluid-spacing-css",
+    title: "Fluid Spacing Systems",
+    category: "Tutorials",
+    description: "Using clamp() math alongside design tokens to implement layouts that resize gracefully between small mobile and ultra-wide screens.",
+    coverImage: "/images/media__1780749157620.png",
+    publishedDate: "2022-04-12",
+    readTime: "7 min read",
+    slug: "fluid-spacing-css"
+  },
+  {
+    id: "editorial-platform-roadmap",
+    title: "Editorial Platform Roadmap",
+    category: "Updates",
+    description: "A comprehensive preview of upcoming features, including multi-author collaboration workspaces and draft preview links.",
+    coverImage: "/images/media__1780753392835.png",
+    publishedDate: "2022-03-01",
+    readTime: "4 min read",
+    slug: "editorial-platform-roadmap"
+  },
+  {
+    id: "visualizing-code-architecture",
+    title: "Visualizing Code",
+    category: "Projects",
+    description: "A computational design project translating clean code patterns, dependency graphs, and complexity files into 3D digital shapes.",
+    coverImage: "/images/media__1780753398117.png",
+    publishedDate: "2022-01-20",
+    readTime: "9 min read",
+    slug: "visualizing-code-architecture"
+  },
+  {
+    id: "in-praise-negative-space",
+    title: "In Praise of Negative Space",
+    category: "Blogs",
+    description: "Why modern web layout systems should embrace whitespace as a primary functional element rather than empty margins.",
+    coverImage: "/images/media__1780754512680.png",
+    publishedDate: "2021-12-15",
+    readTime: "5 min read",
+    slug: "in-praise-negative-space"
+  },
+  {
+    id: "secluded-creative-residencies",
+    title: "Secluded Creative Residencies",
+    category: "Case Studies",
+    description: "An analysis of how remote architectural retreats stimulate intense creative outputs for designers and programmers.",
+    coverImage: "/images/july-2024.png",
+    publishedDate: "2021-11-10",
+    readTime: "13 min read",
+    slug: "secluded-creative-residencies"
   }
 ];
 
