@@ -108,6 +108,27 @@ function ArchiveContent() {
 
   return (
     <div className="flex flex-col w-full bg-[#F8FAFC]">
+      <motion.section 
+        initial={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="w-full pt-[100px] pb-[24px]"
+      >
+        <Container size="lg">
+          <div className="flex flex-col items-start text-left">
+            <span className="uppercase tracking-[0.15em] font-medium text-[#0F766E] text-sm mb-4">
+              Curated Collections
+            </span>
+            <h1 className="text-[48px] md:text-[56px] font-normal text-[#111827] mb-4 font-serif leading-tight">
+              Archives
+            </h1>
+            <p className="max-w-[650px] text-[16px] md:text-[18px] text-[#4B5563] leading-relaxed mb-0">
+              Explore five years of independent journalism, deep-dives into modern technology, and premium editorial features from The Journal.
+            </p>
+          </div>
+        </Container>
+      </motion.section>
+
       <div ref={filterSectionRef} className="scroll-mt-24 pt-16">
         <Section variant="large" bg="transparent" className="pt-0">
           <Container size="lg">
