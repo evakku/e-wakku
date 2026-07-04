@@ -1,4 +1,6 @@
-export default {
+import type { Rule } from 'sanity';
+
+const aboutPage = {
   name: 'aboutPage',
   title: 'About Page',
   type: 'document',
@@ -9,19 +11,19 @@ export default {
       title: 'Hero Eyebrow',
       type: 'string',
       initialValue: 'EST. 2024',
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
     {
       name: 'heroTitle',
       title: 'Hero Title',
       type: 'string',
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
     {
       name: 'heroDescription',
       title: 'Hero Description',
       type: 'text',
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
 
     // Mission Section
@@ -30,13 +32,13 @@ export default {
       title: 'Mission Title',
       type: 'string',
       initialValue: 'Our Mission',
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
     {
       name: 'missionDescription',
       title: 'Mission Description',
       type: 'text',
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
     {
       name: 'missionImage',
@@ -45,7 +47,7 @@ export default {
       options: {
         hotspot: true,
       },
-      validation: (Rule: any) => Rule.required(),
+      validation: (rule: Rule) => rule.required(),
     },
 
     // Editorial Board Section
@@ -63,13 +65,13 @@ export default {
               name: 'name',
               title: 'Full Name',
               type: 'string',
-              validation: (Rule: any) => Rule.required(),
+              validation: (rule: Rule) => rule.required(),
             },
             {
               name: 'role',
               title: 'Role / Position',
               type: 'string',
-              validation: (Rule: any) => Rule.required(),
+              validation: (rule: Rule) => rule.required(),
             },
             {
               name: 'photo',
@@ -78,7 +80,7 @@ export default {
               options: {
                 hotspot: true,
               },
-              validation: (Rule: any) => Rule.required(),
+              validation: (rule: Rule) => rule.required(),
             },
             {
               name: 'bio',
@@ -95,7 +97,7 @@ export default {
           },
         },
       ],
-      validation: (Rule: any) => Rule.required().min(1),
+      validation: (rule: Rule) => rule.required().min(1),
     },
   ],
   preview: {
@@ -110,3 +112,5 @@ export default {
     },
   },
 };
+
+export default aboutPage;
