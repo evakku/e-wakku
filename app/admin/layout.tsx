@@ -1,6 +1,8 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
+import { usePathname } from "next/navigation";
+import { logoutAdmin } from "@/app/admin/actions/auth";
 
 /**
  * Admin Route Layout
@@ -25,5 +27,26 @@ export default function AdminGroupLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <AdminLayout>{children}</AdminLayout>;
+  const pathname = usePathname();
+
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
+  return (
+    <AdminLayout
+      headerAction={
+        <form action={logoutAdmin}>
+          <button
+            type="submit"
+            className="text-sm font-medium text-red-600 hover:text-red-700 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
+          >
+            Sign Out
+          </button>
+        </form>
+      }
+    >
+      {children}
+    </AdminLayout>
+  );
 }

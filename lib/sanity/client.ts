@@ -25,17 +25,19 @@ export const client = createClient({
 
 const builder = createImageUrlBuilder(client);
 
+type ImageSource = Parameters<typeof builder.image>[0];
+
 /**
  * Builds a url for a Sanity image reference
  */
-export function urlFor(source: any) {
+export function urlFor(source: ImageSource) {
   return builder.image(source);
 }
 
 /**
  * Resolves any image source (Sanity Image reference or local static string) to a URL string
  */
-export function getImageUrl(source: any): string {
+export function getImageUrl(source: ImageSource | string | undefined | null): string {
   if (!source) return '';
   if (typeof source === 'string') {
     return source;
