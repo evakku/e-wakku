@@ -1,24 +1,73 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const adminSession = request.cookies.get("admin_session");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
+/**
+ * Middleware — runs on every request matching /admin/:path*
+ *
+ * Responsibilities:
+ * 1. Instantiate a Supabase SSR client that can read/write cookies on the
+ *    NextResponse (required so session tokens get refreshed on every request).
+ * 2. Call `getUser()` — the only secure way to verify the session server-side.
+ *    `getSession()` is NOT used because it trusts unvalidated client-side data.
+ * 3. Protect /admin/* routes: redirect unauthenticated users to /admin/login.
+ * 4. Prevent authenticated users from landing on /admin/login unnecessarily.
+ */
+export async function middleware(request: NextRequest) {
+  let supabaseResponse = NextResponse.next({ request });
 
-  // If trying to access /admin routes without a session and not on login page
-  if (!adminSession && !isLoginPage) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return request.cookies.getAll();
+        },
+        setAll(cookiesToSet) {
+          // First apply to the request (so the Supabase client itself sees them)
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          // Then rebuild the response so the refreshed tokens are sent to the
+          // browser.
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
+        },
+      },
+    }
+  );
+
+  // IMPORTANT: do NOT run any logic between createServerClient and getUser().
+  // A subtle bug can make it difficult to debug issues with users being
+  // randomly logged out.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { pathname } = request.nextUrl;
+  const isLoginPage = pathname === "/admin/login";
+
+  // Unauthenticated user trying to access a protected admin route
+  if (!user && !isLoginPage) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/admin/login";
+    return NextResponse.redirect(redirectUrl);
   }
 
-  // If user has a session and tries to go to login page, redirect to admin dashboard
-  if (adminSession && isLoginPage) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+  // Authenticated user visiting the login page — send them to the dashboard
+  if (user && isLoginPage) {
+    const redirectUrl = request.nextUrl.clone();
+    redirectUrl.pathname = "/admin";
+    return NextResponse.redirect(redirectUrl);
   }
 
-  return NextResponse.next();
+  // IMPORTANT: return supabaseResponse (not NextResponse.next()) so that the
+  // refreshed session cookies are forwarded to the browser.
+  return supabaseResponse;
 }
 
 export const config = {
-  // Apply middleware to all /admin routes
   matcher: "/admin/:path*",
 };

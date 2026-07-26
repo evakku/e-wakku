@@ -1,7 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
+import { createClient } from "@/lib/supabase/server";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -13,6 +14,14 @@ export type LoginState = {
   success?: boolean;
 };
 
+/**
+ * loginAdmin
+ *
+ * Server Action called from the admin login form.
+ * Validates inputs, then delegates to Supabase Auth's signInWithPassword.
+ * On success the Supabase SSR client automatically sets the session cookies;
+ * the client-side router.push("/admin") handles the redirect.
+ */
 export async function loginAdmin(
   prevState: LoginState,
   formData: FormData
@@ -20,6 +29,7 @@ export async function loginAdmin(
   const email = formData.get("email");
   const password = formData.get("password");
 
+  // Client-side validation mirror (also validated on client, but guard here too)
   const parsed = loginSchema.safeParse({ email, password });
 
   if (!parsed.success) {
@@ -28,33 +38,33 @@ export async function loginAdmin(
     };
   }
 
-  // Hardcoded check or env variable check (fallback to 'admin@thejournal.com' / 'password')
-  const validEmail = process.env.ADMIN_EMAIL || "admin@thejournal.com";
-  const validPassword = process.env.ADMIN_PASSWORD || "password";
+  const supabase = await createClient();
 
-  if (parsed.data.email === validEmail && parsed.data.password === validPassword) {
-    const cookieStore = await cookies();
-    cookieStore.set({
-      name: "admin_session",
-      value: "authenticated",
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 7, // 1 week
-    });
-    return { success: true };
+  const { error } = await supabase.auth.signInWithPassword({
+    email: parsed.data.email,
+    password: parsed.data.password,
+  });
+
+  if (error) {
+    return {
+      error: error.message,
+    };
   }
 
-  return {
-    error: "Invalid email or password",
-  };
+  return { success: true };
 }
 
-import { redirect } from "next/navigation";
-
+/**
+ * logoutAdmin
+ *
+ * Server Action called from the admin layout Sign Out button.
+ * Calls Supabase Auth signOut to clear the session cookies, then redirects
+ * to the login page.
+ *
+ * Note: redirect() throws internally, so no return is needed after it.
+ */
 export async function logoutAdmin() {
-  const cookieStore = await cookies();
-  cookieStore.delete("admin_session");
+  const supabase = await createClient();
+  await supabase.auth.signOut();
   redirect("/admin/login");
 }

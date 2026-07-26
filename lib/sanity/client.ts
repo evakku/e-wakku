@@ -42,7 +42,7 @@ export function getImageUrl(source: ImageSource | string | undefined | null): st
   if (typeof source === 'string') {
     return source;
   }
-  if (source && source.asset) {
+  if (typeof source === 'object' && 'asset' in source && source.asset) {
     try {
       return urlFor(source).url();
     } catch (error) {
