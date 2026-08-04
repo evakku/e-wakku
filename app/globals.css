@@ -99,6 +99,25 @@
     0 4px 8px rgba(25, 28, 30, 0.04),
     0 16px 40px rgba(25, 28, 30, 0.08),
     0 2px 4px rgba(25, 28, 30, 0.04);
+
+
+    /* ── Journal aliases (reuse existing tokens where possible) ─────── */
+  --color-surface: var(--background);
+  --color-surface-lowest: var(--card);
+  --color-surface-low: var(--muted);
+  --color-surface-container: var(--surface-container);
+  --color-surface-high: var(--surface-container-high);
+  --color-surface-highest: var(--surface-container-highest);
+  --color-on-surface: var(--foreground);
+  --color-on-surface-variant: var(--muted-foreground);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--border);
+  --color-error: var(--destructive);
+  --color-error-container: var(--error-container);
+  --color-on-error-container: var(--on-error-container);
+  --color-secondary-container: var(--accent-light);
+  --color-on-secondary-container: var(--on-secondary-container);
+  --font-serif: var(--font-heading);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -160,6 +179,14 @@
   --sidebar-accent-foreground: #191C1E;
   --sidebar-border: #C6C6CD;
   --sidebar-ring: #2B6954;
+
+/*new variables */
+  --surface-container: #eceef0;
+  --surface-container-high: #e6e8ea;
+  --surface-container-highest: #e0e3e5;
+  --on-secondary-container: #306d58;
+  --error-container: #ffdad6;
+  --on-error-container: #93000a;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -641,3 +668,4 @@
     padding-block: calc(var(--spacing) * 1) !important;
   }
 }
+
