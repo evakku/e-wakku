@@ -5,12 +5,12 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 
 const issueSchema = z.object({
-    title: z.string().min(1, "Title is required."),
-    description: z.string().min(1, "Description is required."),
-    month: z.string().min(1, "Select a month."),
-    year: z.coerce.number().min(2000, "Select a year."),
-    isDraft: z.string().transform((v) => v === "true"),
-  });
+  title: z.string().min(1, "Title is required."),
+  description: z.string().min(1, "Description is required."),
+  month: z.string().min(1, "Select a month."),
+  year: z.coerce.number().min(2000, "Select a year."),
+  isDraft: z.string().transform((v) => v === "true"),
+});
 
 export type CreateIssueState = {
   error?: string;
@@ -46,13 +46,21 @@ export async function createIssue(
   if (!coverImage || coverImage.size === 0) {
     return { error: "Cover image is required." };
   }
-  if (coverImage.type !== "image/png") {
+  const isPng =
+    coverImage.type === "image/png" ||
+    coverImage.type === "image/x-png" ||
+    coverImage.name.toLowerCase().endsWith(".png");
+  if (!isPng) {
     return { error: "Cover image must be a .png file." };
   }
   if (!pdfFile || pdfFile.size === 0) {
     return { error: "PDF file is required." };
   }
-  if (pdfFile.type !== "application/pdf") {
+  const isPdf =
+    pdfFile.type === "application/pdf" ||
+    pdfFile.type === "application/x-pdf" ||
+    pdfFile.name.toLowerCase().endsWith(".pdf");
+  if (!isPdf) {
     return { error: "File must be a .pdf." };
   }
 
@@ -96,5 +104,6 @@ export async function createIssue(
   }
 
   revalidatePath("/admin/issues");
+  revalidatePath("/admin/issues/manage");
   return { success: true };
 }
