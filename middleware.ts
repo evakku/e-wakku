@@ -47,17 +47,21 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isLoginPage = pathname === "/admin/login";
+  const isAuthRoute =
+    pathname === "/admin/login" ||
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/reset-password";
 
   // Unauthenticated user trying to access a protected admin route
-  if (!user && !isLoginPage) {
+  if (!user && !isAuthRoute) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/admin/login";
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Authenticated user visiting the login page — send them to the dashboard
-  if (user && isLoginPage) {
+  // Authenticated user visiting login or forgot-password — send them to the dashboard
+  // (Keep /admin/reset-password accessible so users can update their password)
+  if (user && (pathname === "/admin/login" || pathname === "/admin/forgot-password")) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/admin";
     return NextResponse.redirect(redirectUrl);
