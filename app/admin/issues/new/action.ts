@@ -103,6 +103,7 @@ export async function createIssue(
     return { error: `Failed to save issue: ${insertErr.message}` };
   }
 
+  revalidatePath("/admin/issues");
   revalidatePath("/admin/issues/manage");
   return { success: true };
 }

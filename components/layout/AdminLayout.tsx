@@ -14,9 +14,11 @@ import {
   ChevronRight,
   Menu,
   X,
+  FilePlus,
+  Files
 } from "lucide-react";
 import type { AdminLayoutProps, AdminNavItem } from "./types";
-
+  
 /**
  * AdminLayout
  *
@@ -48,7 +50,8 @@ import type { AdminLayoutProps, AdminNavItem } from "./types";
 
 const DEFAULT_NAV: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: <LayoutDashboard size={18} /> },
-  { label: "Issues", href: "/admin/issues", icon: <BookOpen size={18} /> },
+  { label: "Add Issues", href: "/admin/issues/new", icon: <FilePlus size={18} /> },
+  { label: "Manage Issues", href: "/admin/issues/manage", icon: <Files size={18} /> },
   { label: "Archive", href: "/admin/archive", icon: <Archive size={18} /> },
   { label: "Readers", href: "/admin/readers", icon: <Users size={18} /> },
   { label: "Settings", href: "/admin/settings", icon: <Settings size={18} /> },
