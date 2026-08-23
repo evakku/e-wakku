@@ -100,12 +100,12 @@ export default function AdminLoginPage() {
                   >
                     Password
                   </label>
-                  <a
-                    href="#"
+                  <Link
+                    href="/admin/forgot-password"
                     className="font-['Inter'] text-[12px] font-semibold text-[#059669] hover:opacity-80 transition-opacity"
                   >
-                    Forgot?
-                  </a>
+                    Forgot Password?
+                  </Link>
                 </div>
                 <div className="relative">
                   <input

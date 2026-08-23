@@ -29,7 +29,12 @@ export default function AdminGroupLayout({
 }) {
   const pathname = usePathname();
 
-  if (pathname === "/admin/login") {
+  const isAuthPage =
+    pathname === "/admin/login" ||
+    pathname === "/admin/forgot-password" ||
+    pathname === "/admin/reset-password";
+
+  if (isAuthPage) {
     return <>{children}</>;
   }
 
