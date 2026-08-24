@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
 import HomeHero from "@/components/magazine/HomeHero";
 import IssueArchiveGrid from "@/components/magazine/IssueArchiveGrid";
-import NewsletterCTA from "@/components/magazine/NewsletterCTA";
 import EmptyState from "@/components/magazine/EmptyState";
-import { getFeaturedIssue, getRecentIssues, getNewsletterSettings, getImageUrl } from "@/lib/sanity/client";
+import { getLatestIssue, getAllPublishedIssues } from "@/lib/queries/issue";
+import { toMagazineIssue } from "@/lib/queries/issue-adapter";
 
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
-  const featuredIssue = await getFeaturedIssue();
-  const coverUrl = featuredIssue ? getImageUrl(featuredIssue.coverImage) : "/images/october-2024.png";
+  const featuredIssue = await getLatestIssue();
+  const coverUrl = featuredIssue?.cover_image_url ?? "/images/october-2024.png";
 
   return {
     title: "The Journal | Premium Digital Magazine",
@@ -25,13 +25,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  // Parallel fetching of CMS/fallback data
-  const [featuredIssue, newsletterSettings] = await Promise.all([
-    getFeaturedIssue(),
-    getNewsletterSettings(),
+  const [featuredIssue, allPublished] = await Promise.all([
+    getLatestIssue(),
+    getAllPublishedIssues(),
   ]);
 
-  // Handle case where no publications exist
   if (!featuredIssue) {
     return (
       <Section variant="hero" bg="white" className="flex flex-1 items-center justify-center">
@@ -42,10 +40,9 @@ export default async function HomePage() {
     );
   }
 
-  // Fetch recent issues excluding the featured one
-  const recentIssues = await getRecentIssues(featuredIssue._id);
+  // Get up to 3 published issues for the centered 3-card home grid
+  const recentIssues = allPublished.length >= 3 ? allPublished.slice(0, 3) : allPublished;
 
-  // Structured Data (JSON-LD) for Periodical / Magazine
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Periodical",
@@ -69,29 +66,26 @@ export default async function HomePage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
-      <div className="flex flex-col w-full">
-        {/* Section 1: Hero / Latest Issue */}
-        <Section variant="hero" bg="white">
+      <div className="flex flex-col w-full bg-[#F8FAFC]">
+        {/* Section 1: Hero / Latest Featured Issue (Centered in section) */}
+        <Section variant="hero" bg="white" className="py-12 sm:py-20">
           <Container size="lg">
-            <HomeHero issue={featuredIssue} />
+            <HomeHero issue={toMagazineIssue(featuredIssue)} />
           </Container>
         </Section>
 
-        {/* Section 2: Past Issues Grid */}
+        {/* Section 2: ISSUES (Centered 3-Card Grid with Generous Footer Spacing) */}
         {recentIssues.length > 0 && (
-          <Section variant="large" divider bg="white">
+          <Section variant="large" bg="transparent" className="py-16 sm:py-24 pb-24 sm:pb-36">
             <Container size="lg">
-              <IssueArchiveGrid issues={recentIssues} />
+              <IssueArchiveGrid
+                issues={recentIssues.map(toMagazineIssue)}
+                title="ISSUES"
+                viewAllPlacement="header"
+              />
             </Container>
           </Section>
         )}
-
-        {/* Section 3: Newsletter subscription CTA */}
-        <Section variant="large" divider bg="surface">
-          <Container size="lg">
-            <NewsletterCTA settings={newsletterSettings} />
-          </Container>
-        </Section>
       </div>
     </>
   );

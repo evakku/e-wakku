@@ -1,116 +1,169 @@
 "use client";
 
-import Image from "next/image";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
-import { Download } from "lucide-react";
-import { HeadlineLg, BodyMd } from "@/src/components/ui/typography";
-import { getImageUrl } from "@/lib/sanity/client";
-import { fadeUpVariants, staggerContainer } from "@/lib/animations";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import { staggerContainer } from "@/lib/animations";
+import IssueArchiveCard from "./IssueArchiveCard";
 import type { Issue } from "./types";
+
+const ITEMS_PER_PAGE = 8;
 
 interface IssueArchiveGridProps {
   issues: Issue[];
+  title?: string;
+  showViewAll?: boolean;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+  viewAllPlacement?: "header" | "footer";
+  enablePagination?: boolean;
 }
 
-export default function IssueArchiveGrid({ issues }: IssueArchiveGridProps) {
-  const shouldReduceMotion = useReducedMotion() ?? false;
+export default function IssueArchiveGrid({
+  issues,
+  title = "ISSUES",
+  showViewAll = true,
+  viewAllHref = "/issues",
+  viewAllLabel = "All Issues",
+  viewAllPlacement = "header",
+  enablePagination = !showViewAll,
+}: IssueArchiveGridProps) {
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isPageLoading, setIsPageLoading] = useState<boolean>(false);
+
+  const shouldPaginate = enablePagination && issues.length > ITEMS_PER_PAGE;
+  const totalPages = shouldPaginate ? Math.ceil(issues.length / ITEMS_PER_PAGE) : 1;
+
+  const displayedIssues = useMemo(() => {
+    if (showViewAll) return issues.slice(0, 3);
+    if (!shouldPaginate) return issues;
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return issues.slice(start, start + ITEMS_PER_PAGE);
+  }, [issues, showViewAll, shouldPaginate, currentPage]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+
+    setIsPageLoading(true);
+    setCurrentPage(page);
+
+    gridRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+    window.setTimeout(() => setIsPageLoading(false), 250);
+  };
+
+  const isHomePreview = showViewAll;
 
   return (
-    <section className="flex flex-col gap-8 w-full" aria-labelledby="archive-title">
-      {/* Grid Header */}
-      <div className="flex justify-between items-baseline border-b border-border/40 pb-4">
-        <HeadlineLg id="archive-title" className="text-foreground tracking-tight font-heading font-normal">
-          Past Issues
-        </HeadlineLg>
-        <Link
-          href="/archive"
-          className="text-sm font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1 group focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:outline-none rounded"
+    <section
+      ref={gridRef}
+      className="scroll-mt-28 flex flex-col w-full items-center"
+      aria-labelledby="archive-title"
+    >
+      {/* Subheading Header */}
+      <div className="flex items-center justify-between border-b border-slate-200/80 pb-4 mb-8 sm:mb-10 w-full max-w-[1140px] mx-auto">
+        <h2
+          id="archive-title"
+          className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]"
         >
-          View All Archives
-          <span className="inline-block transition-transform duration-200 group-hover:translate-x-0.5">
-            &rarr;
-          </span>
-        </Link>
+          {title}
+        </h2>
+        {showViewAll && viewAllPlacement === "header" && (
+          <Link
+            href={viewAllHref}
+            className="text-xs sm:text-sm font-semibold text-[#059669] hover:text-[#047857] transition-colors flex items-center gap-1.5 group focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:outline-none rounded cursor-pointer"
+          >
+            <span>{viewAllLabel}</span>
+            <ArrowRight
+              className="size-4 transition-transform duration-200 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </Link>
+        )}
       </div>
 
-      {/* Responsive Grid */}
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-40px" }}
-        variants={staggerContainer}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-12"
-      >
-        {issues.map((issue) => {
-          const imageUrl = getImageUrl(issue.coverImage);
-          const slugStr = typeof issue.slug === "string" ? issue.slug : issue.slug?.current || "";
-
-          return (
-            <motion.article
+      {/* 3-Card Centered Grid Container */}
+      <div className="w-full max-w-[1140px] mx-auto flex justify-center">
+        <motion.div
+          key={currentPage}
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+          className={[
+            isHomePreview
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 w-full justify-items-center transition-opacity duration-200"
+              : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8 w-full transition-opacity duration-200",
+            isPageLoading ? "opacity-40" : "opacity-100",
+          ].join(" ")}
+        >
+          {displayedIssues.map((issue) => (
+            <IssueArchiveCard
               key={issue._id}
-              variants={fadeUpVariants(shouldReduceMotion)}
-              className="group flex flex-col"
+              issue={issue}
+              className="w-full h-full"
+            />
+          ))}
+        </motion.div>
+      </div>
+
+      {/* Pagination Controls (when viewing full list) */}
+      {shouldPaginate && totalPages > 1 && (
+        <div className="mt-12 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || isPageLoading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="size-4" />
+            <span>Previous</span>
+          </button>
+
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <button
+              key={page}
+              type="button"
+              onClick={() => handlePageChange(page)}
+              disabled={isPageLoading}
+              aria-current={page === currentPage ? "page" : undefined}
+              className={[
+                "min-w-10 rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-wider transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+                page === currentPage
+                  ? "bg-[#059669] text-white shadow-sm"
+                  : "border border-slate-200 text-slate-600 hover:bg-slate-100 hover:text-slate-900",
+              ].join(" ")}
             >
-              {/* Card Thumbnail / Aspect Ratio container */}
-              <Link
-                href={`/issue/${slugStr}`}
-                className="focus:outline-none rounded-lg group-focus-visible:ring-3 group-focus-visible:ring-accent/40 block overflow-hidden transition-editorial"
-                tabIndex={0}
-              >
-                <div className="card-editorial card-image-45 relative w-full overflow-hidden rounded-lg shadow-paper-sm bg-muted">
-                  {imageUrl ? (
-                    <Image
-                      src={imageUrl}
-                      alt={`Cover of ${issue.title}`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 400px"
-                      className="transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-light">
-                      No Cover Image
-                    </div>
-                  )}
-                  {/* Subtle editorial card highlight border */}
-                  <div className="absolute inset-0 border border-border/10 rounded-lg pointer-events-none" />
-                </div>
-              </Link>
+              {page}
+            </button>
+          ))}
 
-              {/* Card Details */}
-              <div className="mt-5 flex flex-col flex-1">
-                <div className="flex justify-between items-start gap-4">
-                  <Link
-                    href={`/issue/${slugStr}`}
-                    className="hover:text-accent transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent rounded"
-                  >
-                    <h3 className="font-heading text-xl text-foreground font-normal tracking-tight">
-                      {issue.title}
-                    </h3>
-                  </Link>
+          <button
+            type="button"
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || isPageLoading}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-slate-200 text-xs font-semibold uppercase tracking-wider text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 disabled:pointer-events-none disabled:opacity-30 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
+            aria-label="Next page"
+          >
+            <span>Next</span>
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      )}
 
-                  {issue.pdfUrl && (
-                    <Link
-                      href={issue.pdfUrl}
-                      download
-                      className="text-muted-foreground hover:text-accent transition-colors p-1 -m-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 rounded-full"
-                      aria-label={`Download PDF of ${issue.title}`}
-                    >
-                      <Download className="size-4 stroke-2" />
-                    </Link>
-                  )}
-                </div>
-
-                {issue.subtitle && (
-                  <BodyMd className="text-muted-foreground mt-1 font-light leading-relaxed">
-                    {issue.subtitle}
-                  </BodyMd>
-                )}
-              </div>
-            </motion.article>
-          );
-        })}
-      </motion.div>
+      {showViewAll && viewAllPlacement === "footer" && (
+        <div className="flex justify-center pt-8">
+          <Link
+            href={viewAllHref}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 py-2.5 text-sm font-semibold text-[#0F172A] shadow-sm transition-colors hover:bg-slate-50 hover:border-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#059669]"
+          >
+            {viewAllLabel}
+            <ArrowRight className="size-4" aria-hidden="true" />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
