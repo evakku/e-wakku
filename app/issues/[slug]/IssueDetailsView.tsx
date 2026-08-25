@@ -4,17 +4,16 @@ import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Section, Container } from "@/components/layout";
 import { HeadlineMd } from "@/src/components/ui/typography";
-import { getIssueBySlug } from "@/data/mockIssue";
+import type { Issue } from "@/data/mockIssue";
 import IssueHero from "./IssueHero";
 import PDFViewerPlaceholder from "./PDFViewerPlaceholder";
 
 interface IssueDetailsViewProps {
-  slug: string;
+  issue: Issue;
 }
 
-export default function IssueDetailsView({ slug }: IssueDetailsViewProps) {
+export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
-  const issue = getIssueBySlug(slug);
 
   if (!issue) {
     notFound();
@@ -64,7 +63,7 @@ export default function IssueDetailsView({ slug }: IssueDetailsViewProps) {
                 Digital Archive Viewer
               </HeadlineMd>
               <span className="text-xs sm:text-sm font-medium text-slate-500 uppercase tracking-widest font-mono">
-                {issue.pageCount} Pages
+                {issue.pageCount > 0 ? `${issue.pageCount} Pages` : "Digital Edition"}
               </span>
             </div>
 

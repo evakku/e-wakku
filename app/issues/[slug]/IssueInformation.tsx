@@ -61,22 +61,24 @@ export default function IssueInformation({ issue }: IssueInformationProps) {
         <Button
           variant="default"
           size="lg"
-          className="bg-black text-white hover:bg-slate-900 border-none transition-colors duration-200 flex items-center justify-center gap-2.5 h-12 shadow-sm font-medium rounded cursor-pointer px-6"
+          disabled={!issue.pdfUrl}
+          className="bg-black text-white hover:bg-slate-900 border-none transition-colors duration-200 flex items-center justify-center gap-2.5 h-12 shadow-sm font-medium rounded cursor-pointer px-6 disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => {
             if (issue.pdfUrl) {
-              // Trigger programmatic mock download
               const link = document.createElement("a");
               link.href = issue.pdfUrl;
-              link.download = `${issue.id}-issue-${issue.issueNumber}.pdf`;
+              link.download = `${issue.title.replace(/\s+/g, "-").toLowerCase()}.pdf`;
+              link.target = "_blank";
+              link.rel = "noopener noreferrer";
               document.body.appendChild(link);
               link.click();
               document.body.removeChild(link);
             }
           }}
-          aria-label={`Download PDF edition of Issue ${issue.issueNumber}: ${issue.title}`}
+          aria-label={`Download PDF edition: ${issue.title}`}
         >
           <Download className="size-4 shrink-0 stroke-[2.25]" />
-          <span>Download</span>
+          <span>Download as PDF</span>
         </Button>
 
         {/* Read Online Button */}

@@ -7,6 +7,7 @@ import { Download, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
 import { getImageUrl } from "@/lib/sanity/client";
+import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 import { fadeUpVariants, staggerContainer } from "@/lib/animations";
 import type { Issue } from "./types";
 
@@ -30,7 +31,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
       {/* Left Column: Editorial Content */}
       <motion.div
         variants={fadeUpVariants(shouldReduceMotion)}
-        className="flex flex-col lg:col-span-5 order-1 lg:order-1"
+        className="flex flex-col justify-center lg:col-span-5 order-1 lg:order-1 my-auto"
       >
         <LabelCaps className="text-accent mb-4 tracking-widest font-semibold block">
           Latest Issue
@@ -87,6 +88,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
                 alt={`Cover of ${issue.title}`}
                 fill
                 priority
+                unoptimized={isSupabaseStorageUrl(imageUrl)}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 700px"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
               />

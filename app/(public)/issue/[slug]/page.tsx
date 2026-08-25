@@ -1,37 +1,38 @@
 import type { Metadata } from "next";
-import { getIssueBySlug } from "@/data/mockIssue";
+import { notFound } from "next/navigation";
+import { getIssueById } from "@/lib/queries/issue";
+import { toDetailIssue } from "@/lib/queries/issue-adapter";
 import IssueDetailsView from "@/app/issues/[slug]/IssueDetailsView";
+
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-// Reuse dynamic metadata generation for /issue/[slug] route
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const resolvedParams = await params;
-  const issue = getIssueBySlug(resolvedParams.slug);
+  const { slug } = await params;
+  const row = await getIssueById(slug);
 
-  if (!issue) {
+  if (!row) {
     return {
       title: "Issue Not Found | The Journal",
       description: "The requested magazine issue could not be found.",
     };
   }
 
+  const issue = toDetailIssue(row);
+
   return {
     title: `${issue.title} | The Journal`,
-    description: `Explore Issue ${issue.issueNumber} of The Journal. ${issue.description.substring(0, 100)}...`,
+    description: `${issue.season} ${issue.year} — ${issue.description.substring(0, 100)}...`,
     openGraph: {
       title: `${issue.title} | The Journal`,
-      description: `Explore Issue ${issue.issueNumber} of The Journal.`,
-      images: [
-        {
-          url: issue.coverImage,
-          width: 800,
-          height: 1067,
-          alt: `Cover art for ${issue.title}`,
-        },
-      ],
+      description: `${issue.season} ${issue.year} — ${issue.title}`,
+      images: issue.coverImage
+        ? [{ url: issue.coverImage, width: 800, height: 1067, alt: `Cover art for ${issue.title}` }]
+        : [],
       type: "article",
       siteName: "The Journal",
     },
@@ -39,7 +40,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function IssueSingularPage({ params }: PageProps) {
-  const resolvedParams = await params;
+  const { slug } = await params;
+  const row = await getIssueById(slug);
 
-  return <IssueDetailsView slug={resolvedParams.slug} />;
+  if (!row) {
+    notFound();
+  }
+
+  return <IssueDetailsView issue={toDetailIssue(row)} />;
 }
