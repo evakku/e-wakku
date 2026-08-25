@@ -1,5 +1,8 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Section, Container } from "@/components/layout";
@@ -14,7 +17,10 @@ interface IssueDetailsViewProps {
 
 export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from") || "archive";
 
+  const backHref = from === "home" ? "/" : "/archives";
   if (!issue) {
     notFound();
   }
@@ -34,6 +40,15 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
 
   return (
     <div className="w-full bg-[#F8FAFC]">
+
+      <Container size="lg">
+        <Link href={backHref} className="mb-2 absolute top-30 hidden md:inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors">
+          <ArrowLeft size={20} className="mr-2" />
+          <span className="text-sm font-medium">Back</span>
+        </Link>
+      </Container>
+
+
       {/* SECTION 1 — ISSUE HERO */}
       <Section variant="hero" bg="white">
         <Container size="lg">

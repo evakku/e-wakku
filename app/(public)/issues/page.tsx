@@ -27,6 +27,7 @@ export default async function AllIssuesPage() {
               issues={issues.map(toMagazineIssue)}
               title="All Issues"
               showViewAll={false}
+              issueSource="home"
             />
           )}
         </Container>

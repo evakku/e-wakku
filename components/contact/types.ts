@@ -6,6 +6,4 @@ export interface SocialLink {
 export interface ContactPageData {
   contactTitle: string;
   contactDescription: string;
-  contactEmail: string;
-  socialLinks: SocialLink[];
 }

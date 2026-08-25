@@ -18,6 +18,7 @@ interface IssueArchiveGridProps {
   viewAllLabel?: string;
   viewAllPlacement?: "header" | "footer";
   enablePagination?: boolean;
+  issueSource?: "home" | "archive";
 }
 
 export default function IssueArchiveGrid({
@@ -28,6 +29,7 @@ export default function IssueArchiveGrid({
   viewAllLabel = "All Issues",
   viewAllPlacement = "header",
   enablePagination = !showViewAll,
+  issueSource
 }: IssueArchiveGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -103,6 +105,7 @@ export default function IssueArchiveGrid({
               key={issue._id}
               issue={issue}
               className="w-full h-full"
+              from={issueSource}
             />
           ))}
         </motion.div>
