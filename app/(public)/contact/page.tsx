@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Section, Container } from "@/components/layout";
-import { ContactHero, ContactForm, SocialLinks } from "@/components/contact";
+import { ContactHero, ContactForm } from "@/components/contact";
 import { getContactPage } from "@/lib/queries/contact-settings";
 
 // Dynamic metadata generation for SEO
@@ -41,7 +41,7 @@ export default function ContactPage() {
     "mainEntity": {
       "@type": "Organization",
       "name": "The Journal",
-      "email": contactData.contactEmail,
+
     },
   };
 
@@ -55,7 +55,7 @@ export default function ContactPage() {
 
       <article className="flex flex-col w-full">
         {/* Section 1: Hero Section */}
-        <Section variant="hero" bg="white" className="pb-8 lg:pb-12 relative">
+        <Section variant="hero" bg="white" className="py-12 sm:py-16 lg:py-20 relative">
           <Link href="/" className="mb-6 hidden md:inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors absolute top-15 left-50">
             <ArrowLeft size={20} className="mr-2" />
             <span className="text-sm font-medium">Back</span>
@@ -69,7 +69,7 @@ export default function ContactPage() {
         </Section>
 
         {/* Section 2: Contact Form Card */}
-        <Section variant="default" bg="white" className="pt-0 pb-1">
+        <Section variant="default" bg="white" className="pt-8 sm:pt-12 pb-16 sm:pb-24 lg:pb-32">
           <Container size="lg">
             <ContactForm />
           </Container>

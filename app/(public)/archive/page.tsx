@@ -24,7 +24,7 @@ export default async function ArchivePage() {
 
   return (
     <div className="flex flex-col w-full bg-[#F8FAFC]">
-      <Section variant="hero" bg="transparent" className="pt-[100px] pb-2">
+      <Section variant="hero" bg="transparent" className="pt-16 sm:pt-24 lg:pt-28 pb-8 sm:pb-12">
         <Container size="lg">
           <Link href="/" className="mb-6 inline-flex items-center text-black hover:text-[#0D9488] transition-colors">
             <ArrowLeft size={20} className="mr-2" />
@@ -44,7 +44,7 @@ export default async function ArchivePage() {
         </Container>
       </Section>
 
-      <Section variant="large" bg="transparent" className="pt-0">
+      <Section variant="large" bg="transparent" className="pt-8 sm:pt-12 pb-16 sm:pb-24 lg:pb-32">
         <Container size="lg">
           <ArchiveIssuesGrid issues={issues} />
         </Container>

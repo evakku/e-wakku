@@ -60,7 +60,7 @@ export default function Footer({
     <footer
       role="contentinfo"
       aria-label="Site footer"
-      className="w-full bg-white border-t border-[#E2E8F0]"
+      className="w-full bg-white border-t border-[#E2E8F0] mt-16 sm:mt-24 lg:mt-32"
     >
       {/* ── Animated border-top line ──────────────────────────────────── */}
       <motion.div

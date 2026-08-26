@@ -33,9 +33,9 @@ export type ContainerSize = keyof typeof containerSizes;
  */
 export const sectionSpacing = {
   hero:    "py-16 sm:py-24 lg:py-32",    // 64 / 96 / 128 px
-  large:   "py-14 sm:py-20 lg:py-28",    // 56 / 80 / 112 px
-  default: "py-10 sm:py-14 lg:py-20",    // 40 / 56 / 80 px
-  compact: "py-6  sm:py-8  lg:py-12",    // 24 / 32 / 48 px
+  large:   "py-16 sm:py-24 lg:py-32",    // 64 / 96 / 128 px
+  default: "py-12 sm:py-16 lg:py-24",    // 48 / 64 / 96 px
+  compact: "py-8  sm:py-12 lg:py-16",    // 32 / 48 / 64 px
   footer:  "py-8  sm:py-10 lg:py-12",    // 32 / 40 / 48 px
 } as const;
 

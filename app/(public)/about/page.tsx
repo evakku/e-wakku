@@ -63,7 +63,7 @@ export default async function AboutPage() {
 
       <article className="flex flex-col w-full">
         {/* Section 1: Hero Section */}
-        <Section variant="hero" bg="white">
+        <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-28">
           <Container size="lg">
             <AboutHero
               eyebrow={aboutData.heroEyebrow}
@@ -74,7 +74,7 @@ export default async function AboutPage() {
         </Section>
 
         {/* Section 2: Mission Section */}
-        <Section variant="large" divider bg="white">
+        <Section variant="large" divider bg="white" className="py-16 sm:py-24 lg:py-28">
           <Container size="lg">
             <MissionSection
               title={aboutData.missionTitle}
@@ -86,7 +86,7 @@ export default async function AboutPage() {
 
         {/* Section 3: Editorial Board Section */}
         {aboutData.editorialBoard && aboutData.editorialBoard.length > 0 && (
-          <Section variant="large" divider bg="white">
+          <Section variant="large" divider bg="white" className="py-16 sm:py-24 lg:py-32">
             <Container size="lg">
               <EditorialBoard
                 title="Editorial Board"

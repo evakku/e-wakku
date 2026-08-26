@@ -20,7 +20,8 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const searchParams = useSearchParams();
   const from = searchParams.get("from") || "archive";
 
-  const backHref = from === "home" ? "/" : "/archives";
+  const backHref = from === "home" ? "/" : "/archive";
+  const backLabel = from === "home" ? "Back to Home" : "Back to Archive";
   if (!issue) {
     notFound();
   }
@@ -40,18 +41,16 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
 
   return (
     <div className="w-full bg-[#F8FAFC]">
-
-      <Container size="lg">
-        <Link href={backHref} className="mb-2 absolute top-30 hidden md:inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors">
-          <ArrowLeft size={20} className="mr-2" />
-          <span className="text-sm font-medium">Back</span>
-        </Link>
-      </Container>
-
-
       {/* SECTION 1 — ISSUE HERO */}
-      <Section variant="hero" bg="white">
+      <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-28">
         <Container size="lg">
+          <Link
+            href={backHref}
+            className="mb-6 inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors py-5"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            <span className="text-sm font-medium">{backLabel}</span>
+          </Link>
           <IssueHero issue={issue} />
         </Container>
       </Section>
@@ -62,7 +61,7 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
         bg="transparent"
         divider
         id="digital-archive-viewer"
-        className="scroll-mt-12"
+        className="scroll-mt-12 py-16 sm:py-24 lg:py-32"
       >
         <Container size="lg">
           <motion.div

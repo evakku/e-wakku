@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Section, Container } from "@/components/layout";
 import IssueArchiveGrid from "@/components/magazine/IssueArchiveGrid";
 import EmptyState from "@/components/magazine/EmptyState";
@@ -17,9 +19,16 @@ export default async function AllIssuesPage() {
   const issues = await getAllPublishedIssues();
 
   return (
-    <div className="flex flex-col w-full">
-      <Section variant="hero" bg="white">
+    <div className="flex flex-col w-full bg-[#F8FAFC]">
+      <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-32">
         <Container size="lg">
+          <Link
+            href="/"
+            className="mb-6 inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors"
+          >
+            <ArrowLeft size={20} className="mr-2" />
+            <span className="text-sm font-medium">Back to Home</span>
+          </Link>
           {issues.length === 0 ? (
             <EmptyState />
           ) : (

@@ -61,7 +61,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
             </Link>
           )}
           
-          <Link href={`/issue/${slugStr}`} className="w-full sm:w-auto">
+          <Link href={`/issue/${slugStr}?from=home`} className="w-full sm:w-auto">
             <Button
               variant="outline"
               size="lg"
@@ -80,7 +80,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
         variants={fadeUpVariants(shouldReduceMotion)}
         className="lg:col-span-7 order-2 lg:order-2"
       >
-        <Link href={`/issue/${slugStr}`} className="group block focus:outline-none">
+        <Link href={`/issue/${slugStr}?from=home`} className="group block focus:outline-none">
           <div className="relative aspect-[7/5] md:aspect-[7/5] w-full overflow-hidden rounded-2xl bg-muted border border-border/10 shadow-paper-lg group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-editorial">
             {imageUrl ? (
               <Image
