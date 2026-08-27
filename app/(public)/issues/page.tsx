@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { Suspense } from "react";
 import { Section, Container } from "@/components/layout";
-import IssueArchiveGrid from "@/components/magazine/IssueArchiveGrid";
 import EmptyState from "@/components/magazine/EmptyState";
 import { getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
@@ -26,13 +24,16 @@ export default async function AllIssuesPage() {
           {issues.length === 0 ? (
             <EmptyState />
           ) : (
-            <ArchiveIssuesGrid
-              issues={issues.map(toMagazineIssue)}
-              issueSource="home"
-            />
+            <Suspense fallback={<div className="min-h-[400px]" />}>
+              <ArchiveIssuesGrid
+                issues={issues.map(toMagazineIssue)}
+                issueSource="home"
+              />
+            </Suspense>
           )}
         </Container>
       </Section>
     </div>
   );
 }
+

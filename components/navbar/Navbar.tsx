@@ -94,9 +94,9 @@ export default function Navbar({
 
         {/* ── RIGHT — Search + Profile + hamburger ───────────────────── */}
         <div className="flex items-center gap-3 relative z-10">
-          {/* SEARCH SLOT — optional, desktop only, smaller size */}
+          {/* SEARCH SLOT — optional, medium and larger screens */}
           {searchSlot && (
-            <div className="hidden lg:block w-48 mr-1">
+            <div className="hidden md:block w-44 lg:w-48 mr-1">
               {searchSlot}
             </div>
           )}

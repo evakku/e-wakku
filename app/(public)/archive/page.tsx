@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { ArrowLeft } from "lucide-react";
+import { Suspense } from "react";
 import { Section, Container } from "@/components/layout";
 import ArchiveIssuesGrid from "@/components/magazine/ArchiveIssuesGrid";
 import { getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -15,11 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ArchivePage() {
-  const [rows] = await Promise.all([
-    getAllPublishedIssues(),
-
-  ]);
-
+  const rows = await getAllPublishedIssues();
   const issues = rows.map(toMagazineIssue);
 
   return (
@@ -46,9 +41,12 @@ export default async function ArchivePage() {
         className="pt-12 sm:pt-16 lg:pt-8 pb-16 sm:pb-24 lg:pb-32"
       >
         <Container size="lg">
-          <ArchiveIssuesGrid issues={issues} />
+          <Suspense fallback={<div className="min-h-[400px]" />}>
+            <ArchiveIssuesGrid issues={issues} />
+          </Suspense>
         </Container>
       </Section>
     </div>
   );
 }
+
