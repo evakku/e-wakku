@@ -24,18 +24,14 @@ export default async function ArchivePage() {
 
   return (
     <div className="flex flex-col w-full bg-[#F8FAFC]">
-      <Section variant="hero" bg="transparent" className="pt-16 sm:pt-24 lg:pt-28 pb-8 sm:pb-12">
+      <Section variant="hero" bg="transparent" className="pt-16 sm:pt-24 lg:pt-28 pb-2 sm:pb-4">
         <Container size="lg">
-          <Link href="/" className="mb-6 inline-flex items-center text-black hover:text-[#0D9488] transition-colors">
-            <ArrowLeft size={20} className="mr-2" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
           <div className="flex flex-col items-start text-left">
             <span className="mb-4 text-sm font-medium uppercase tracking-[0.15em] text-[#0F766E]">
               Curated Collections
             </span>
             <h1 className="mb-4 font-serif text-[48px] font-normal leading-tight text-[#111827] md:text-[56px]">
-              Archives
+              All Issues
             </h1>
             <p className="mb-0 max-w-[650px] text-[16px] leading-relaxed text-[#4B5563] md:text-[18px]">
               Browse every published issue — covers, editions, and full digital archives from The Journal.
@@ -44,7 +40,11 @@ export default async function ArchivePage() {
         </Container>
       </Section>
 
-      <Section variant="large" bg="transparent" className="pt-8 sm:pt-12 pb-16 sm:pb-24 lg:pb-32">
+      <Section
+        variant="compact"
+        bg="transparent"
+        className="pt-12 sm:pt-16 lg:pt-8 pb-16 sm:pb-24 lg:pb-32"
+      >
         <Container size="lg">
           <ArchiveIssuesGrid issues={issues} />
         </Container>

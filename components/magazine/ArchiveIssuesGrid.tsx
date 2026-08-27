@@ -299,7 +299,7 @@ export default function ArchiveIssuesGrid({ issues, issueSource = "archive" }: A
   return (
     <div ref={gridRef} className="scroll-mt-28 flex flex-col w-full">
       {/* Header Bar with Filter Tabs & Result Count */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-4 mb-5">
         {/* Dynamic Year Filter Tabs */}
         {availableYears.length > 1 && (
           <div

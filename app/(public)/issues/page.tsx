@@ -6,6 +6,7 @@ import IssueArchiveGrid from "@/components/magazine/IssueArchiveGrid";
 import EmptyState from "@/components/magazine/EmptyState";
 import { getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
+import ArchiveIssuesGrid from "@/components/magazine/ArchiveIssuesGrid";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -22,20 +23,11 @@ export default async function AllIssuesPage() {
     <div className="flex flex-col w-full bg-[#F8FAFC]">
       <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-32">
         <Container size="lg">
-          <Link
-            href="/"
-            className="mb-6 inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors"
-          >
-            <ArrowLeft size={20} className="mr-2" />
-            <span className="text-sm font-medium">Back to Home</span>
-          </Link>
           {issues.length === 0 ? (
             <EmptyState />
           ) : (
-            <IssueArchiveGrid
+            <ArchiveIssuesGrid
               issues={issues.map(toMagazineIssue)}
-              title="All Issues"
-              showViewAll={false}
               issueSource="home"
             />
           )}

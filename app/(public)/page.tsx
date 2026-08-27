@@ -82,7 +82,6 @@ export default async function HomePage() {
                 issues={recentIssues.map(toMagazineIssue)}
                 title="ISSUES"
                 viewAllPlacement="header"
-                issueSource="home"
               />
             </Container>
           </Section>

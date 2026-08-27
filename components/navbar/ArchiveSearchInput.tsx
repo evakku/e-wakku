@@ -46,8 +46,8 @@ export default function ArchiveSearchInput() {
         type="text"
         value={query}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search archives…"
-        aria-label="Search archives"
+        placeholder="Search Issues…"
+        aria-label="Search Issues"
         className={[
           "w-full h-8 pl-8 pr-7 text-[13px] rounded-full",
           "bg-[#F1F5F9] border border-transparent",

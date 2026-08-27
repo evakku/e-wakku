@@ -25,11 +25,10 @@ export default function IssueArchiveGrid({
   issues,
   title = "ISSUES",
   showViewAll = true,
-  viewAllHref = "/issues",
+  viewAllHref = "/archive",
   viewAllLabel = "All Issues",
   viewAllPlacement = "header",
   enablePagination = !showViewAll,
-  issueSource
 }: IssueArchiveGridProps) {
   const gridRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -105,7 +104,6 @@ export default function IssueArchiveGrid({
               key={issue._id}
               issue={issue}
               className="w-full h-full"
-              from={issueSource}
             />
           ))}
         </motion.div>
