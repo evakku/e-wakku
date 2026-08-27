@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Section, Container } from "@/components/layout";
@@ -14,6 +15,16 @@ interface IssueDetailsViewProps {
 
 export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
+
+  useEffect(() => {
+    if (issue?.id) {
+      fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "view", issueId: issue.id }),
+      }).catch(() => {});
+    }
+  }, [issue?.id]);
 
   if (!issue) {
     notFound();

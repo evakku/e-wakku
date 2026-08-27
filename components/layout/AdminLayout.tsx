@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   FilePlus,
-  Files
+  Files,
+  BarChart3,
 } from "lucide-react";
 import type { AdminLayoutProps, AdminNavItem } from "./types";
 
@@ -51,7 +52,7 @@ import type { AdminLayoutProps, AdminNavItem } from "./types";
 const DEFAULT_NAV: AdminNavItem[] = [
   { label: "Dashboard", href: "/admin", icon: <LayoutDashboard size={18} /> },
   { label: "Manage Issues", href: "/admin/issues/manage", icon: <Files size={18} /> },
-  { label: "Analytics", href: "/admin/analytics", icon: <Users size={18} /> },
+  { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 size={18} /> },
   { label: "Settings", href: "/admin/settings", icon: <Settings size={18} /> },
 ];
 

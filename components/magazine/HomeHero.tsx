@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { Download, BookOpen } from "lucide-react";
+import { Download, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
 import { getImageUrl } from "@/lib/sanity/client";
@@ -19,6 +20,53 @@ export default function HomeHero({ issue }: HomeHeroProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
   const imageUrl = getImageUrl(issue.coverImage);
   const slugStr = typeof issue.slug === "string" ? issue.slug : issue.slug?.current || "";
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!issue.pdfUrl || isDownloading) return;
+
+    const issueId = issue._id || (typeof issue.slug === "string" ? issue.slug : issue.slug?.current);
+    if (issueId) {
+      fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "download", issueId }),
+      }).catch(() => {});
+    }
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(issue.pdfUrl);
+      if (!response.ok) throw new Error("Failed to fetch PDF");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const filename = issue.title.toLowerCase().endsWith(".pdf")
+        ? issue.title
+        : `${issue.title}.pdf`;
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Direct download failed, falling back:", error);
+      const filename = issue.title.toLowerCase().endsWith(".pdf")
+        ? issue.title
+        : `${issue.title}.pdf`;
+      const link = document.createElement("a");
+      link.href = issue.pdfUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <motion.section
@@ -48,17 +96,21 @@ export default function HomeHero({ issue }: HomeHeroProps) {
         {/* Responsive buttons: stack vertically on mobile, row on tablet/desktop */}
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           {issue.pdfUrl && (
-            <Link href={issue.pdfUrl} download className="w-full sm:w-auto">
-              <Button
-                variant="default"
-                size="lg"
-                className="w-full sm:w-auto bg-accent text-white hover:bg-accent/90 border-0 flex items-center justify-center gap-2.5 h-12 shadow-sm font-medium transition-editorial px-6 rounded-md cursor-pointer"
-                aria-label={`Download PDF of ${issue.title}`}
-              >
+            <Button
+              variant="default"
+              size="lg"
+              disabled={isDownloading}
+              onClick={handleDownload}
+              className="w-full sm:w-auto bg-accent text-white hover:bg-accent/90 border-0 flex items-center justify-center gap-2.5 h-12 shadow-sm font-medium transition-editorial px-6 rounded-md cursor-pointer disabled:opacity-50"
+              aria-label={`Download PDF of ${issue.title}`}
+            >
+              {isDownloading ? (
+                <Loader2 className="size-4 shrink-0 animate-spin" />
+              ) : (
                 <Download className="size-4 shrink-0" />
-                Download Issue
-              </Button>
-            </Link>
+              )}
+              <span>{isDownloading ? "Downloading..." : "Download Issue"}</span>
+            </Button>
           )}
           
           <Link href={`/issue/${slugStr}`} className="w-full sm:w-auto">
