@@ -71,7 +71,7 @@ export default async function HomePage() {
 
       <div className="flex flex-col w-full bg-[#F8FAFC]">
         {/* Section 1: Hero / Latest Featured Issue (Centered in section) */}
-        <Section variant="hero" bg="white" className="py-12 sm:py-20">
+        <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-28">
           <Container size="lg">
             <HomeHero issue={toMagazineIssue(featuredIssue)} />
           </Container>
@@ -79,7 +79,7 @@ export default async function HomePage() {
 
         {/* Section 2: ISSUES (Centered 3-Card Grid with Generous Footer Spacing) */}
         {recentIssues.length > 0 && (
-          <Section variant="large" bg="transparent" className="py-16 sm:py-24 pb-24 sm:pb-36">
+          <Section variant="large" bg="transparent" className="py-16 sm:py-24 lg:py-32">
             <Container size="lg">
               <IssueArchiveGrid
                 issues={recentIssues.map(toMagazineIssue)}

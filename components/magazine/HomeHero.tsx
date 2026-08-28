@@ -113,7 +113,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
             </Button>
           )}
           
-          <Link href={`/issue/${slugStr}`} className="w-full sm:w-auto">
+          <Link href={`/issue/${slugStr}?from=home`} className="w-full sm:w-auto">
             <Button
               variant="outline"
               size="lg"
@@ -130,10 +130,10 @@ export default function HomeHero({ issue }: HomeHeroProps) {
       {/* Right Column: Premium Cover Image Showcase */}
       <motion.div
         variants={fadeUpVariants(shouldReduceMotion)}
-        className="lg:col-span-7 order-2 lg:order-2"
+        className="lg:col-span-7 order-2 lg:order-2 flex justify-center items-center py-4 sm:py-6 lg:py-8"
       >
-        <Link href={`/issue/${slugStr}`} className="group block focus:outline-none">
-          <div className="relative aspect-[7/5] md:aspect-[7/5] w-full overflow-hidden rounded-2xl bg-muted border border-border/10 shadow-paper-lg group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-editorial">
+        <Link href={`/issue/${slugStr}?from=home`} className="group block focus:outline-none w-full max-w-[250px] sm:max-w-[290px] lg:max-w-[320px] mx-auto">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-md group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-all duration-500 ease-out group-hover:shadow-xl">
             {imageUrl ? (
               <Image
                 src={imageUrl}
@@ -141,8 +141,8 @@ export default function HomeHero({ issue }: HomeHeroProps) {
                 fill
                 priority
                 unoptimized={isSupabaseStorageUrl(imageUrl)}
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 60vw, 700px"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
+                sizes="(max-width: 768px) 290px, 320px"
+                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               />
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-light">
@@ -150,7 +150,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
               </div>
             )}
             
-            {/* Elegant luxury overlay shading */}
+            {/* Subtle ambient gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-60 pointer-events-none" />
           </div>
         </Link>

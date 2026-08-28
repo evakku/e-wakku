@@ -23,7 +23,7 @@ import { Suspense } from "react";
 const NAV_LINKS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
-  { label: "Archives", href: "/archive" },
+  { label: "All Issues", href: "/archive" },
   { label: "Contact", href: "/contact" },
 ] as const;
 
