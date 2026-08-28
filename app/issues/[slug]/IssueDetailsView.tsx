@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
 import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Section, Container } from "@/components/layout";
@@ -22,6 +23,16 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
 
   const backHref = from === "archive" ? "/archive" : null;
   const backLabel = "All Issues";
+  useEffect(() => {
+    if (issue?.id) {
+      fetch("/api/analytics/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "view", issueId: issue.id }),
+      }).catch(() => {});
+    }
+  }, [issue?.id]);
+
   if (!issue) {
     notFound();
   }

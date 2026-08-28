@@ -3,6 +3,9 @@ import { Section, Container } from "@/components/layout";
 import { AboutHero, MissionSection, EditorialBoard } from "@/components/about";
 import { getAboutPage, getImageUrl } from "@/lib/sanity/client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
   const aboutData = await getAboutPage();

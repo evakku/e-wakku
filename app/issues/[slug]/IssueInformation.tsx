@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Download, BookOpen } from "lucide-react";
+import { Download, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
 import type { Issue } from "@/data/mockIssue";
@@ -33,6 +34,51 @@ export default function IssueInformation({ issue }: IssueInformationProps) {
     }
   };
 
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const handleDownload = async () => {
+    if (!issue.pdfUrl || isDownloading) return;
+
+    fetch("/api/analytics/track", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "download", issueId: issue.id }),
+    }).catch(() => {});
+
+    setIsDownloading(true);
+    try {
+      const response = await fetch(issue.pdfUrl);
+      if (!response.ok) throw new Error("Failed to fetch PDF");
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+
+      const filename = issue.title.toLowerCase().endsWith(".pdf")
+        ? issue.title
+        : `${issue.title}.pdf`;
+
+      const link = document.createElement("a");
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error("Direct download failed, falling back:", error);
+      const filename = issue.title.toLowerCase().endsWith(".pdf")
+        ? issue.title
+        : `${issue.title}.pdf`;
+      const link = document.createElement("a");
+      link.href = issue.pdfUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   return (
     <motion.div
       variants={slideLeftVariants}
@@ -61,24 +107,17 @@ export default function IssueInformation({ issue }: IssueInformationProps) {
         <Button
           variant="default"
           size="lg"
-          disabled={!issue.pdfUrl}
+          disabled={!issue.pdfUrl || isDownloading}
           className="bg-black text-white hover:bg-slate-900 border-none transition-colors duration-200 flex items-center justify-center gap-2.5 h-12 shadow-sm font-medium rounded cursor-pointer px-6 disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={() => {
-            if (issue.pdfUrl) {
-              const link = document.createElement("a");
-              link.href = issue.pdfUrl;
-              link.download = `${issue.title.replace(/\s+/g, "-").toLowerCase()}.pdf`;
-              link.target = "_blank";
-              link.rel = "noopener noreferrer";
-              document.body.appendChild(link);
-              link.click();
-              document.body.removeChild(link);
-            }
-          }}
+          onClick={handleDownload}
           aria-label={`Download PDF edition: ${issue.title}`}
         >
-          <Download className="size-4 shrink-0 stroke-[2.25]" />
-          <span>Download as PDF</span>
+          {isDownloading ? (
+            <Loader2 className="size-4 shrink-0 stroke-[2.25] animate-spin" />
+          ) : (
+            <Download className="size-4 shrink-0 stroke-[2.25]" />
+          )}
+          <span>{isDownloading ? "Downloading..." : "Download as PDF"}</span>
         </Button>
 
         {/* Read Online Button */}

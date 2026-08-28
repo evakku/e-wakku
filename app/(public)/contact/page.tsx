@@ -5,6 +5,9 @@ import { Section, Container } from "@/components/layout";
 import { ContactHero, ContactForm } from "@/components/contact";
 import { getContactPage } from "@/lib/queries/contact-settings";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
   const contactData = getContactPage();
