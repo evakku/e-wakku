@@ -6,6 +6,9 @@ import EmptyState from "@/components/magazine/EmptyState";
 import { getLatestIssue, getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
   const featuredIssue = await getLatestIssue();

@@ -3,6 +3,9 @@ import { Section, Container } from "@/components/layout";
 import { ContactHero, ContactForm, DirectContact, SocialLinks } from "@/components/contact";
 import { getContactPage } from "@/lib/sanity/client";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
   const contactData = await getContactPage();

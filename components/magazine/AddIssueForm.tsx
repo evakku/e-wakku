@@ -168,11 +168,10 @@ export function AddIssueForm() {
               Cover Image (.png) <span className="text-red-500">*</span>
             </label>
             <div
-              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${
-                coverImage
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${coverImage
                   ? "border-[#059669] bg-[#ECFDF5]/30"
                   : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
-              }`}
+                }`}
             >
               {coverPreview ? (
                 <div className="relative flex flex-col items-center gap-2">
@@ -229,11 +228,10 @@ export function AddIssueForm() {
               Issue PDF (.pdf) <span className="text-red-500">*</span>
             </label>
             <div
-              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${
-                pdfFile
+              className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${pdfFile
                   ? "border-[#059669] bg-[#ECFDF5]/30"
                   : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
-              }`}
+                }`}
             >
               {pdfFile ? (
                 <div className="flex flex-col items-center gap-2 text-center">
@@ -371,14 +369,12 @@ export function AddIssueForm() {
             role="switch"
             aria-checked={isDraft}
             onClick={() => setIsDraft(!isDraft)}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] ${
-              isDraft ? "bg-[#059669]" : "bg-slate-200"
-            }`}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#059669] ${isDraft ? "bg-[#059669]" : "bg-slate-200"
+              }`}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                isDraft ? "translate-x-5" : "translate-x-0"
-              }`}
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${isDraft ? "translate-x-5" : "translate-x-0"
+                }`}
             />
           </button>
         </div>
@@ -394,11 +390,10 @@ export function AddIssueForm() {
           <button
             type="submit"
             disabled={!canSubmit}
-            className={`inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-all ${
-              canSubmit
+            className={`inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-all ${canSubmit
                 ? "bg-[#059669] hover:bg-[#047857] shadow-sm hover:scale-[1.01]"
                 : "bg-slate-300 cursor-not-allowed opacity-70"
-            }`}
+              }`}
           >
             {isPending ? (
               <>
