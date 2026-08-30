@@ -2,8 +2,10 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import logo from "@/src/assets/logo.png";
 import {
   LayoutDashboard,
   BookOpen,
@@ -92,10 +94,36 @@ export default function AdminLayout({
             collapsed ? "justify-center" : "justify-between",
           ].join(" ")}
         >
-          {!collapsed && (
-            <span className="font-heading text-base font-medium text-[#0F172A] tracking-tight select-none truncate">
-              E-Wakku
-            </span>
+          {!collapsed ? (
+            <Link
+              href="/admin"
+              className="relative h-9 w-28 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
+              aria-label="Admin Dashboard"
+            >
+              <Image
+                src={logo}
+                alt="E-Wakku Logo"
+                fill
+                priority
+                sizes="112px"
+                className="object-contain object-left select-none"
+              />
+            </Link>
+          ) : (
+            <Link
+              href="/admin"
+              className="relative h-7 w-7 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
+              aria-label="Admin Dashboard"
+            >
+              <Image
+                src={logo}
+                alt="E-Wakku Logo"
+                fill
+                priority
+                sizes="28px"
+                className="object-contain select-none"
+              />
+            </Link>
           )}
           <button
             type="button"
@@ -174,9 +202,21 @@ export default function AdminLayout({
             >
               {/* Drawer header */}
               <div className="flex h-[64px] items-center justify-between border-b border-[#E2E8F0] px-4">
-                <span className="font-heading text-base font-medium text-[#0F172A] tracking-tight select-none">
-                  E-Wakku
-                </span>
+                <Link
+                  href="/admin"
+                  onClick={closeDrawer}
+                  className="relative h-9 w-28 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
+                  aria-label="Admin Dashboard"
+                >
+                  <Image
+                    src={logo}
+                    alt="E-Wakku Logo"
+                    fill
+                    priority
+                    sizes="112px"
+                    className="object-contain object-left select-none"
+                  />
+                </Link>
                 <button
                   type="button"
                   onClick={closeDrawer}

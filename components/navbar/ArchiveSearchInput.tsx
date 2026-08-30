@@ -29,13 +29,13 @@ export default function ArchiveSearchInput() {
       } else {
         params.delete("q");
       }
-      router.replace(`/archive?${params.toString()}`, { scroll: false });
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false });
     },
-    [router, searchParams]
+    [router, searchParams, pathname]
   );
 
-  // Only render on the /archive route
-  if (pathname !== "/archive") return null;
+  // Only render on the /allIssues, /archive, or /archives route
+  if (pathname !== "/allIssues" && pathname !== "/archive" && pathname !== "/archives") return null;
 
   return (
     <div className="relative w-full">
@@ -46,8 +46,8 @@ export default function ArchiveSearchInput() {
         type="text"
         value={query}
         onChange={(e) => handleChange(e.target.value)}
-        placeholder="Search archives…"
-        aria-label="Search archives"
+        placeholder="Search issues…"
+        aria-label="Search issues"
         className={[
           "w-full h-8 pl-8 pr-7 text-[13px] rounded-full",
           "bg-[#F1F5F9] border border-transparent",

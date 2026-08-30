@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox, Search } from "lucide-react";
 import { staggerContainer } from "@/lib/animations";
 import IssueArchiveCard from "./IssueArchiveCard";
 import type { Issue } from "./types";
@@ -27,6 +28,9 @@ function getIssueYear(issue: Issue): string | null {
 }
 
 export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
+  const searchParams = useSearchParams();
+  const query = (searchParams?.get("q") ?? "").trim().toLowerCase();
+
   const gridRef = useRef<HTMLDivElement>(null);
   const [selectedYear, setSelectedYear] = useState<string>("All");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -43,11 +47,22 @@ export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
     return ["All", ...sortedYears];
   }, [issues]);
 
-  // Filter issues dynamically by selected year
+  // Filter issues dynamically by selected year and search query
   const filteredIssues = useMemo(() => {
-    if (selectedYear === "All") return issues;
-    return issues.filter((issue) => getIssueYear(issue) === selectedYear);
-  }, [issues, selectedYear]);
+    let result = issues;
+    if (selectedYear !== "All") {
+      result = result.filter((issue) => getIssueYear(issue) === selectedYear);
+    }
+    if (query) {
+      result = result.filter(
+        (issue) =>
+          issue.title.toLowerCase().includes(query) ||
+          (issue.description && issue.description.toLowerCase().includes(query)) ||
+          (issue.subtitle && issue.subtitle.toLowerCase().includes(query))
+      );
+    }
+    return result;
+  }, [issues, selectedYear, query]);
 
   const totalPages = Math.ceil(filteredIssues.length / ITEMS_PER_PAGE);
 
@@ -130,7 +145,9 @@ export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
       {filteredIssues.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/30 bg-card/20 px-6 py-16 text-center max-w-md mx-auto my-8">
           <p className="text-sm text-muted-foreground">
-            No published issues found for {selectedYear}.
+            {query
+              ? `No published issues found matching "${query}".`
+              : `No published issues found for ${selectedYear}.`}
           </p>
         </div>
       ) : (

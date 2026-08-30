@@ -13,7 +13,7 @@ import Footer from "@/components/footer/Footer";
 const FOOTER_LINKS = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
-  { label: "Archives", href: "/archives" },
+  { label: "All Issues", href: "/allIssues" },
   { label: "Newsletter", href: "/newsletter" },
 ] as const;
 

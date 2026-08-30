@@ -13,7 +13,7 @@ import PublicLayout from "@/components/layout/PublicLayout";
  *   /              → app/(public)/page.tsx
  *   /about         → app/(public)/about/page.tsx
  *   /contact       → app/(public)/contact/page.tsx
- *   /archive       → app/(public)/archive/page.tsx
+ *   /allIssues     → app/(public)/allIssues/page.tsx
  *   /issue/[slug]  → app/(public)/issue/[slug]/page.tsx
  *   /search        → app/(public)/search/page.tsx
  *   /newsletter    → app/(public)/newsletter/page.tsx

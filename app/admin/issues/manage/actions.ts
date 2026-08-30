@@ -93,7 +93,10 @@ export async function toggleDraftStatus(
 
   revalidatePath("/admin/issues/manage");
   revalidatePath("/admin/issues");
+  revalidatePath("/allIssues");
   revalidatePath("/archive");
+  revalidatePath("/archives");
+  revalidatePath("/issues");
   revalidatePath("/");
   return {
     success: true,
@@ -144,7 +147,10 @@ export async function deleteIssue(id: string): Promise<ActionResult> {
 
   revalidatePath("/admin/issues/manage");
   revalidatePath("/admin/issues");
+  revalidatePath("/allIssues");
   revalidatePath("/archive");
+  revalidatePath("/archives");
+  revalidatePath("/issues");
   revalidatePath("/");
   return { success: true, message: "Issue deleted successfully" };
 }
@@ -274,7 +280,10 @@ export async function updateIssue(
 
   revalidatePath("/admin/issues/manage");
   revalidatePath("/admin/issues");
+  revalidatePath("/allIssues");
   revalidatePath("/archive");
+  revalidatePath("/archives");
+  revalidatePath("/issues");
   revalidatePath("/");
 
   return { success: true, message: "Issue updated successfully!" };
