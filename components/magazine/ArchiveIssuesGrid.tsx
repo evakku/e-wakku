@@ -3,7 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Inbox, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
 import { staggerContainer } from "@/lib/animations";
 import IssueArchiveCard from "./IssueArchiveCard";
 import type { Issue } from "./types";
@@ -12,6 +12,7 @@ const ITEMS_PER_PAGE = 8;
 
 interface ArchiveIssuesGridProps {
   issues: Issue[];
+  issueSource?: "home" | "archive";
 }
 
 function getIssueYear(issue: Issue): string | null {
@@ -27,7 +28,10 @@ function getIssueYear(issue: Issue): string | null {
   return null;
 }
 
-export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
+export default function ArchiveIssuesGrid({
+  issues,
+  issueSource = "archive",
+}: ArchiveIssuesGridProps) {
   const searchParams = useSearchParams();
   const query = (searchParams?.get("q") ?? "").trim().toLowerCase();
 
@@ -106,7 +110,7 @@ export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
   return (
     <div ref={gridRef} className="scroll-mt-28 flex flex-col w-full">
       {/* Header Bar with Filter Tabs & Result Count */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-6 mb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-4 mb-5">
         {/* Dynamic Year Filter Tabs */}
         {availableYears.length > 1 && (
           <div
@@ -164,7 +168,7 @@ export default function ArchiveIssuesGrid({ issues }: ArchiveIssuesGridProps) {
             ].join(" ")}
           >
             {paginatedIssues.map((issue) => (
-              <IssueArchiveCard key={issue._id} issue={issue} />
+              <IssueArchiveCard key={issue._id} issue={issue} from={issueSource} />
             ))}
           </motion.div>
 

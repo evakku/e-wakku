@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Section, Container } from "@/components/layout";
-import { ContactHero, ContactForm, DirectContact, SocialLinks } from "@/components/contact";
-import { getContactPage } from "@/lib/sanity/client";
+import { ContactHero, ContactForm } from "@/components/contact";
+import { getContactPage } from "@/lib/queries/contact-settings";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 // Dynamic metadata generation for SEO
 export async function generateMetadata(): Promise<Metadata> {
-  const contactData = await getContactPage();
+  const contactData = getContactPage();
 
   return {
     title: "Contact | The Journal",
@@ -22,8 +24,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ContactPage() {
-  const contactData = await getContactPage();
+export default function ContactPage() {
+  const contactData = getContactPage();
 
   // Structured Data (JSON-LD) for Editorial Contact Page
   const jsonLd = {
@@ -42,7 +44,7 @@ export default async function ContactPage() {
     "mainEntity": {
       "@type": "Organization",
       "name": "The Journal",
-      "email": contactData.contactEmail,
+
     },
   };
 
@@ -56,7 +58,11 @@ export default async function ContactPage() {
 
       <article className="flex flex-col w-full">
         {/* Section 1: Hero Section */}
-        <Section variant="hero" bg="white" className="pb-8 lg:pb-12">
+        <Section variant="hero" bg="white" className="py-12 sm:py-16 lg:py-20 relative">
+          <Link href="/" className="mb-6 hidden md:inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors absolute top-15 left-50">
+            <ArrowLeft size={20} className="mr-2" />
+            <span className="text-sm font-medium">Back</span>
+          </Link>
           <Container size="lg">
             <ContactHero
               title={contactData.contactTitle}
@@ -66,27 +72,11 @@ export default async function ContactPage() {
         </Section>
 
         {/* Section 2: Contact Form Card */}
-        <Section variant="default" bg="white" className="pt-0 pb-10">
+        <Section variant="default" bg="white" className="pt-8 sm:pt-12 pb-16 sm:pb-24 lg:pb-32">
           <Container size="lg">
             <ContactForm />
           </Container>
         </Section>
-
-        {/* Section 3: Direct Contact */}
-        <Section variant="compact" bg="white" className="py-6">
-          <Container size="lg">
-            <DirectContact email={contactData.contactEmail} />
-          </Container>
-        </Section>
-
-        {/* Section 4: Social Links */}
-        {contactData.socialLinks && contactData.socialLinks.length > 0 && (
-          <Section variant="compact" bg="white" className="pt-6 pb-16">
-            <Container size="lg">
-              <SocialLinks links={contactData.socialLinks} />
-            </Container>
-          </Section>
-        )}
       </article>
     </>
   );

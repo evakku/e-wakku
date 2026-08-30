@@ -1,4 +1,5 @@
 import { sectionSpacing, sectionBg } from "@/lib/layout-tokens";
+import { cn } from "@/lib/utils";
 import type { SectionProps } from "./types";
 
 /**
@@ -32,14 +33,12 @@ export default function Section({
   return (
     <section
       id={id}
-      className={[
+      className={cn(
         sectionSpacing[variant],
         sectionBg[bg],
-        divider ? "border-t border-[#E2E8F0]" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+        divider && "border-t border-[#E2E8F0]",
+        className
+      )}
     >
       {children}
     </section>

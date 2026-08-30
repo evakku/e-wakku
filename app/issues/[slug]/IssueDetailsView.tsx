@@ -1,5 +1,8 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
@@ -15,7 +18,11 @@ interface IssueDetailsViewProps {
 
 export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
+  const searchParams = useSearchParams();
+  const from = searchParams.get("from");
 
+  const backHref = from === "archive" ? "/archive" : null;
+  const backLabel = "All Issues";
   useEffect(() => {
     if (issue?.id) {
       fetch("/api/analytics/track", {
@@ -46,8 +53,17 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   return (
     <div className="w-full bg-[#F8FAFC]">
       {/* SECTION 1 — ISSUE HERO */}
-      <Section variant="hero" bg="white">
+      <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-28">
         <Container size="lg">
+          {backHref && (
+            <Link
+              href={backHref}
+              className="mb-6 inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors py-5"
+            >
+              <ArrowLeft size={20} className="mr-2" />
+              <span className="text-sm font-medium">{backLabel}</span>
+            </Link>
+          )}
           <IssueHero issue={issue} />
         </Container>
       </Section>
@@ -58,7 +74,7 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
         bg="transparent"
         divider
         id="digital-archive-viewer"
-        className="scroll-mt-12"
+        className="scroll-mt-12 py-16 sm:py-24 lg:py-32"
       >
         <Container size="lg">
           <motion.div

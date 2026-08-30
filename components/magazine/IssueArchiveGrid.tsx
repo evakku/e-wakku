@@ -18,6 +18,7 @@ interface IssueArchiveGridProps {
   viewAllLabel?: string;
   viewAllPlacement?: "header" | "footer";
   enablePagination?: boolean;
+  issueSource?: "home" | "archive";
 }
 
 export default function IssueArchiveGrid({
