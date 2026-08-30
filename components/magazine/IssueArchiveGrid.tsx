@@ -25,7 +25,7 @@ export default function IssueArchiveGrid({
   issues,
   title = "ISSUES",
   showViewAll = true,
-  viewAllHref = "/archive",
+  viewAllHref = "/allIssues",
   viewAllLabel = "All Issues",
   viewAllPlacement = "header",
   enablePagination = !showViewAll,

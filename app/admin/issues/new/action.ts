@@ -105,5 +105,10 @@ export async function createIssue(
 
   revalidatePath("/admin/issues");
   revalidatePath("/admin/issues/manage");
+  revalidatePath("/allIssues");
+  revalidatePath("/archive");
+  revalidatePath("/archives");
+  revalidatePath("/issues");
+  revalidatePath("/");
   return { success: true };
 }

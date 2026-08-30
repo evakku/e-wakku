@@ -38,14 +38,14 @@ export default function NotFound() {
                 </Button>
               </Link>
 
-              <Link href="/archive" className="w-full sm:w-auto">
+              <Link href="/allIssues" className="w-full sm:w-auto">
                 <Button
                   variant="outline"
                   size="lg"
                   className="w-full sm:w-auto border-slate-300 text-slate-800 hover:bg-slate-100 hover:text-black flex items-center justify-center gap-2.5 h-12 px-6 rounded font-medium transition-colors"
                 >
                   <BookOpen className="size-4 text-slate-600" />
-                  <span>Browse Archives</span>
+                  <span>Browse All Issues</span>
                 </Button>
               </Link>
             </div>

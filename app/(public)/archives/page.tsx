@@ -1,8 +1,6 @@
-import ArchivePage, { metadata as archiveMetadata } from "../archive/page";
+import { redirect } from "next/navigation";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export default function ArchivesPageRedirect() {
+  redirect("/allIssues");
+}
 
-export const metadata = archiveMetadata;
-
-export default ArchivePage;
