@@ -1,8 +1,8 @@
 {
-  "totalReaders": 1457,
-  "activeReaders": 408,
-  "totalViews": 4927,
-  "totalDownloads": 1250,
+  "totalReaders": 1459,
+  "activeReaders": 409,
+  "totalViews": 4929,
+  "totalDownloads": 1251,
   "perIssue": {
     "ac9eba56-8f9a-4af3-a659-91016f78c6f5": {
       "views": 1250,
@@ -33,12 +33,12 @@
       "lastDownloadedAt": "2026-08-25T09:34:20.281Z"
     },
     "1be4746a-8a78-4a60-8343-edab07b37508": {
-      "views": 697,
-      "readers": 237,
-      "downloads": 122,
-      "lastViewedAt": "2026-08-30T10:41:11.714Z",
-      "lastDownloadedAt": "2026-08-25T09:34:38.183Z"
+      "views": 699,
+      "readers": 239,
+      "downloads": 123,
+      "lastViewedAt": "2026-08-30T10:55:40.561Z",
+      "lastDownloadedAt": "2026-08-30T10:55:31.997Z"
     }
   },
-  "lastUpdated": "2026-08-30T10:45:50.507Z"
+  "lastUpdated": "2026-08-30T10:55:40.561Z"
 }
