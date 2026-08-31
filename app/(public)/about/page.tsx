@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
-import { AboutHero, MissionSection, EditorialBoard } from "@/components/about";
+import { AboutHero, MissionSection } from "@/components/about";
 import { getAboutPage, getImageUrl } from "@/lib/sanity/client";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +48,6 @@ export default async function AboutPage() {
       "name": "The Journal",
       "foundingDate": "2024",
       "knowsAbout": ["Culture", "Design", "Aesthetic Living", "In-depth Journalism"],
-      "employee": aboutData.editorialBoard?.map((member) => ({
-        "@type": "Person",
-        "name": member.name,
-        "jobTitle": member.role,
-      })) || [],
     },
   };
 
@@ -66,7 +61,7 @@ export default async function AboutPage() {
 
       <article className="flex flex-col w-full">
         {/* Section 1: Hero Section */}
-        <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-28">
+        <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-32">
           <Container size="lg">
             <AboutHero
               eyebrow={aboutData.heroEyebrow}
@@ -77,7 +72,7 @@ export default async function AboutPage() {
         </Section>
 
         {/* Section 2: Mission Section */}
-        <Section variant="large" divider bg="white" className="py-16 sm:py-24 lg:py-28">
+        <Section variant="large" divider bg="white" className="py-16 sm:py-24 lg:py-32">
           <Container size="lg">
             <MissionSection
               title={aboutData.missionTitle}
@@ -86,24 +81,6 @@ export default async function AboutPage() {
             />
           </Container>
         </Section>
-
-        {/* Section 3: Editorial Board Section */}
-        {aboutData.editorialBoard && aboutData.editorialBoard.length > 0 && (
-          <Section variant="large" divider bg="white" className="py-16 sm:py-24 lg:py-32">
-            <Container size="lg">
-              <EditorialBoard
-                title="Editorial Board"
-                members={aboutData.editorialBoard}
-              />
-            </Container>
-          </Section>
-        )}
-
-        {/* Section 4: Future Expansion Areas */}
-        {/*
-          This container is structured for future modules
-          (e.g., brand partners, submissions, or editorial guidelines)
-        */}
       </article>
     </>
   );

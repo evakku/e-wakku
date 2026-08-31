@@ -1,8 +1,8 @@
 {
-  "totalReaders": 1459,
-  "activeReaders": 409,
-  "totalViews": 4929,
-  "totalDownloads": 1251,
+  "totalReaders": 1465,
+  "activeReaders": 410,
+  "totalViews": 4935,
+  "totalDownloads": 1252,
   "perIssue": {
     "ac9eba56-8f9a-4af3-a659-91016f78c6f5": {
       "views": 1250,
@@ -12,24 +12,24 @@
       "lastDownloadedAt": "2026-08-25T07:15:00Z"
     },
     "c6b21c7d-1974-4952-bfda-a58edd0f4846": {
-      "views": 982,
-      "readers": 312,
+      "views": 984,
+      "readers": 314,
       "downloads": 245,
-      "lastViewedAt": "2026-08-30T10:45:50.507Z",
+      "lastViewedAt": "2026-08-30T16:28:52.432Z",
       "lastDownloadedAt": "2026-08-24T15:40:00Z"
     },
     "1c75dda5-93d4-4783-a52a-92ae1b60bfe6": {
-      "views": 867,
-      "readers": 267,
-      "downloads": 211,
-      "lastViewedAt": "2026-08-30T10:13:48.451Z",
-      "lastDownloadedAt": "2026-08-25T06:19:31.679Z"
+      "views": 869,
+      "readers": 269,
+      "downloads": 212,
+      "lastViewedAt": "2026-08-30T16:27:52.755Z",
+      "lastDownloadedAt": "2026-08-30T16:28:08.285Z"
     },
     "67cb3136-4910-4ca6-9811-0bb031b72bad": {
-      "views": 1131,
-      "readers": 351,
+      "views": 1133,
+      "readers": 353,
       "downloads": 292,
-      "lastViewedAt": "2026-08-30T10:41:04.591Z",
+      "lastViewedAt": "2026-08-30T16:26:25.534Z",
       "lastDownloadedAt": "2026-08-25T09:34:20.281Z"
     },
     "1be4746a-8a78-4a60-8343-edab07b37508": {
@@ -40,5 +40,5 @@
       "lastDownloadedAt": "2026-08-30T10:55:31.997Z"
     }
   },
-  "lastUpdated": "2026-08-30T10:55:40.561Z"
+  "lastUpdated": "2026-08-30T16:28:52.432Z"
 }
