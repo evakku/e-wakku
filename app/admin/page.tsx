@@ -23,6 +23,7 @@ import {
 import { getAllIssuesAdmin } from "@/lib/queries/issue";
 import { getAnalyticsSummary } from "@/lib/analytics";
 import { getEnquiries } from "@/lib/queries/enquiries";
+import RecentEnquiries from "./RecentEnquiries";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -314,63 +315,7 @@ export default async function AdminDashboardPage() {
       )}
 
       {/* ── Enquiries Preview ─────────────────────────────────── */}
-      <div className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E8F0]">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-sky-50 text-sky-600">
-              <Mail size={18} />
-            </div>
-            <div>
-              <h3 className="font-heading text-base font-semibold text-[#0F172A]">
-                Recent Enquiries
-              </h3>
-              <p className="text-xs text-[#64748B] mt-0.5">
-                Latest messages from the public contact form.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/admin/enquiries"
-            className="text-xs font-semibold text-sky-600 hover:text-sky-700 flex items-center gap-1 transition-colors"
-          >
-            View All ({enquiries.length})
-            <ArrowRight size={14} />
-          </Link>
-        </div>
-
-        {recentEnquiries.length === 0 ? (
-          <div className="p-8 text-center flex flex-col items-center justify-center">
-            <Inbox size={32} className="text-[#CBD5E1] mb-2" />
-            <p className="text-sm font-medium text-[#0F172A]">No enquiries yet</p>
-            <p className="text-xs text-[#64748B] mt-1">
-              Messages from the Contact page will appear here.
-            </p>
-          </div>
-        ) : (
-          <div className="divide-y divide-[#E2E8F0]">
-            {recentEnquiries.map((enquiry) => (
-              <div key={enquiry.id} className="flex items-start gap-4 px-6 py-4 hover:bg-[#F8FAFC]/80 transition-colors">
-                <div className="flex size-9 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-semibold text-sm shrink-0">
-                  {enquiry.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium text-sm text-[#0F172A]">{enquiry.name}</span>
-                    <span className="text-xs text-[#94A3B8] shrink-0">{formatDate(enquiry.created_at)}</span>
-                  </div>
-                  <a
-                    href={`mailto:${enquiry.email}`}
-                    className="text-xs text-sky-600 hover:underline"
-                  >
-                    {enquiry.email}
-                  </a>
-                  <p className="mt-1 text-xs text-[#64748B] line-clamp-2 leading-relaxed">{enquiry.message}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <RecentEnquiries initialEnquiries={recentEnquiries} totalCount={enquiries.length} />
 
       {/* ── Recent Issues Table ───────────────────────────────── */}
       <div className="rounded-xl bg-white border border-[#E2E8F0] shadow-sm overflow-hidden">

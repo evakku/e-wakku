@@ -32,11 +32,22 @@ export async function submitContactForm(formData: {
   // SELECT) via RLS, since this is a public contact form with no login.
   const supabase = await createClient();
 
-  const { error } = await supabase.from("contact_messages").insert({
+  let { error } = await supabase.from("contact_messages").insert({
     name,
     email,
     message,
+    is_read: false,
   });
+
+  if (error && (error.code === "PGRST204" || error.code === "42703" || error.message?.includes("is_read"))) {
+    console.warn("is_read column not found in database, retrying insert without it");
+    const retryResult = await supabase.from("contact_messages").insert({
+      name,
+      email,
+      message,
+    });
+    error = retryResult.error;
+  }
 
   if (error) {
     console.error("Failed to save contact message:", error.message);

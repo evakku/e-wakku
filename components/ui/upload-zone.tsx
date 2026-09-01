@@ -105,6 +105,8 @@ export function UploadZone({
             <img
               src={URL.createObjectURL(file)}
               alt="Cover preview"
+              width={48}
+              height={48}
               className="h-12 w-12 flex-shrink-0 rounded object-cover"
             />
           ) : (

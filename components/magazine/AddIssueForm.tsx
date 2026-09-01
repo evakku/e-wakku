@@ -179,6 +179,8 @@ export function AddIssueForm() {
                   <img
                     src={coverPreview}
                     alt="Cover preview"
+                    width={80}
+                    height={112}
                     className="h-28 w-20 rounded object-cover shadow border border-slate-200"
                   />
                   <span className="text-xs font-medium text-[#0F172A] max-w-[180px] truncate">
