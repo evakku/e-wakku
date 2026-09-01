@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Mail, Trash2, Copy, Check, X, AlertTriangle } from "lucide-react";
-import { deleteEnquiry } from "@/app/actions/enquiry";
+import { Mail, Trash2, Copy, Check, X, AlertTriangle, Eye, EyeOff } from "lucide-react";
+import { deleteEnquiry, toggleEnquiryReadStatus } from "@/app/actions/enquiry";
 import type { ContactEnquiry } from "@/lib/queries/enquiries";
+import EnquiryDetailsModal from "./EnquiryDetailsModal";
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 
@@ -104,9 +105,13 @@ function DeleteModal({
 function EnquiryRow({
   enquiry,
   onDelete,
+  onRowClick,
+  onToggleRead,
 }: {
   enquiry: ContactEnquiry;
   onDelete: (id: string, name: string) => void;
+  onRowClick: () => void;
+  onToggleRead: (id: string, isRead: boolean) => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -122,14 +127,30 @@ function EnquiryRow({
   };
 
   return (
-    <tr className="hover:bg-[#F8FAFC]/80 transition-colors group">
+    <tr
+      onClick={onRowClick}
+      className={`hover:bg-[#F8FAFC]/80 transition-colors group cursor-pointer ${
+        !enquiry.is_read ? "bg-sky-50/20" : ""
+      }`}
+    >
       {/* Sender */}
       <td className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center gap-3">
-          <div className="flex size-9 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-semibold text-sm shrink-0">
-            {enquiry.name.charAt(0).toUpperCase()}
+          <div className="relative">
+            <div className="flex size-9 items-center justify-center rounded-full bg-sky-100 text-sky-700 font-semibold text-sm shrink-0">
+              {enquiry.name.charAt(0).toUpperCase()}
+            </div>
+            {!enquiry.is_read && (
+              <span className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full bg-sky-500 border-2 border-white animate-pulse" />
+            )}
           </div>
-          <span className="font-medium text-sm text-[#0F172A]">{enquiry.name}</span>
+          <span
+            className={`text-sm text-[#0F172A] ${
+              !enquiry.is_read ? "font-bold text-sky-950" : "font-medium"
+            }`}
+          >
+            {enquiry.name}
+          </span>
         </div>
       </td>
 
@@ -138,12 +159,16 @@ function EnquiryRow({
         <div className="flex items-center gap-2">
           <a
             href={`mailto:${enquiry.email}`}
+            onClick={(e) => e.stopPropagation()}
             className="text-xs text-sky-600 hover:text-sky-700 hover:underline"
           >
             {enquiry.email}
           </a>
           <button
-            onClick={copyEmail}
+            onClick={(e) => {
+              e.stopPropagation();
+              copyEmail();
+            }}
             title="Copy email"
             className="opacity-0 group-hover:opacity-100 transition-opacity text-[#94A3B8] hover:text-[#64748B]"
           >
@@ -156,17 +181,25 @@ function EnquiryRow({
       <td className="py-4 px-4 max-w-sm">
         <p
           className={[
-            "text-xs text-[#64748B] leading-relaxed cursor-pointer",
+            "text-xs leading-relaxed",
+            !enquiry.is_read ? "text-[#0F172A] font-semibold" : "text-[#64748B]",
             expanded ? "" : "line-clamp-2",
           ].join(" ")}
-          onClick={() => setExpanded((v) => !v)}
+          onClick={(e) => {
+            // Expand message locally without opening modal
+            e.stopPropagation();
+            setExpanded((v) => !v);
+          }}
           title={expanded ? "Click to collapse" : "Click to expand"}
         >
           {enquiry.message}
         </p>
         {enquiry.message.length > 120 && (
           <button
-            onClick={() => setExpanded((v) => !v)}
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded((v) => !v);
+            }}
             className="mt-0.5 text-[11px] text-sky-500 hover:text-sky-700 font-medium"
           >
             {expanded ? "Show less" : "Show more"}
@@ -177,7 +210,11 @@ function EnquiryRow({
       {/* Date */}
       <td className="py-4 px-4 whitespace-nowrap">
         <div className="flex flex-col">
-          <span className="text-xs text-[#0F172A] font-medium">
+          <span
+            className={`text-xs text-[#0F172A] ${
+              !enquiry.is_read ? "font-bold" : "font-medium"
+            }`}
+          >
             {formatDate(enquiry.created_at)}
           </span>
           <span className="text-[11px] text-[#94A3B8]">
@@ -189,9 +226,24 @@ function EnquiryRow({
       {/* Actions */}
       <td className="py-4 px-6 whitespace-nowrap">
         <div className="flex items-center justify-end gap-2">
+          {/* Mark read / unread toggle */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleRead(enquiry.id, !enquiry.is_read);
+            }}
+            title={enquiry.is_read ? "Mark as unread" : "Mark as read"}
+            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors"
+          >
+            {enquiry.is_read ? <EyeOff size={14} /> : <Eye size={14} />}
+          </button>
+
           {/* Delete */}
           <button
-            onClick={() => onDelete(enquiry.id, enquiry.name)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(enquiry.id, enquiry.name);
+            }}
             title="Delete enquiry"
             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors"
           >
@@ -213,6 +265,7 @@ export default function EnquiriesTable({
 }) {
   const [enquiries, setEnquiries] = useState(initialEnquiries);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
+  const [selectedEnquiry, setSelectedEnquiry] = useState<ContactEnquiry | null>(null);
   const [isPending, startTransition] = useTransition();
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
@@ -239,6 +292,50 @@ export default function EnquiriesTable({
       }
     });
   };
+
+  const handleDeleteFromModal = async (id: string, name: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      startTransition(async () => {
+        const result = await deleteEnquiry(id);
+        if (result.success) {
+          setEnquiries((prev) => prev.filter((e) => e.id !== id));
+          showToast(`Enquiry from ${name} deleted.`, "success");
+          resolve(true);
+        } else {
+          showToast(result.message ?? "Failed to delete.", "error");
+          resolve(false);
+        }
+      });
+    });
+  };
+
+  const handleToggleRead = async (id: string, isRead: boolean) => {
+    // Optimistic UI update
+    setEnquiries((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, is_read: isRead } : e))
+    );
+    if (selectedEnquiry && selectedEnquiry.id === id) {
+      setSelectedEnquiry((prev) => (prev ? { ...prev, is_read: isRead } : null));
+    }
+
+    const result = await toggleEnquiryReadStatus(id, isRead);
+    if (!result.success) {
+      // Revert status on failure
+      setEnquiries((prev) =>
+        prev.map((e) => (e.id === id ? { ...e, is_read: !isRead } : e))
+      );
+      if (selectedEnquiry && selectedEnquiry.id === id) {
+        setSelectedEnquiry((prev) => (prev ? { ...prev, is_read: !isRead } : null));
+      }
+      showToast(result.message ?? "Failed to update status.", "error");
+    }
+  };
+
+  const handleRowClick = (enquiry: ContactEnquiry) => {
+    setSelectedEnquiry(enquiry);
+  };
+
+  const unreadCount = enquiries.filter((e) => !e.is_read).length;
 
   return (
     <>
@@ -271,10 +368,27 @@ export default function EnquiriesTable({
         />
       )}
 
+      {/* ── Details Card Modal ──────────────────────────────────────── */}
+      <EnquiryDetailsModal
+        enquiry={selectedEnquiry}
+        isOpen={selectedEnquiry !== null}
+        onClose={() => setSelectedEnquiry(null)}
+        onToggleRead={handleToggleRead}
+        onDelete={handleDeleteFromModal}
+      />
+
       {/* ── Stats bar ─────────────────────────────────────────────── */}
-      <div className="flex items-center gap-2 text-xs text-[#64748B]">
-        <span className="font-semibold text-[#0F172A]">{enquiries.length}</span>
-        {enquiries.length === 1 ? "message" : "messages"}
+      <div className="flex items-center gap-4 text-xs text-[#64748B]">
+        <div className="flex items-center gap-1.5">
+          <span className="font-semibold text-[#0F172A]">{enquiries.length}</span>
+          {enquiries.length === 1 ? "message" : "messages"}
+        </div>
+        {unreadCount > 0 && (
+          <div className="flex items-center gap-1 text-sky-700 bg-sky-50 px-2 py-0.5 rounded-full border border-sky-100">
+            <span className="size-1.5 rounded-full bg-sky-500 animate-pulse" />
+            <span className="font-semibold">{unreadCount}</span> unread
+          </div>
+        )}
       </div>
 
       {/* ── Table ─────────────────────────────────────────────────── */}
@@ -314,6 +428,8 @@ export default function EnquiriesTable({
                     key={enquiry.id}
                     enquiry={enquiry}
                     onDelete={handleDeleteRequest}
+                    onRowClick={() => handleRowClick(enquiry)}
+                    onToggleRead={handleToggleRead}
                   />
                 ))}
               </tbody>
