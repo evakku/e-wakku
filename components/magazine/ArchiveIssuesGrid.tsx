@@ -110,7 +110,7 @@ export default function ArchiveIssuesGrid({
   return (
     <div ref={gridRef} className="scroll-mt-28 flex flex-col w-full">
       {/* Header Bar with Filter Tabs & Result Count */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-4 mb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-3 mb-3">
         {/* Dynamic Year Filter Tabs */}
         {availableYears.length > 1 && (
           <div
@@ -163,12 +163,17 @@ export default function ArchiveIssuesGrid({
             animate="visible"
             variants={staggerContainer}
             className={[
-              "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-10 transition-opacity duration-200",
+              "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-6 gap-y-8 sm:gap-y-8 justify-items-center sm:justify-items-stretch transition-opacity duration-200",
               isPageLoading ? "opacity-40" : "opacity-100",
             ].join(" ")}
           >
             {paginatedIssues.map((issue) => (
-              <IssueArchiveCard key={issue._id} issue={issue} from={issueSource} />
+              <IssueArchiveCard
+                key={issue._id}
+                issue={issue}
+                from={issueSource}
+                className="w-full max-w-[330px] sm:max-w-none mx-auto h-full"
+              />
             ))}
           </motion.div>
 
