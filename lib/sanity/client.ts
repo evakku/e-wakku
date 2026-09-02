@@ -108,7 +108,6 @@ const MOCK_NEWSLETTER_SETTINGS: NewsletterSettings = {
 const MOCK_ABOUT_PAGE: AboutPageData = {
   heroTitle: "A curation of modern thought and aesthetic living.",
   heroDescription: "The Journal was founded on the belief that amidst the noise of the digital age, there remains a profound need for quiet reflection, in-depth reporting, and visual restraint.\n\nWe publish stories that matter, presented in a space designed for focus.",
-  heroEyebrow: "EST. 2024",
   missionTitle: "Our Mission",
   missionDescription: "To document the intersection of culture, technology, and design through an editorial lens that values clarity over volume. We strive to provide our readers with a respite—a digital environment that feels as tactile and considered as premium print.\n\nEvery article, photograph, and layout is crafted to respect the reader's time and attention. We embrace minimalism not as an aesthetic trend, but as a functional necessity for deep reading.",
   missionImage: "/images/media__1780745927835.png",

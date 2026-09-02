@@ -58,11 +58,7 @@ export default function ContactPage() {
 
       <article className="flex flex-col w-full">
         {/* Section 1: Hero Section */}
-        <Section variant="hero" bg="white" className="py-12 sm:py-16 lg:py-20 relative">
-          <Link href="/" className="mb-6 hidden md:inline-flex items-center text-[#0F766E] hover:text-[#0D9488] transition-colors absolute top-15 left-50">
-            <ArrowLeft size={20} className="mr-2" />
-            <span className="text-sm font-medium">Back</span>
-          </Link>
+        <Section variant="hero" bg="white" className="py-12 sm:py-16 lg:py-12 relative">
           <Container size="lg">
             <ContactHero
               title={contactData.contactTitle}
