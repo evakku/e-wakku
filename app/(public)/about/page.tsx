@@ -64,7 +64,6 @@ export default async function AboutPage() {
         <Section variant="hero" bg="white" className="py-16 sm:py-24 lg:py-32">
           <Container size="lg">
             <AboutHero
-              eyebrow={aboutData.heroEyebrow}
               title={aboutData.heroTitle}
               description={aboutData.heroDescription}
             />

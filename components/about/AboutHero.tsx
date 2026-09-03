@@ -5,13 +5,11 @@ import type { Variants } from "framer-motion";
 import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
 
 interface AboutHeroProps {
-  eyebrow?: string;
   title: string;
   description: string;
 }
 
 export default function AboutHero({
-  eyebrow = "EST. 2024",
   title,
   description,
 }: AboutHeroProps) {
@@ -40,16 +38,11 @@ export default function AboutHero({
         animate="animate"
         className="flex flex-col items-center"
       >
-        {eyebrow && (
-          <LabelCaps className="text-muted-foreground/80 mb-6 tracking-[0.2em] font-medium block">
-            {eyebrow}
-          </LabelCaps>
-        )}
-        
+
         <DisplayXL as="h1" className="text-foreground tracking-tight font-heading mb-8 leading-[1.15] text-[clamp(2rem,6vw+0.5rem,3.75rem)]">
           {title}
         </DisplayXL>
-        
+
         {/* Paragraph splits by newlines to render editorial paragraph styling */}
         <div className="flex flex-col gap-6 text-muted-foreground font-sans leading-relaxed">
           {description.split("\n\n").map((para, index) => (
