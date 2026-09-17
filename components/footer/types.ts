@@ -28,6 +28,11 @@ export interface FooterProps {
    * etc.). Rendered between the brand name and copyright line when provided.
    */
   leftSlot?: ReactNode;
+  /**
+   * Optional slot for developer attribution/watermark.
+   * Rendered below the navigation links by default.
+   */
+  attribution?: ReactNode;
 }
 
 /**
@@ -50,4 +55,20 @@ export interface FooterLinksProps {
   links: FooterLink[];
   /** Optional extra content above the link list */
   children?: ReactNode;
+  /** Optional developer attribution watermark below the link list */
+  attribution?: ReactNode;
+}
+
+/**
+ * Props for the developer attribution watermark component.
+ */
+export interface FooterAttributionProps {
+  /** Lead-in text, defaults to "Developed by" */
+  label?: string;
+  /** Developer name, defaults to "HexaKode" */
+  developerName?: string;
+  /** Developer external URL, defaults to "https://hexakode.in" */
+  developerUrl?: string;
+  /** Optional CSS class extensions */
+  className?: string;
 }
