@@ -1,6 +1,7 @@
 "use client";
 
 import Footer from "@/components/footer/Footer";
+import type { ReactNode } from "react";
 
 /**
  * SiteFooter
@@ -18,12 +19,17 @@ const FOOTER_LINKS = [
 
 const CURRENT_YEAR = new Date().getFullYear();
 
-export default function SiteFooter() {
+interface SiteFooterProps {
+  attribution?: ReactNode;
+}
+
+export default function SiteFooter({ attribution }: SiteFooterProps = {}) {
   return (
     <Footer
       brandName="E-Wakku"
       copyrightText={`© ${CURRENT_YEAR} E-Wakku. All rights reserved.`}
       links={[...FOOTER_LINKS]}
+      attribution={attribution}
     />
   );
 }

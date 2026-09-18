@@ -41,9 +41,13 @@ const itemVariants = {
   },
 };
 
-export default function FooterLinks({ links, children }: FooterLinksProps) {
+export default function FooterLinks({
+  links,
+  children,
+  attribution,
+}: FooterLinksProps) {
   return (
-    <div className="flex flex-col items-start md:items-end gap-3">
+    <div className="flex flex-col items-start md:items-end gap-3 sm:gap-2.5">
       {/* Optional slot (social icons, newsletter CTA, etc.) */}
       {children}
 
@@ -77,6 +81,9 @@ export default function FooterLinks({ links, children }: FooterLinksProps) {
           ))}
         </ul>
       </motion.nav>
+
+      {/* Developer attribution signature */}
+      {attribution}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import FooterBrand from "./FooterBrand";
 import FooterLinks from "./FooterLinks";
+import FooterAttribution from "./FooterAttribution";
 import Container from "@/components/layout/Container";
 import type { FooterProps } from "./types";
 
@@ -17,7 +18,7 @@ import type { FooterProps } from "./types";
  *   Desktop / Tablet:
  *   ┌──────────────────────────────────────────────┐
  *   │ Brand Name               Links · Links · Links│
- *   │ © Copyright text                             │
+ *   │ © Copyright text         Developed by HexaKode│
  *   └──────────────────────────────────────────────┘
  *
  *   Mobile:
@@ -27,6 +28,9 @@ import type { FooterProps } from "./types";
  *   │                  │
  *   │ Links            │
  *   │ Links            │
+ *   │                  │
+ *   │ Developed by     │
+ *   │ HexaKode         │
  *   └──────────────────┘
  *
  * Usage:
@@ -48,6 +52,7 @@ import type { FooterProps } from "./types";
  * Future extensibility:
  * - `rightSlot` prop: render social icons, newsletter CTA, etc. above links
  * - `leftSlot` prop: render tagline, contact info, etc. below brand name
+ * - `attribution` prop: customize or disable developer signature
  */
 export default function Footer({
   brandName,
@@ -55,6 +60,7 @@ export default function Footer({
   links,
   rightSlot,
   leftSlot,
+  attribution = <FooterAttribution />,
 }: FooterProps) {
   return (
     <footer
@@ -89,8 +95,10 @@ export default function Footer({
           {leftSlot}
         </FooterBrand>
 
-        {/* ── RIGHT — Links (+ optional slot) ─────────────────── */}
-        <FooterLinks links={links}>{rightSlot}</FooterLinks>
+        {/* ── RIGHT — Links (+ optional slot & attribution) ──── */}
+        <FooterLinks links={links} attribution={attribution}>
+          {rightSlot}
+        </FooterLinks>
       </Container>
     </footer>
   );
