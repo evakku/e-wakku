@@ -7,23 +7,19 @@ import {
   Settings,
   ArrowRight,
   BookOpen,
-  Eye,
-  FileText,
   FileDown,
   ExternalLink,
   CheckCircle2,
   Clock,
   ImageOff,
   Users,
-  TrendingUp,
   Download,
-  Mail,
-  Inbox,
 } from "lucide-react";
 import { getAllIssuesAdmin } from "@/lib/queries/issue";
 import { getAnalyticsSummary } from "@/lib/analytics";
 import { getEnquiries } from "@/lib/queries/enquiries";
 import RecentEnquiries from "./RecentEnquiries";
+import RealtimeAnalyticsListener from "./RealtimeAnalyticsListener";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -82,7 +78,7 @@ function formatDate(dateStr: string | null): string {
 export default async function AdminDashboardPage() {
   const [issues, analytics, enquiries] = await Promise.all([
     getAllIssuesAdmin(),
-    Promise.resolve(getAnalyticsSummary()),
+    getAnalyticsSummary(),
     getEnquiries(),
   ]);
 
@@ -108,13 +104,16 @@ export default async function AdminDashboardPage() {
             Real-time status of publication catalog, reader engagement, and downloads.
           </p>
         </div>
-        <Link
-          href="/admin/issues/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-[#059669] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#047857] transition-all shadow-sm shrink-0"
-        >
-          <FilePlus size={16} />
-          New Issue
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <RealtimeAnalyticsListener />
+          <Link
+            href="/admin/issues/new"
+            className="inline-flex items-center gap-2 rounded-lg bg-[#059669] px-4 py-2.5 text-sm font-medium text-white hover:bg-[#047857] transition-all shadow-sm shrink-0"
+          >
+            <FilePlus size={16} />
+            New Issue
+          </Link>
+        </div>
       </div>
 
       {/* ── Live Metric Cards ───────────────────────────────────── */}

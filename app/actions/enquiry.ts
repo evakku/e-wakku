@@ -1,10 +1,14 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminAuth } from "@/lib/supabase/auth";
 
 export async function deleteEnquiry(id: string): Promise<{ success: boolean; message?: string }> {
-  const supabase = await createClient();
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { success: false, message: auth.error };
+  }
+  const supabase = auth.supabase;
 
   const { error } = await supabase
     .from("contact_messages")
@@ -25,7 +29,11 @@ export async function toggleEnquiryReadStatus(
   id: string,
   isRead: boolean
 ): Promise<{ success: boolean; message?: string }> {
-  const supabase = await createClient();
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { success: false, message: auth.error };
+  }
+  const supabase = auth.supabase;
 
   const { error } = await supabase
     .from("contact_messages")

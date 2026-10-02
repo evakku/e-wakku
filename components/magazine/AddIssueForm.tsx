@@ -32,8 +32,6 @@ const MONTHS = [
 ];
 
 const currentYear = new Date().getFullYear();
-const YEARS = Array.from({ length: 15 }, (_, i) => currentYear - 5 + i);
-
 const initialState: CreateIssueState = {};
 
 export function AddIssueForm() {
@@ -169,8 +167,8 @@ export function AddIssueForm() {
             </label>
             <div
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${coverImage
-                  ? "border-[#059669] bg-[#ECFDF5]/30"
-                  : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
+                ? "border-[#059669] bg-[#ECFDF5]/30"
+                : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
                 }`}
             >
               {coverPreview ? (
@@ -231,8 +229,8 @@ export function AddIssueForm() {
             </label>
             <div
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-4 transition-colors min-h-[190px] ${pdfFile
-                  ? "border-[#059669] bg-[#ECFDF5]/30"
-                  : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
+                ? "border-[#059669] bg-[#ECFDF5]/30"
+                : "border-[#CBD5E1] bg-white hover:border-[#94A3B8]"
                 }`}
             >
               {pdfFile ? (
@@ -343,18 +341,15 @@ export function AddIssueForm() {
             <label className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
               Publication Year <span className="text-red-500">*</span>
             </label>
-            <select
+            <input
+              type="number"
               name="year"
+              required
+              placeholder="eg: 2022"
               value={year}
               onChange={(e) => setYear(e.target.value)}
-              className="rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-sm text-[#0F172A] focus:border-[#059669] focus:outline-none focus:ring-1 focus:ring-[#059669]"
-            >
-              {YEARS.map((y) => (
-                <option key={y} value={String(y)}>
-                  {y}
-                </option>
-              ))}
-            </select>
+              className="w-full rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#059669] focus:outline-none focus:ring-1 focus:ring-[#059669]"
+            />
           </div>
         </div>
 
@@ -393,8 +388,8 @@ export function AddIssueForm() {
             type="submit"
             disabled={!canSubmit}
             className={`inline-flex items-center gap-2 rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-all ${canSubmit
-                ? "bg-[#059669] hover:bg-[#047857] shadow-sm hover:scale-[1.01]"
-                : "bg-slate-300 cursor-not-allowed opacity-70"
+              ? "bg-[#059669] hover:bg-[#047857] shadow-sm hover:scale-[1.01]"
+              : "bg-slate-300 cursor-not-allowed opacity-70"
               }`}
           >
             {isPending ? (

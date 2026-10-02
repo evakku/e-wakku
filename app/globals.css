@@ -101,7 +101,7 @@
     0 2px 4px rgba(25, 28, 30, 0.04);
 
 
-    /* ── Journal aliases (reuse existing tokens where possible) ─────── */
+  /* ── Journal aliases (reuse existing tokens where possible) ─────── */
   --color-surface: var(--background);
   --color-surface-lowest: var(--card);
   --color-surface-low: var(--muted);
@@ -180,7 +180,7 @@
   --sidebar-border: #C6C6CD;
   --sidebar-ring: #2B6954;
 
-/*new variables */
+  /*new variables */
   --surface-container: #eceef0;
   --surface-container-high: #e6e8ea;
   --surface-container-highest: #e0e3e5;
@@ -668,4 +668,3 @@
     padding-block: calc(var(--spacing) * 1) !important;
   }
 }
-

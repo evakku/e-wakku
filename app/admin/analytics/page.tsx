@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
-  BarChart3,
   TrendingUp,
   BookOpen,
   FileDown,
@@ -10,7 +9,6 @@ import {
   HardDrive,
   Calendar,
   Layers,
-  FileText,
   ExternalLink,
   ImageOff,
   Files,
@@ -22,6 +20,7 @@ import {
 } from "lucide-react";
 import { getAllIssuesAdmin } from "@/lib/queries/issue";
 import { getAnalyticsSummary } from "@/lib/analytics";
+import RealtimeAnalyticsListener from "../RealtimeAnalyticsListener";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -92,12 +91,11 @@ function formatDate(dateStr: string | null): string {
 export default async function AnalyticsPage() {
   const [issues, analytics] = await Promise.all([
     getAllIssuesAdmin(),
-    Promise.resolve(getAnalyticsSummary()),
+    getAnalyticsSummary(),
   ]);
 
   const totalIssues = issues.length;
   const publishedIssues = issues.filter((i) => !i.is_draft);
-  const draftIssues = issues.filter((i) => i.is_draft);
   const pdfAttachedCount = issues.filter((i) => Boolean(i.pdf_url)).length;
   const coverAttachedCount = issues.filter((i) => Boolean(i.cover_image_url)).length;
 
@@ -156,13 +154,16 @@ export default async function AnalyticsPage() {
           </p>
         </div>
 
-        <Link
-          href="/admin/issues/manage"
-          className="inline-flex items-center gap-2 rounded-lg bg-white border border-[#E2E8F0] px-4 py-2 text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all shadow-sm"
-        >
-          <Files size={14} className="text-[#059669]" />
-          Manage Issues
-        </Link>
+        <div className="flex items-center gap-3 shrink-0">
+          <RealtimeAnalyticsListener />
+          <Link
+            href="/admin/issues/manage"
+            className="inline-flex items-center gap-2 rounded-lg bg-white border border-[#E2E8F0] px-4 py-2 text-xs font-semibold text-[#0F172A] hover:bg-[#F8FAFC] transition-all shadow-sm"
+          >
+            <Files size={14} className="text-[#059669]" />
+            Manage Issues
+          </Link>
+        </div>
       </div>
 
       {/* ── Key Performance Metrics (6 Cards) ──────────────────── */}
@@ -575,9 +576,8 @@ export default async function AnalyticsPage() {
                 <span className="text-xs font-semibold text-[#0F172A]">{count}</span>
                 <div className="w-full bg-slate-100 rounded-md h-24 flex items-end p-1">
                   <div
-                    className={`w-full rounded transition-all duration-500 ${
-                      count > 0 ? "bg-[#059669]" : "bg-slate-200"
-                    }`}
+                    className={`w-full rounded transition-all duration-500 ${count > 0 ? "bg-[#059669]" : "bg-slate-200"
+                      }`}
                     style={{ height: `${heightPercent}%` }}
                     title={`${m.name}: ${count} issues`}
                   />
