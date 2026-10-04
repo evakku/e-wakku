@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminAuth } from "@/lib/supabase/auth";
 
 const issueSchema = z.object({
   title: z.string().min(1, "Title is required."),
@@ -21,13 +21,19 @@ export type CreateIssueState = {
  * createIssue
  *
  * Server Action called from the Add Issue form.
- * Validates fields, uploads the cover image + PDF to Supabase Storage,
- * then inserts the issue row. Rolls back uploaded files if any step fails.
+ * Validates admin authorization, validates fields, uploads the cover image + PDF
+ * to Supabase Storage, then inserts the issue row. Rolls back uploaded files if any step fails.
  */
 export async function createIssue(
   prevState: CreateIssueState,
   formData: FormData
 ): Promise<CreateIssueState> {
+  // 1. Enforce Server Action authorization independently
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { error: auth.error };
+  }
+  const supabase = auth.supabase;
   const parsed = issueSchema.safeParse({
     title: formData.get("title"),
     description: formData.get("description"),
@@ -63,8 +69,6 @@ export async function createIssue(
   if (!isPdf) {
     return { error: "File must be a .pdf." };
   }
-
-  const supabase = await createClient();
 
   const coverPath = `${crypto.randomUUID()}-${coverImage.name}`;
   const pdfPath = `${crypto.randomUUID()}-${pdfFile.name}`;

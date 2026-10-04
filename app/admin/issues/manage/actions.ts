@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { createClient } from "@/lib/supabase/server";
+import { requireAdminAuth } from "@/lib/supabase/auth";
 
 export type Issue = {
   id: string;
@@ -41,7 +41,11 @@ export async function getIssues(
   search = "",
   statusFilter: "all" | "published" | "draft" = "all"
 ): Promise<{ issues: Issue[]; total: number; error?: string }> {
-  const supabase = await createClient();
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { issues: [], total: 0, error: auth.error };
+  }
+  const supabase = auth.supabase;
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
@@ -76,7 +80,11 @@ export async function toggleDraftStatus(
   id: string,
   currentDraft: boolean
 ): Promise<ActionResult> {
-  const supabase = await createClient();
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { error: auth.error };
+  }
+  const supabase = auth.supabase;
   const newDraft = !currentDraft;
 
   const { error } = await supabase
@@ -107,7 +115,11 @@ export async function toggleDraftStatus(
 // ─── Delete an issue (+ clean up Supabase Storage) ───────────────────────────
 
 export async function deleteIssue(id: string): Promise<ActionResult> {
-  const supabase = await createClient();
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { error: auth.error };
+  }
+  const supabase = auth.supabase;
 
   // 1. Fetch to get storage file URLs
   const { data: issue, error: fetchErr } = await supabase
@@ -171,6 +183,12 @@ export async function updateIssue(
   prevState: UpdateIssueState,
   formData: FormData
 ): Promise<UpdateIssueState> {
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { error: auth.error };
+  }
+  const supabase = auth.supabase;
+
   const id = formData.get("id") as string;
   if (!id) return { error: "Missing issue ID." };
 
@@ -185,8 +203,6 @@ export async function updateIssue(
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
   }
-
-  const supabase = await createClient();
 
   // Fetch current issue row for storage file comparisons
   const { data: currentIssue, error: currentErr } = await supabase
