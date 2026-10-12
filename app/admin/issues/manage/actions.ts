@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { removeIssueAnalytics } from "@/lib/analytics";
 
 export type Issue = {
   id: string;
@@ -130,7 +131,10 @@ export async function deleteIssue(id: string): Promise<ActionResult> {
     return { error: deleteErr.message };
   }
 
-  // 3. Remove files from Supabase Storage buckets (best-effort)
+  // 3. Remove issue entry from analytics (totals are preserved)
+  removeIssueAnalytics(id);
+
+  // 4. Remove files from Supabase Storage buckets (best-effort)
   if (issue?.cover_image_url) {
     const coverPath = extractStoragePath(issue.cover_image_url, "covers");
     if (coverPath) {

@@ -23,48 +23,12 @@ const ANALYTICS_FILE = path.join(DATA_DIR, "analytics.json");
 
 // Default initial state
 const DEFAULT_ANALYTICS: AnalyticsData = {
-  totalReaders: 1420,
-  activeReaders: 384,
-  totalViews: 4890,
-  totalDownloads: 1245,
-  perIssue: {
-    "ac9eba56-8f9a-4af3-a659-91016f78c6f5": {
-      views: 1250,
-      readers: 410,
-      downloads: 380,
-      lastViewedAt: "2026-08-25T08:30:00Z",
-      lastDownloadedAt: "2026-08-25T07:15:00Z",
-    },
-    "c6b21c7d-1974-4952-bfda-a58edd0f4846": {
-      views: 980,
-      readers: 310,
-      downloads: 245,
-      lastViewedAt: "2026-08-24T18:20:00Z",
-      lastDownloadedAt: "2026-08-24T15:40:00Z",
-    },
-    "1c75dda5-93d4-4783-a52a-92ae1b60bfe6": {
-      views: 860,
-      readers: 260,
-      downloads: 210,
-      lastViewedAt: "2026-08-24T21:10:00Z",
-      lastDownloadedAt: "2026-08-23T19:05:00Z",
-    },
-    "67cb3136-4910-4ca6-9811-0bb031b72bad": {
-      views: 1120,
-      readers: 340,
-      downloads: 290,
-      lastViewedAt: "2026-08-25T04:50:00Z",
-      lastDownloadedAt: "2026-08-24T12:30:00Z",
-    },
-    "1be4746a-8a78-4a60-8343-edab07b37508": {
-      views: 680,
-      readers: 220,
-      downloads: 120,
-      lastViewedAt: "2026-08-25T06:10:00Z",
-      lastDownloadedAt: "2026-08-25T05:40:00Z",
-    },
-  },
-  lastUpdated: new Date().toISOString(),
+  totalReaders: 0,
+  activeReaders: 0,
+  totalViews: 0,
+  totalDownloads: 0,
+  perIssue: {},
+  lastUpdated: "",
 };
 
 function readAnalyticsFromFile(): AnalyticsData {
@@ -142,4 +106,18 @@ export function trackAnalyticsEvent(
   data.lastUpdated = now;
   writeAnalyticsToFile(data);
   return data;
+}
+
+/**
+ * Removes a single issue's entry from perIssue when it is deleted.
+ * Global totals (totalViews, totalDownloads, totalReaders, activeReaders)
+ * are intentionally left unchanged.
+ */
+export function removeIssueAnalytics(issueId: string): void {
+  const data = readAnalyticsFromFile();
+  if (data.perIssue[issueId]) {
+    delete data.perIssue[issueId];
+    data.lastUpdated = new Date().toISOString();
+    writeAnalyticsToFile(data);
+  }
 }
