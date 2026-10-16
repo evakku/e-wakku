@@ -6,8 +6,8 @@ import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { fadeUpVariants } from "@/lib/animations";
-import { getImageUrl } from "@/lib/sanity/client";
-import { isSupabaseStorageUrl } from "@/lib/supabase-image";
+import { getImageUrl } from "@/lib/utils/image";
+
 import type { Issue } from "./types";
 
 interface IssueArchiveCardProps {
@@ -60,7 +60,7 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
               src={imageUrl}
               alt={`Cover of ${issue.title}`}
               fill
-              unoptimized={isSupabaseStorageUrl(imageUrl)}
+
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
               className="object-contain object-center p-2 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             />

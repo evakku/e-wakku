@@ -7,8 +7,8 @@ import { motion, useReducedMotion } from "framer-motion";
 import { Download, BookOpen, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
-import { getImageUrl } from "@/lib/sanity/client";
-import { isSupabaseStorageUrl } from "@/lib/supabase-image";
+import { getImageUrl } from "@/lib/utils/image";
+
 import { fadeUpVariants, staggerContainer } from "@/lib/animations";
 import type { Issue } from "./types";
 
@@ -140,7 +140,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
                 alt={`Cover of ${issue.title}`}
                 fill
                 priority
-                unoptimized={isSupabaseStorageUrl(imageUrl)}
+
                 sizes="(max-width: 768px) 290px, 320px"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               />

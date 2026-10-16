@@ -109,6 +109,17 @@ export async function trackAnalyticsEvent(
   try {
     const supabase = await createClient();
 
+    // Attempt atomic multi-table mutation via PostgreSQL stored procedure (DB-03)
+    const { error: rpcError } = await supabase.rpc("track_analytics_event", {
+      p_event_type: type,
+      p_issue_id: validIssueId,
+    });
+
+    if (!rpcError) {
+      return await getAnalyticsSummary();
+    }
+
+    // Fallback path if stored procedure is not yet applied
     // 1. Record granular event in analytics_events table
     try {
       await supabase.from("analytics_events").insert({
@@ -199,5 +210,19 @@ export async function trackAnalyticsEvent(
   } catch (err) {
     console.error("Error in trackAnalyticsEvent:", err);
     return getAnalyticsSummary();
+  }
+}
+
+/**
+ * Removes a single issue's entry from issue_analytics when it is deleted.
+ * Global totals (totalViews, totalDownloads, totalReaders, activeReaders)
+ * are intentionally left unchanged.
+ */
+export async function removeIssueAnalytics(issueId: string): Promise<void> {
+  try {
+    const supabase = await createClient();
+    await supabase.from("issue_analytics").delete().eq("issue_id", issueId);
+  } catch (err) {
+    console.warn("Could not remove issue analytics for:", issueId, err);
   }
 }

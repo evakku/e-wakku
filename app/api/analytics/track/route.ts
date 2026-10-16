@@ -10,8 +10,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid event type" }, { status: 400 });
     }
 
-    const updated = await trackAnalyticsEvent(type, issueId);
-    return NextResponse.json({ success: true, data: updated });
+    await trackAnalyticsEvent(type, issueId);
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error logging analytics event:", error);
     return NextResponse.json({ error: "Failed to record event" }, { status: 500 });

@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { isSupabaseStorageUrl } from "@/lib/supabase-image";
 
 interface IssueCoverProps {
   title: string;
@@ -45,7 +44,6 @@ export default function IssueCover({ title, coverImage }: IssueCoverProps) {
                 alt={`Cover art of the issue: ${title}`}
                 fill
                 priority
-                unoptimized={isSupabaseStorageUrl(coverImage)}
                 sizes="(max-width: 768px) 290px, 320px"
                 className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
               />

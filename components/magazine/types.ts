@@ -1,8 +1,9 @@
 export interface SanityImageReference {
-  _type: 'image';
-  asset: {
-    _ref: string;
-    _type: 'reference';
+  _type?: string;
+  asset?: {
+    _ref?: string;
+    _type?: string;
+    url?: string;
   };
 }
 

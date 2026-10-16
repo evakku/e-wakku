@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { BodyMd, LabelCaps } from "@/src/components/ui/typography";
-import { getImageUrl } from "@/lib/sanity/client";
+import { getImageUrl } from "@/lib/utils/image";
 import type { EditorialMember } from "./types";
 
 interface TeamMemberCardProps {

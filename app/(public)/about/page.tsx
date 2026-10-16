@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
 import { AboutHero, MissionSection } from "@/components/about";
-import { getAboutPage, getImageUrl } from "@/lib/sanity/client";
+import { getAboutPage } from "@/lib/queries/about";
+import { getImageUrl } from "@/lib/utils/image";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;

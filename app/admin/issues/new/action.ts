@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminAuth } from "@/lib/supabase/auth";
+import { validateCoverImageFile, validatePdfDocumentFile } from "@/lib/validation/file-upload";
 
 const issueSchema = z.object({
   title: z.string().min(1, "Title is required."),
@@ -49,25 +50,14 @@ export async function createIssue(
   const coverImage = formData.get("coverImage") as File | null;
   const pdfFile = formData.get("pdfFile") as File | null;
 
-  if (!coverImage || coverImage.size === 0) {
-    return { error: "Cover image is required." };
+  const coverValidation = await validateCoverImageFile(coverImage);
+  if (!coverValidation.valid || !coverImage) {
+    return { error: coverValidation.error || "Invalid cover image." };
   }
-  const isPng =
-    coverImage.type === "image/png" ||
-    coverImage.type === "image/x-png" ||
-    coverImage.name.toLowerCase().endsWith(".png");
-  if (!isPng) {
-    return { error: "Cover image must be a .png file." };
-  }
-  if (!pdfFile || pdfFile.size === 0) {
-    return { error: "PDF file is required." };
-  }
-  const isPdf =
-    pdfFile.type === "application/pdf" ||
-    pdfFile.type === "application/x-pdf" ||
-    pdfFile.name.toLowerCase().endsWith(".pdf");
-  if (!isPdf) {
-    return { error: "File must be a .pdf." };
+
+  const pdfValidation = await validatePdfDocumentFile(pdfFile);
+  if (!pdfValidation.valid || !pdfFile) {
+    return { error: pdfValidation.error || "Invalid PDF file." };
   }
 
   const coverPath = `${crypto.randomUUID()}-${coverImage.name}`;

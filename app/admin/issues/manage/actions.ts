@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminAuth } from "@/lib/supabase/auth";
+import { removeIssueAnalytics } from "@/lib/analytics";
+import { validateCoverImageFile, validatePdfDocumentFile } from "@/lib/validation/file-upload";
 
 export type Issue = {
   id: string;
@@ -142,7 +144,10 @@ export async function deleteIssue(id: string): Promise<ActionResult> {
     return { error: deleteErr.message };
   }
 
-  // 3. Remove files from Supabase Storage buckets (best-effort)
+  // 3. Remove issue entry from analytics (totals are preserved)
+  await removeIssueAnalytics(id);
+
+  // 4. Remove files from Supabase Storage buckets (best-effort)
   if (issue?.cover_image_url) {
     const coverPath = extractStoragePath(issue.cover_image_url, "covers");
     if (coverPath) {
@@ -215,7 +220,7 @@ export async function updateIssue(
     return { error: "Issue not found." };
   }
 
-  const updates: Record<string, any> = {
+  const updates: Record<string, unknown> = {
     title: parsed.data.title,
     description: parsed.data.description,
     month: parsed.data.month,
@@ -233,8 +238,9 @@ export async function updateIssue(
   // Handle optional new cover image
   const coverImage = formData.get("coverImage") as File | null;
   if (coverImage && coverImage.size > 0) {
-    if (coverImage.type !== "image/png") {
-      return { error: "Cover image must be a .png file." };
+    const coverValidation = await validateCoverImageFile(coverImage);
+    if (!coverValidation.valid) {
+      return { error: coverValidation.error || "Invalid cover image." };
     }
     const coverPath = `${crypto.randomUUID()}-${coverImage.name}`;
     const { error: coverErr } = await supabase.storage
@@ -260,8 +266,9 @@ export async function updateIssue(
   // Handle optional new PDF file
   const pdfFile = formData.get("pdfFile") as File | null;
   if (pdfFile && pdfFile.size > 0) {
-    if (pdfFile.type !== "application/pdf") {
-      return { error: "PDF file must be a .pdf document." };
+    const pdfValidation = await validatePdfDocumentFile(pdfFile);
+    if (!pdfValidation.valid) {
+      return { error: pdfValidation.error || "Invalid PDF file." };
     }
     const pdfPath = `${crypto.randomUUID()}-${pdfFile.name}`;
     const { error: pdfErr } = await supabase.storage
