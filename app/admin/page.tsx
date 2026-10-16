@@ -15,7 +15,7 @@ import {
   Users,
   Download,
 } from "lucide-react";
-import { getAllIssuesAdmin } from "@/lib/queries/issue";
+import { getAllIssuesAdmin, getIssueStatsAdmin } from "@/lib/queries/issue";
 import { getAnalyticsSummary } from "@/lib/analytics";
 import { getEnquiries } from "@/lib/queries/enquiries";
 import RecentEnquiries from "./RecentEnquiries";
@@ -76,19 +76,19 @@ function formatDate(dateStr: string | null): string {
  * Admin Dashboard — /admin
  */
 export default async function AdminDashboardPage() {
-  const [issues, analytics, enquiries] = await Promise.all([
-    getAllIssuesAdmin(),
+  const [stats, recentIssues, analytics, enquiries] = await Promise.all([
+    getIssueStatsAdmin(),
+    getAllIssuesAdmin(5),
     getAnalyticsSummary(),
     getEnquiries(),
   ]);
 
-  const totalIssues = issues.length;
-  const publishedIssues = issues.filter((i) => !i.is_draft);
-  const draftIssues = issues.filter((i) => i.is_draft);
-  const pdfCount = issues.filter((i) => Boolean(i.pdf_url)).length;
+  const totalIssues = stats.total;
+  const publishedCount = stats.published;
+  const draftCount = stats.draft;
+  const pdfCount = stats.withPdf;
 
-  const recentIssues = issues.slice(0, 5);
-  const latestPublished = publishedIssues[0] ?? null;
+  const latestPublished = recentIssues.find((i) => !i.is_draft) ?? null;
   const latestStats = latestPublished ? analytics.perIssue[latestPublished.id] : null;
   const recentEnquiries = enquiries.slice(0, 2);
 
@@ -149,11 +149,11 @@ export default async function AdminDashboardPage() {
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <p className="font-heading text-2xl font-bold text-[#0F172A]">
-                {publishedIssues.length}
+                {publishedCount}
               </p>
               {totalIssues > 0 && (
                 <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
-                  {Math.round((publishedIssues.length / totalIssues) * 100)}%
+                  {Math.round((publishedCount / totalIssues) * 100)}%
                 </span>
               )}
             </div>
@@ -174,9 +174,9 @@ export default async function AdminDashboardPage() {
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <p className="font-heading text-2xl font-bold text-[#0F172A]">
-                {draftIssues.length}
+                {draftCount}
               </p>
-              {draftIssues.length > 0 && (
+              {draftCount > 0 && (
                 <span className="text-xs font-medium text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded-full">
                   In queue
                 </span>

@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { contactSchema } from "@/validation/contactSchema";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export type SubmitContactState = {
   success: boolean;
@@ -13,7 +15,25 @@ export async function submitContactForm(formData: {
   name: string;
   email: string;
   message: string;
+  website?: string;
 }): Promise<SubmitContactState> {
+  // Honeypot check: If the hidden honeypot input is populated, silently drop without erroring
+  if (formData.website && formData.website.trim().length > 0) {
+    return { success: true };
+  }
+
+  // Rate limiting check: Cap contact submissions to 5 per 10 minutes per IP
+  const headersList = await headers();
+  const clientIp = getClientIp(headersList);
+  const rateLimit = checkRateLimit(`contact:${clientIp}`, 5, 10 * 60 * 1000);
+
+  if (!rateLimit.success) {
+    return {
+      success: false,
+      message: "Too many messages sent. Please wait a few minutes before trying again.",
+    };
+  }
+
   // 1. Server-side validation using Zod
   const result = contactSchema.safeParse(formData);
 

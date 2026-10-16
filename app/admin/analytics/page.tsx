@@ -18,7 +18,7 @@ import {
   Eye,
   Award,
 } from "lucide-react";
-import { getAllIssuesAdmin } from "@/lib/queries/issue";
+import { getAllIssuesAdmin, getIssueStatsAdmin } from "@/lib/queries/issue";
 import { getAnalyticsSummary } from "@/lib/analytics";
 import RealtimeAnalyticsListener from "../RealtimeAnalyticsListener";
 
@@ -89,17 +89,18 @@ function formatDate(dateStr: string | null): string {
 }
 
 export default async function AnalyticsPage() {
-  const [issues, analytics] = await Promise.all([
-    getAllIssuesAdmin(),
+  const [stats, issues, analytics] = await Promise.all([
+    getIssueStatsAdmin(),
+    getAllIssuesAdmin(50),
     getAnalyticsSummary(),
   ]);
 
-  const totalIssues = issues.length;
-  const publishedIssues = issues.filter((i) => !i.is_draft);
-  const pdfAttachedCount = issues.filter((i) => Boolean(i.pdf_url)).length;
-  const coverAttachedCount = issues.filter((i) => Boolean(i.cover_image_url)).length;
+  const totalIssues = stats.total;
+  const publishedCount = stats.published;
+  const pdfAttachedCount = stats.withPdf;
+  const coverAttachedCount = stats.withCover;
 
-  const publicationRate = totalIssues > 0 ? Math.round((publishedIssues.length / totalIssues) * 100) : 0;
+  const publicationRate = totalIssues > 0 ? Math.round((publishedCount / totalIssues) * 100) : 0;
   const pdfCoverageRate = totalIssues > 0 ? Math.round((pdfAttachedCount / totalIssues) * 100) : 0;
   const coverCoverageRate = totalIssues > 0 ? Math.round((coverAttachedCount / totalIssues) * 100) : 0;
 
@@ -260,7 +261,7 @@ export default async function AnalyticsPage() {
           <div className="mt-3">
             <div className="flex items-baseline gap-2">
               <span className="font-heading text-2xl font-bold text-[#0F172A]">
-                {publishedIssues.length}
+                {publishedCount}
               </span>
               <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full">
                 {publicationRate}%

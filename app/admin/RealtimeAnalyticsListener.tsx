@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -16,18 +16,35 @@ export default function RealtimeAnalyticsListener({
   const [isPending, startTransition] = useTransition();
   const [isConnected, setIsConnected] = useState(false);
   const [lastSynced, setLastSynced] = useState<Date>(new Date());
+  const refreshTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleManualRefresh = () => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
     startTransition(() => {
       router.refresh();
       setLastSynced(new Date());
     });
   };
 
+  const debouncedRefresh = () => {
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+    }
+    refreshTimerRef.current = setTimeout(() => {
+      startTransition(() => {
+        router.refresh();
+        setLastSynced(new Date());
+      });
+    }, 3000);
+  };
+
   useEffect(() => {
     const supabase = createClient();
 
-    // Subscribe to changes across analytics tables
+    // Subscribe to changes across analytics tables with 3-second debouncing to prevent thrashing
     const channel = supabase
       .channel("admin-realtime-analytics")
       .on(
@@ -37,12 +54,7 @@ export default function RealtimeAnalyticsListener({
           schema: "public",
           table: "analytics_summary",
         },
-        () => {
-          startTransition(() => {
-            router.refresh();
-            setLastSynced(new Date());
-          });
-        }
+        debouncedRefresh
       )
       .on(
         "postgres_changes",
@@ -51,12 +63,7 @@ export default function RealtimeAnalyticsListener({
           schema: "public",
           table: "issue_analytics",
         },
-        () => {
-          startTransition(() => {
-            router.refresh();
-            setLastSynced(new Date());
-          });
-        }
+        debouncedRefresh
       )
       .on(
         "postgres_changes",
@@ -65,12 +72,7 @@ export default function RealtimeAnalyticsListener({
           schema: "public",
           table: "analytics_events",
         },
-        () => {
-          startTransition(() => {
-            router.refresh();
-            setLastSynced(new Date());
-          });
-        }
+        debouncedRefresh
       )
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -81,6 +83,9 @@ export default function RealtimeAnalyticsListener({
       });
 
     return () => {
+      if (refreshTimerRef.current) {
+        clearTimeout(refreshTimerRef.current);
+      }
       supabase.removeChannel(channel);
     };
   }, [router]);

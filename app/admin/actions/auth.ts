@@ -1,5 +1,6 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -64,7 +65,19 @@ export async function loginAdmin(
  * Note: redirect() throws internally, so no return is needed after it.
  */
 export async function logoutAdmin() {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
+  const cookieStore = await cookies();
+  try {
+    const supabase = await createClient();
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error("Supabase signOut error:", error);
+  } finally {
+    const allCookies = cookieStore.getAll();
+    for (const cookie of allCookies) {
+      if (cookie.name.startsWith("sb-") || cookie.name.includes("auth-token")) {
+        cookieStore.delete(cookie.name);
+      }
+    }
+  }
   redirect("/admin/login");
 }

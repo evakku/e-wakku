@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
+    "test:e2e": "playwright test",
     "reset:analytics": "node scripts/reset-analytics.js"
   },
   "dependencies": {
@@ -30,7 +31,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
-    "@types/node": "^20",
+    "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",
@@ -38,6 +39,10 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^5.4.11",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "@playwright/test": "^1.49.1"
+  },
+  "engines": {
+    "node": ">=20.0.0"
   }
 }

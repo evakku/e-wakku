@@ -183,4 +183,37 @@ export async function getAllIssuesAdmin(
   return data ?? [];
 }
 
+export interface IssueStatsAdmin {
+  total: number;
+  published: number;
+  draft: number;
+  withPdf: number;
+  withCover: number;
+}
+
+/**
+ * getIssueStatsAdmin
+ * Uses SQL COUNT(*) aggregations (head: true) to fetch total, published, draft,
+ * and PDF counts without loading entire entity rows into Node.js server memory.
+ */
+export async function getIssueStatsAdmin(): Promise<IssueStatsAdmin> {
+  const supabase = await createClient();
+
+  const [totalRes, publishedRes, draftRes, pdfRes, coverRes] = await Promise.all([
+    supabase.from("issues").select("id", { count: "exact", head: true }),
+    supabase.from("issues").select("id", { count: "exact", head: true }).eq("is_draft", false),
+    supabase.from("issues").select("id", { count: "exact", head: true }).eq("is_draft", true),
+    supabase.from("issues").select("id", { count: "exact", head: true }).not("pdf_url", "is", null),
+    supabase.from("issues").select("id", { count: "exact", head: true }).not("cover_image_url", "is", null),
+  ]);
+
+  return {
+    total: totalRes.count ?? 0,
+    published: publishedRes.count ?? 0,
+    draft: draftRes.count ?? 0,
+    withPdf: pdfRes.count ?? 0,
+    withCover: coverRes.count ?? 0,
+  };
+}
+
 export { getNewsletterSettings } from "./newsletter";

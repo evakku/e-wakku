@@ -24,18 +24,25 @@ function loadEnvFile(fileName) {
 loadEnvFile(".env.local");
 loadEnvFile(".env");
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error("❌ Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY in environment or .env.local.");
+if (!SUPABASE_URL || !SUPABASE_KEY) {
+  console.error("❌ Missing Supabase credentials in environment or .env.local.");
+  console.error("   Please ensure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are set.");
   process.exit(1);
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+  console.warn("⚠️  Warning: SUPABASE_SERVICE_ROLE_KEY is not defined.");
+  console.warn("   Using NEXT_PUBLIC_SUPABASE_ANON_KEY. Note: Under secured RLS policies, anon role may receive HTTP 401/403.");
+  console.warn("   Add SUPABASE_SERVICE_ROLE_KEY to .env.local for authorized reset operations.\n");
 }
 
 const headers = {
   "Content-Type": "application/json",
-  "apikey": SUPABASE_ANON_KEY,
-  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+  "apikey": SUPABASE_KEY,
+  "Authorization": `Bearer ${SUPABASE_KEY}`,
   "Prefer": "return=representation",
 };
 
