@@ -29,6 +29,7 @@ export default function ContactForm() {
       name: "",
       email: "",
       message: "",
+      website: "",
     },
   });
 
@@ -103,6 +104,18 @@ export default function ContactForm() {
               exit="initial"
             >
               <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6" noValidate>
+                {/* Honeypot field for bot protection */}
+                <div className="hidden" aria-hidden="true" style={{ display: "none" }}>
+                  <label htmlFor="contact-website-hp">Website</label>
+                  <input
+                    id="contact-website-hp"
+                    type="text"
+                    tabIndex={-1}
+                    autoComplete="off"
+                    {...register("website")}
+                  />
+                </div>
+
                 {/* Submit-level error banner */}
                 {submitError && (
                   <div className="flex items-start gap-3 bg-destructive/5 border border-destructive/10 text-destructive text-sm rounded-lg p-4 font-medium">

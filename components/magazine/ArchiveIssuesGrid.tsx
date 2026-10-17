@@ -2,17 +2,25 @@
 
 import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Inbox } from "lucide-react";
+import { ChevronLeft, ChevronRight, Inbox, ArrowRight } from "lucide-react";
 import { staggerContainer } from "@/lib/animations";
 import IssueArchiveCard from "./IssueArchiveCard";
 import type { Issue } from "./types";
 
 const ITEMS_PER_PAGE = 8;
 
-interface ArchiveIssuesGridProps {
+export interface ArchiveIssuesGridProps {
   issues: Issue[];
   issueSource?: "home" | "archive";
+  title?: string;
+  showViewAll?: boolean;
+  viewAllHref?: string;
+  viewAllLabel?: string;
+  viewAllPlacement?: "header" | "footer";
+  enableFilters?: boolean;
+  enablePagination?: boolean;
 }
 
 function getIssueYear(issue: Issue): string | null {
@@ -31,6 +39,13 @@ function getIssueYear(issue: Issue): string | null {
 export default function ArchiveIssuesGrid({
   issues,
   issueSource = "archive",
+  title = "ISSUES",
+  showViewAll = false,
+  viewAllHref = "/allIssues",
+  viewAllLabel = "All Issues",
+  viewAllPlacement = "header",
+  enableFilters = !showViewAll,
+  enablePagination = !showViewAll,
 }: ArchiveIssuesGridProps) {
   const searchParams = useSearchParams();
   const query = (searchParams?.get("q") ?? "").trim().toLowerCase();
@@ -91,19 +106,51 @@ export default function ArchiveIssuesGrid({
     window.setTimeout(() => setIsPageLoading(false), 250);
   };
 
-  if (issues.length === 0) {
+  if (showViewAll) {
+    const displayedIssues = issues.slice(0, 3);
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-border/40 bg-card/30 px-6 py-24 text-center max-w-xl mx-auto">
-        <div className="mb-6 flex size-12 items-center justify-center rounded-full bg-secondary text-muted-foreground">
-          <Inbox className="size-6 stroke-[1.5]" />
+      <section
+        ref={gridRef}
+        className="scroll-mt-28 flex flex-col w-full items-center"
+        aria-labelledby="archive-title"
+      >
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-4 mb-8 sm:mb-10 w-full max-w-[1140px] mx-auto">
+          <h2
+            id="archive-title"
+            className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-[#0F172A]"
+          >
+            {title}
+          </h2>
+          <Link
+            href={viewAllHref}
+            className="text-xs sm:text-sm font-semibold text-[#059669] hover:text-[#047857] transition-colors flex items-center gap-1.5 group focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:outline-none rounded cursor-pointer"
+          >
+            <span>{viewAllLabel}</span>
+            <ArrowRight
+              className="size-4 transition-transform duration-200 group-hover:translate-x-1"
+              aria-hidden="true"
+            />
+          </Link>
         </div>
-        <h3 className="mb-2 font-heading text-xl font-normal tracking-tight text-foreground">
-          No published issues yet
-        </h3>
-        <p className="max-w-sm text-sm font-light leading-relaxed text-muted-foreground">
-          Check back soon — new issues will appear here once they are published.
-        </p>
-      </div>
+
+        <div className="w-full max-w-[1140px] mx-auto flex justify-center">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 w-full justify-items-center"
+          >
+            {displayedIssues.map((issue) => (
+              <IssueArchiveCard
+                key={issue._id}
+                issue={issue}
+                from={issueSource}
+                className="w-full h-full"
+              />
+            ))}
+          </motion.div>
+        </div>
+      </section>
     );
   }
 

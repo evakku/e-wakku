@@ -1,6 +1,8 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
 import ArchiveIssuesGrid from "@/components/magazine/ArchiveIssuesGrid";
+import LoadingSkeleton from "@/components/magazine/LoadingSkeleton";
 import { getAllPublishedIssues, getNewsletterSettings } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
 
@@ -47,7 +49,9 @@ export default async function AllIssuesPage() {
         className="!pt-0 !mt-0"
       >
         <Container size="lg">
-          <ArchiveIssuesGrid issues={issues} />
+          <Suspense fallback={<LoadingSkeleton />}>
+            <ArchiveIssuesGrid issues={issues} />
+          </Suspense>
         </Container>
       </Section>
     </div>

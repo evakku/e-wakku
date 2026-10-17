@@ -31,6 +31,7 @@ const notoSerif = Noto_Serif({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://e-wakku.com"),
   title: {
     default: "E-Wakku",
     template: "%s | E-Wakku",

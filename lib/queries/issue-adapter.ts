@@ -13,10 +13,9 @@ import type { Issue as SupabaseIssueRow } from "./issue";
  * changed (Sanity -> Supabase); the shape handed to the UI stays identical.
  *
  * Note: `slug` is populated with the row's `id` (a UUID), since we're
- * routing by id, not a real slug. Any component that does
- * `<Link href={`/issues/${issue.slug}`}>` will therefore correctly link to
- * `/issues/<uuid>`, matching the app/issues/[id]/ route — no component
- * changes needed for that either.
+ * routing by id/slug. Any component linking to `/issue/${issue.slug}` will
+ * correctly link to `/issue/<uuid>`, matching the canonical app/issue/[slug]/
+ * route.
  */
 export function toMagazineIssue(row: SupabaseIssueRow): MagazineIssue {
   return {

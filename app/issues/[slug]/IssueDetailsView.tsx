@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { notFound } from "next/navigation";
 import { motion, useReducedMotion } from "framer-motion";
 import { Section, Container } from "@/components/layout";
@@ -20,11 +20,13 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
   const searchParams = useSearchParams();
   const from = searchParams.get("from");
+  const hasTrackedView = useRef(false);
 
   const backHref = from === "archive" ? "/archive" : null;
   const backLabel = "All Issues";
   useEffect(() => {
-    if (issue?.id) {
+    if (issue?.id && !hasTrackedView.current) {
+      hasTrackedView.current = true;
       fetch("/api/analytics/track", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

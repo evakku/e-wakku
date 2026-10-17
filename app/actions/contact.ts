@@ -1,7 +1,9 @@
 "use server";
 
+import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
 import { contactSchema } from "@/validation/contactSchema";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limit";
 
 export type SubmitContactState = {
   success: boolean;
@@ -13,7 +15,25 @@ export async function submitContactForm(formData: {
   name: string;
   email: string;
   message: string;
+  website?: string;
 }): Promise<SubmitContactState> {
+  // Honeypot check: If the hidden honeypot input is populated, silently drop without erroring
+  if (formData.website && formData.website.trim().length > 0) {
+    return { success: true };
+  }
+
+  // Rate limiting check: Cap contact submissions to 5 per 10 minutes per IP
+  const headersList = await headers();
+  const clientIp = getClientIp(headersList);
+  const rateLimit = checkRateLimit(`contact:${clientIp}`, 5, 10 * 60 * 1000);
+
+  if (!rateLimit.success) {
+    return {
+      success: false,
+      message: "Too many messages sent. Please wait a few minutes before trying again.",
+    };
+  }
+
   // 1. Server-side validation using Zod
   const result = contactSchema.safeParse(formData);
 
@@ -32,22 +52,12 @@ export async function submitContactForm(formData: {
   // SELECT) via RLS, since this is a public contact form with no login.
   const supabase = await createClient();
 
-  let { error } = await supabase.from("contact_messages").insert({
+  const { error } = await supabase.from("contact_messages").insert({
     name,
     email,
     message,
     is_read: false,
   });
-
-  if (error && (error.code === "PGRST204" || error.code === "42703" || error.message?.includes("is_read"))) {
-    console.warn("is_read column not found in database, retrying insert without it");
-    const retryResult = await supabase.from("contact_messages").insert({
-      name,
-      email,
-      message,
-    });
-    error = retryResult.error;
-  }
 
   if (error) {
     console.error("Failed to save contact message:", error.message);

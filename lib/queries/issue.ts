@@ -1,5 +1,4 @@
 import { createClient } from "@/lib/supabase/server";
-import { mockIssue, mockIssuesList } from "@/data/mockIssue";
 
 export interface Issue {
   id: string;
@@ -20,202 +19,201 @@ const isUuid = (str: string) =>
 /**
  * getLatestIssue
  * The single most recent published issue — used for the Home page hero.
+ * Does not fall back to silent mock data on database error (CQ-03).
  */
 export async function getLatestIssue(): Promise<Issue | null> {
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    const { data, error } = await supabase
-      .from("issues")
-      .select("*")
-      .eq("is_draft", false)
-      .order("published_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  const { data, error } = await supabase
+    .from("issues")
+    .select("*")
+    .eq("is_draft", false)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
 
-    if (!error && data) {
-      return data;
-    }
-  } catch (err) {
-    console.error("getLatestIssue database error:", err);
+  if (error) {
+    console.error("getLatestIssue database error:", error.message);
+    throw new Error(`Failed to load latest issue: ${error.message}`);
   }
 
-  // Fallback to mock issue if database returns empty or fails
-  return {
-    id: mockIssue.id,
-    title: mockIssue.title,
-    description: mockIssue.description,
-    cover_image_url: mockIssue.coverImage,
-    pdf_url: mockIssue.pdfUrl || "",
-    month: mockIssue.season,
-    year: parseInt(mockIssue.year, 10) || 2024,
-    is_draft: false,
-    published_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  };
+  return data ?? null;
 }
 
 /**
  * getPastIssues
  * Published issues ordered by newest first.
- * Pass `excludeId` to omit one issue (e.g. the home hero).
- * Pass `limit` to cap results (e.g. 3 on the home page).
+ * Supports pagination via limit and offset (BE-05).
+ * Throws on database failure instead of returning mock data (CQ-03).
  */
-export async function getPastIssues(excludeId?: string, limit?: number): Promise<Issue[]> {
-  try {
-    const supabase = await createClient();
+export async function getPastIssues(
+  excludeId?: string,
+  limit?: number,
+  offset?: number
+): Promise<Issue[]> {
+  const supabase = await createClient();
 
-    let query = supabase
-      .from("issues")
-      .select("*")
-      .eq("is_draft", false)
-      .order("published_at", { ascending: false, nullsFirst: false })
-      .order("created_at", { ascending: false });
+  let query = supabase
+    .from("issues")
+    .select("*")
+    .eq("is_draft", false)
+    .order("published_at", { ascending: false, nullsFirst: false })
+    .order("created_at", { ascending: false });
 
-    if (excludeId && isUuid(excludeId)) {
-      query = query.neq("id", excludeId);
-    }
-
-    if (limit !== undefined) {
-      query = query.limit(limit);
-    }
-
-    const { data, error } = await query;
-
-    if (!error && data && data.length > 0) {
-      return data;
-    }
-  } catch (err) {
-    console.error("getPastIssues database error:", err);
+  if (excludeId && isUuid(excludeId)) {
+    query = query.neq("id", excludeId);
   }
 
-  // Fallback to mock issues
-  let fallback = mockIssuesList.map((m) => ({
-    id: m.id,
-    title: m.title,
-    description: m.description,
-    cover_image_url: m.coverImage,
-    pdf_url: m.pdfUrl || "",
-    month: m.season,
-    year: parseInt(m.year, 10) || 2024,
-    is_draft: false,
-    published_at: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-  }));
-
-  if (excludeId) {
-    fallback = fallback.filter((item) => item.id !== excludeId);
+  if (offset !== undefined && offset > 0) {
+    const end = limit !== undefined ? offset + limit - 1 : offset + 49;
+    query = query.range(offset, end);
+  } else if (limit !== undefined) {
+    query = query.limit(limit);
   }
 
-  if (limit !== undefined) {
-    fallback = fallback.slice(0, limit);
+  const { data, error } = await query;
+
+  if (error) {
+    console.error("getPastIssues database error:", error.message);
+    throw new Error(`Failed to fetch published issues: ${error.message}`);
   }
 
-  return fallback;
+  return data ?? [];
 }
 
 /**
  * getAllPublishedIssues
  * Every published issue — used for the All Issues page.
+ * Supports pagination (BE-05).
  */
-export async function getAllPublishedIssues(): Promise<Issue[]> {
-  return getPastIssues();
+export async function getAllPublishedIssues(
+  limit?: number,
+  offset?: number
+): Promise<Issue[]> {
+  return getPastIssues(undefined, limit, offset);
 }
 
 /**
  * getIssueById
- * Single issue for the Issue Details page (app/.../issues/[id]/page.tsx).
- * Returns null if not found OR if it's a draft (drafts are only visible
- * to authenticated admins — use getIssueByIdAdmin for the admin panel).
+ * Single issue for the Issue Details page (app/issues/[slug] or app/(public)/issue/[slug]).
+ * Returns null if not found OR if it's a draft.
+ * Throws on database failure instead of returning mock data (CQ-03).
  */
 export async function getIssueById(id: string): Promise<Issue | null> {
   if (!id) return null;
 
-  try {
-    const supabase = await createClient();
+  const supabase = await createClient();
 
-    if (isUuid(id)) {
-      const { data, error } = await supabase
-        .from("issues")
-        .select("*")
-        .eq("id", id)
-        .eq("is_draft", false)
-        .maybeSingle();
+  let query = supabase
+    .from("issues")
+    .select("*")
+    .eq("is_draft", false);
 
-      if (!error && data) {
-        return data;
-      }
-    }
-  } catch (err) {
-    console.error("getIssueById database error:", err);
+  if (isUuid(id)) {
+    query = query.eq("id", id);
+  } else {
+    // If not a UUID, search title matching slug format
+    query = query.ilike("title", id.replace(/-/g, " "));
   }
 
-  // Fallback: search mock issues by ID, title slug, or partial match
-  const foundMock = mockIssuesList.find(
-    (m) =>
-      m.id === id ||
-      m.id.toLowerCase() === id.toLowerCase() ||
-      m.title.toLowerCase().replace(/\s+/g, "-") === id.toLowerCase()
-  );
+  const { data, error } = await query.limit(1).maybeSingle();
 
-  if (foundMock) {
-    return {
-      id: foundMock.id,
-      title: foundMock.title,
-      description: foundMock.description,
-      cover_image_url: foundMock.coverImage,
-      pdf_url: foundMock.pdfUrl || "",
-      month: foundMock.season,
-      year: parseInt(foundMock.year, 10) || 2024,
-      is_draft: false,
-      published_at: new Date().toISOString(),
-      created_at: new Date().toISOString(),
-    };
+  if (error) {
+    console.error("getIssueById database error:", error.message);
+    throw new Error(`Failed to fetch issue: ${error.message}`);
   }
 
-  return null;
+  return data ?? null;
 }
 
 /**
  * getIssueByIdAdmin
- * Same as above but does NOT filter out drafts — for the admin panel,
- * where you need to preview/edit unpublished issues too. Relies on the
- * "Authenticated can view all issues" RLS policy, so this only works
- * when called with a logged-in admin session.
+ * Same as above but does NOT filter out drafts — for the admin panel.
  */
 export async function getIssueByIdAdmin(id: string): Promise<Issue | null> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("issues")
-    .select("*")
-    .eq("id", id)
-    .maybeSingle();
+  let query = supabase.from("issues").select("*");
+
+  if (isUuid(id)) {
+    query = query.eq("id", id);
+  } else {
+    query = query.ilike("title", id.replace(/-/g, " "));
+  }
+
+  const { data, error } = await query.maybeSingle();
 
   if (error) {
     console.error("getIssueByIdAdmin failed:", error.message);
     return null;
   }
-  return data;
+  return data ?? null;
 }
 
 /**
  * getAllIssuesAdmin
  * All issues (published + draft) — for the admin "Issues" list/dashboard.
+ * Supports pagination (BE-05).
  */
-export async function getAllIssuesAdmin(): Promise<Issue[]> {
+export async function getAllIssuesAdmin(
+  limit?: number,
+  offset?: number
+): Promise<Issue[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("issues")
     .select("*")
     .order("created_at", { ascending: false });
+
+  if (offset !== undefined && offset > 0) {
+    const end = limit !== undefined ? offset + limit - 1 : offset + 49;
+    query = query.range(offset, end);
+  } else if (limit !== undefined) {
+    query = query.limit(limit);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("getAllIssuesAdmin failed:", error.message);
     return [];
   }
   return data ?? [];
+}
+
+export interface IssueStatsAdmin {
+  total: number;
+  published: number;
+  draft: number;
+  withPdf: number;
+  withCover: number;
+}
+
+/**
+ * getIssueStatsAdmin
+ * Uses SQL COUNT(*) aggregations (head: true) to fetch total, published, draft,
+ * and PDF counts without loading entire entity rows into Node.js server memory.
+ */
+export async function getIssueStatsAdmin(): Promise<IssueStatsAdmin> {
+  const supabase = await createClient();
+
+  const [totalRes, publishedRes, draftRes, pdfRes, coverRes] = await Promise.all([
+    supabase.from("issues").select("id", { count: "exact", head: true }),
+    supabase.from("issues").select("id", { count: "exact", head: true }).eq("is_draft", false),
+    supabase.from("issues").select("id", { count: "exact", head: true }).eq("is_draft", true),
+    supabase.from("issues").select("id", { count: "exact", head: true }).not("pdf_url", "is", null),
+    supabase.from("issues").select("id", { count: "exact", head: true }).not("cover_image_url", "is", null),
+  ]);
+
+  return {
+    total: totalRes.count ?? 0,
+    published: publishedRes.count ?? 0,
+    draft: draftRes.count ?? 0,
+    withPdf: pdfRes.count ?? 0,
+    withCover: coverRes.count ?? 0,
+  };
 }
 
 export { getNewsletterSettings } from "./newsletter";

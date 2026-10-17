@@ -4,7 +4,7 @@ import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
 import type { Variants } from "framer-motion";
 import { HeadlineLg, BodyLg } from "@/src/components/ui/typography";
-import { getImageUrl } from "@/lib/sanity/client";
+import { getImageUrl } from "@/lib/utils/image";
 import type { SanityImageReference } from "@/components/magazine/types";
 
 interface MissionSectionProps {

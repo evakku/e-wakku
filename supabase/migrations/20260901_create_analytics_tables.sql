@@ -47,23 +47,18 @@ CREATE TABLE IF NOT EXISTS public.issue_analytics (
 -- Enable RLS
 ALTER TABLE public.issue_analytics ENABLE ROW LEVEL SECURITY;
 
--- Allow select and upsert for analytics processing
+-- Allow public select on issue_analytics
 CREATE POLICY "Allow public select on issue_analytics"
     ON public.issue_analytics
     FOR SELECT
     TO anon, authenticated
     USING (true);
 
-CREATE POLICY "Allow public insert on issue_analytics"
+-- Restrict mutation (INSERT/UPDATE/DELETE) to authenticated admins or database functions
+CREATE POLICY "Allow authenticated full access on issue_analytics"
     ON public.issue_analytics
-    FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (true);
-
-CREATE POLICY "Allow public update on issue_analytics"
-    ON public.issue_analytics
-    FOR UPDATE
-    TO anon, authenticated
+    FOR ALL
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
@@ -87,16 +82,11 @@ CREATE POLICY "Allow public select on analytics_summary"
     TO anon, authenticated
     USING (true);
 
-CREATE POLICY "Allow public insert on analytics_summary"
+-- Restrict mutation to authenticated admins or database functions
+CREATE POLICY "Allow authenticated full access on analytics_summary"
     ON public.analytics_summary
-    FOR INSERT
-    TO anon, authenticated
-    WITH CHECK (true);
-
-CREATE POLICY "Allow public update on analytics_summary"
-    ON public.analytics_summary
-    FOR UPDATE
-    TO anon, authenticated
+    FOR ALL
+    TO authenticated
     USING (true)
     WITH CHECK (true);
 
