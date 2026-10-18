@@ -35,14 +35,12 @@ export default function EnquiryDetailsModal({
     }
   }, [isOpen, enquiry, onToggleRead]);
 
-  // Reset delete confirmation state when modal closes or changes enquiry
-  useEffect(() => {
-    if (!isOpen) {
-      setIsConfirmingDelete(false);
-      setIsDeleting(false);
-      setIsTogglingRead(false);
-    }
-  }, [isOpen, enquiry]);
+  const handleClose = () => {
+    setIsConfirmingDelete(false);
+    setIsDeleting(false);
+    setIsTogglingRead(false);
+    onClose();
+  };
 
   if (!enquiry) return null;
 
@@ -70,7 +68,7 @@ export default function EnquiryDetailsModal({
     try {
       const success = await onDelete(enquiry.id, enquiry.name);
       if (success) {
-        onClose();
+        handleClose();
       }
     } finally {
       setIsDeleting(false);
@@ -115,7 +113,7 @@ export default function EnquiryDetailsModal({
             animate="animate"
             exit="exit"
             transition={{ duration: 0.2 }}
-            onClick={onClose}
+            onClick={handleClose}
             className="fixed inset-0 bg-black/45 backdrop-blur-sm"
           />
 
@@ -149,7 +147,7 @@ export default function EnquiryDetailsModal({
                 )}
               </div>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-200/50 transition-colors"
                 aria-label="Close modal"
               >
@@ -211,7 +209,7 @@ export default function EnquiryDetailsModal({
                 <LabelCaps className="text-slate-500 tracking-wider font-semibold">
                   Message
                 </LabelCaps>
-                <div className="w-full rounded border border-transparent bg-slate-50 px-4 py-3.5 text-slate-600 text-sm leading-relaxed whitespace-pre-wrap min-h-[140px] max-h-[220px] overflow-y-auto font-sans">
+                <div className="w-full rounded border border-transparent bg-slate-50 px-4 py-3.5 text-slate-600 text-sm leading-relaxed whitespace-pre-wrap min-h-[140px] max-h-[220px] overflow-y-auto">
                   {enquiry.message}
                 </div>
               </div>
@@ -285,7 +283,7 @@ export default function EnquiryDetailsModal({
                   )}
                 </Button>
                 <Button
-                  onClick={onClose}
+                  onClick={handleClose}
                   variant="secondary"
                   size="sm"
                   className="h-9 bg-slate-200 text-slate-700 hover:bg-slate-300 border-0 cursor-pointer"
