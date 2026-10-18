@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Settings, Shield, Sliders } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Settings | E-Wakku Admin",
+  title: "Settings — Admin",
 };
 
 export default function SettingsPage() {

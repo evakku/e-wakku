@@ -102,7 +102,7 @@ export default function MobileMenu({
                       aria-hidden="true"
                       className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full"
                       animate={{
-                        backgroundColor: isActive ? "#059669" : "transparent",
+                        backgroundColor: isActive ? "rgba(5, 150, 105, 1)" : "rgba(5, 150, 105, 0)",
                         scale: isActive ? 1 : 0.6,
                       }}
                       transition={{

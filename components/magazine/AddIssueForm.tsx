@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState, useRef } from "react";
+import { useActionState, useEffect, useState, useRef, startTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -54,22 +54,24 @@ export function AddIssueForm() {
   useEffect(() => {
     if (coverImage) {
       const url = URL.createObjectURL(coverImage);
-      setCoverPreview(url);
+      startTransition(() => setCoverPreview(url));
       return () => URL.revokeObjectURL(url);
     } else {
-      setCoverPreview(null);
+      startTransition(() => setCoverPreview(null));
     }
   }, [coverImage]);
 
   useEffect(() => {
     if (state.success) {
-      setToast(isDraft ? "Saved as draft" : "Issue published successfully!");
-      setCoverImage(null);
-      setPdfFile(null);
+      startTransition(() => {
+        setToast(isDraft ? "Saved as draft" : "Issue published successfully!");
+        setCoverImage(null);
+        setPdfFile(null);
+        setTitle("");
+        setDescription("");
+      });
       if (coverInputRef.current) coverInputRef.current.value = "";
       if (pdfInputRef.current) pdfInputRef.current.value = "";
-      setTitle("");
-      setDescription("");
       const t = setTimeout(() => {
         router.push("/admin/issues/manage");
       }, 1500);

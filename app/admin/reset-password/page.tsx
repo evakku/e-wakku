@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useState, startTransition } from "react";
 import logo from "@/src/assets/logo.png";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -45,9 +45,11 @@ function ResetPasswordContent() {
     const queryError =
       searchParams.get("error_description") || searchParams.get("error");
     if (queryError) {
-      setError(queryError);
-      setIsInvalidSession(true);
-      setIsSessionChecking(false);
+      startTransition(() => {
+        setError(queryError);
+        setIsInvalidSession(true);
+        setIsSessionChecking(false);
+      });
       return;
     }
 
@@ -59,9 +61,11 @@ function ResetPasswordContent() {
       const hashError =
         hashParams.get("error_description") || hashParams.get("error");
       if (hashError) {
-        setError(decodeURIComponent(hashError.replace(/\+/g, " ")));
-        setIsInvalidSession(true);
-        setIsSessionChecking(false);
+        startTransition(() => {
+          setError(decodeURIComponent(hashError.replace(/\+/g, " ")));
+          setIsInvalidSession(true);
+          setIsSessionChecking(false);
+        });
         return;
       }
     }
@@ -194,7 +198,7 @@ function ResetPasswordContent() {
             <div className="relative h-16 w-48">
               <Image
                 src={logo}
-                alt="The Journal Editorial Logo"
+                alt="E-Wakku Editorial Logo"
                 fill
                 className="object-contain transition-opacity hover:opacity-90"
                 priority
@@ -470,7 +474,7 @@ function ResetPasswordContent() {
       {/* Footer Identity */}
       <footer className="p-8 text-center">
         <p className="font-['Inter'] font-semibold text-[10px] text-[#c6c6cd] uppercase tracking-[0.2em]">
-          © {new Date().getFullYear()} The Journal Editorial Board. All Rights
+          © {new Date().getFullYear()} E-Wakku Editorial Board. All Rights
           Reserved.
         </p>
       </footer>

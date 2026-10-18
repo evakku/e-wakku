@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Publication Analytics | E-Wakku Admin",
+  title: "Publication Analytics — Admin",
   description: "Accurate publication statistics, readership metrics, downloads, and digital asset analytics.",
 };
 

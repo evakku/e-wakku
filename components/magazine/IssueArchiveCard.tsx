@@ -39,7 +39,7 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
   const imageUrl = getImageUrl(issue.coverImage);
   const slugStr = typeof issue.slug === "string" ? issue.slug : issue.slug?.current || issue._id || "";
   const dateStr = formatMonthYear(issue);
-  const issueHref = `/issue/${slugStr}?from=${from}`;
+  const issueHref = from ? `/issue/${slugStr}?from=${from}` : `/issue/${slugStr}`;
 
   return (
     <motion.article

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Enquiries | E-Wakku Admin",
+  title: "Enquiries — Admin",
   description: "All contact form submissions from readers.",
 };
 

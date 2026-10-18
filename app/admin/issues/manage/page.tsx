@@ -5,7 +5,7 @@ import { getIssues } from "@/app/admin/issues/manage/actions";
 import { ManageIssuesTable } from "@/components/magazine/ManageIssuesTable";
 
 export const metadata: Metadata = {
-  title: "Manage Issues | E-Wakku Admin",
+  title: "Manage Issues — Admin",
   description: "View, edit, publish and delete magazine issues.",
 };
 

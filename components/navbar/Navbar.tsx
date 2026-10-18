@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useId } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import NavItem from "./NavItem";
 import MobileMenu from "./MobileMenu";
 import Container from "@/components/layout/Container";
@@ -43,6 +43,7 @@ export default function Navbar({
   currentPath,
   profileIcon,
   onProfileClick,
+  profileAriaLabel = "Admin Portal",
   searchSlot,
 }: NavbarProps) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -105,7 +106,7 @@ export default function Navbar({
             <button
               type="button"
               onClick={onProfileClick}
-              aria-label="Open profile menu"
+              aria-label={profileAriaLabel}
               className={[
                 "flex items-center justify-center",
                 "w-9 h-9 rounded-full",

@@ -10,7 +10,7 @@ import type { FooterProps } from "./types";
 /**
  * Footer
  *
- * A minimal, editorial, reusable footer for "The Journal" / E-Wakku and any
+ * A minimal, editorial, reusable footer for E-Wakku and any
  * future project that adopts the same design language.
  *
  * Layout (responsive):
@@ -38,8 +38,8 @@ import type { FooterProps } from "./types";
  * import Footer from "@/components/footer/Footer";
  *
  * <Footer
- *   brandName="The Journal"
- *   copyrightText="© 2024 The Journal. All rights reserved."
+ *   brandName="E-Wakku"
+ *   copyrightText="© 2026 E-Wakku. All rights reserved."
  *   links={[
  *     { label: "Privacy Policy", href: "/privacy" },
  *     { label: "Terms of Service", href: "/terms" },

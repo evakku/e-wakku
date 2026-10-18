@@ -15,14 +15,16 @@ export async function generateMetadata(): Promise<Metadata> {
   const coverUrl = featuredIssue?.cover_image_url ?? "/images/october-2024.png";
 
   return {
-    title: "The Journal | Premium Digital Magazine",
+    title: {
+      absolute: "E-Wakku | Premium Digital Magazine",
+    },
     description: "A curated collection of modern thought, culture, design, and editorial storytelling.",
     openGraph: {
-      title: "The Journal | Premium Digital Magazine",
+      title: "E-Wakku | Premium Digital Magazine",
       description: "A curated collection of modern thought, culture, design, and editorial storytelling.",
       images: coverUrl ? [{ url: coverUrl, width: 1200, height: 857, alt: "Latest Issue Cover" }] : [],
       type: "website",
-      siteName: "The Journal",
+      siteName: "E-Wakku",
     },
   };
 }
@@ -49,11 +51,11 @@ export default async function HomePage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Periodical",
-    "name": "The Journal",
+    "name": "E-Wakku",
     "description": "A curated collection of modern thought, culture, design, and editorial storytelling.",
     "publisher": {
       "@type": "Organization",
-      "name": "The Journal Publishing",
+      "name": "E-Wakku Publishing",
       "logo": {
         "@type": "ImageObject",
         "url": "https://e-wakku.com/logo.png",

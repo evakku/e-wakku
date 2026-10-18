@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { useState, useActionState, useEffect, startTransition } from "react";
 import { X, AlertCircle, Upload, FileText, ExternalLink, Loader2 } from "lucide-react";
 import {
   updateIssue,
@@ -54,10 +54,10 @@ export function EditIssueModal({
   useEffect(() => {
     if (newCover) {
       const url = URL.createObjectURL(newCover);
-      setCoverPreview(url);
+      startTransition(() => setCoverPreview(url));
       return () => URL.revokeObjectURL(url);
     } else {
-      setCoverPreview(null);
+      startTransition(() => setCoverPreview(null));
     }
   }, [newCover]);
 

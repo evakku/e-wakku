@@ -3,7 +3,7 @@ import type { AboutPageData } from "@/components/about/types";
 export const ABOUT_PAGE_DATA: AboutPageData = {
   heroTitle: "A curation of modern thought and aesthetic living.",
   heroDescription:
-    "The Journal was founded on the belief that amidst the noise of the digital age, there remains a profound need for quiet reflection, in-depth reporting, and visual restraint.\n\nWe publish stories that matter, presented in a space designed for focus.",
+    "E-Wakku was founded on the belief that amidst the noise of the digital age, there remains a profound need for quiet reflection, in-depth reporting, and visual restraint.\n\nWe publish stories that matter, presented in a space designed for focus.",
   missionTitle: "Our Mission",
   missionDescription:
     "To document the intersection of culture, technology, and design through an editorial lens that values clarity over volume. We strive to provide our readers with a respite—a digital environment that feels as tactile and considered as premium print.\n\nEvery article, photograph, and layout is crafted to respect the reader's time and attention. We embrace minimalism not as an aesthetic trend, but as a functional necessity for deep reading.",
@@ -19,7 +19,7 @@ export const ABOUT_PAGE_DATA: AboutPageData = {
       name: "Marcus Chen",
       role: "Creative Director",
       photo: "/images/media__1780753398117.png",
-      bio: "Marcus shapes the visual identity of The Journal, combining classic typography with contemporary layout design.",
+      bio: "Marcus shapes the visual identity of E-Wakku, combining classic typography with contemporary layout design.",
     },
     {
       name: "Elena Rodriguez",

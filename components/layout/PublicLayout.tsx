@@ -31,8 +31,16 @@ export default function PublicLayout({ children, bg }: PublicLayoutProps) {
 
   return (
     <div className={`flex min-h-svh flex-col ${bgClass}`}>
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-[#059669] focus:text-white focus:rounded-md focus:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#059669] text-sm font-medium transition-all"
+      >
+        Skip to main content
+      </a>
       <SiteNavbar />
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main id="main-content" className="flex flex-1 flex-col">
+        {children}
+      </main>
       <SiteFooter />
     </div>
   );

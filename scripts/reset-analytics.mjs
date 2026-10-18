@@ -1,5 +1,5 @@
-const fs = require("fs");
-const path = require("path");
+import fs from "fs";
+import path from "path";
 
 // Automatically load .env.local or .env if variables are not yet in process.env
 function loadEnvFile(fileName) {

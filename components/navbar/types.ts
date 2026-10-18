@@ -28,6 +28,8 @@ export interface NavbarProps {
   profileIcon?: ReactNode;
   /** Callback fired when the profile button is clicked */
   onProfileClick?: () => void;
+  /** Accessible label for the profile button (defaults to "Admin Portal") */
+  profileAriaLabel?: string;
   /**
    * Optional slot rendered between the desktop nav links and the right actions.
    * Used on /archive to inject the page-scoped search input.

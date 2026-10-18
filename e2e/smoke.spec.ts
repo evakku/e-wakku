@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.describe("E-Wakku E2E Smoke Tests", () => {
   test("public home page loads successfully", async ({ page }) => {
     await page.goto("/");
-    await expect(page).toHaveTitle(/The Journal|E-Wakku/i);
+    await expect(page).toHaveTitle(/E-Wakku/i);
     await expect(page.locator("h1")).toBeVisible();
   });
 

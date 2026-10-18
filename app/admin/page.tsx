@@ -25,7 +25,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "Dashboard | E-Wakku Admin",
+  title: "Dashboard — Admin",
   description: "Live overview of magazine publications, readers, downloads, and editorial status.",
 };
 

@@ -86,7 +86,7 @@ export default function ForgotPasswordPage() {
             <div className="relative h-16 w-48">
               <Image
                 src={logo}
-                alt="The Journal Editorial Logo"
+                alt="E-Wakku Editorial Logo"
                 fill
                 className="object-contain transition-opacity hover:opacity-90"
                 priority
@@ -143,7 +143,7 @@ export default function ForgotPasswordPage() {
                         }}
                         disabled={isPending}
                         required
-                        placeholder="editor@thejournal.com"
+                        placeholder="editor@e-wakku.com"
                         className="w-full font-['Inter'] text-[16px] text-[#191c1e] placeholder:text-[#c6c6cd] border-0 border-b border-[#e0e3e5] bg-transparent py-3 focus:outline-none focus:ring-0 focus:border-b-[#059669] transition-all duration-300 disabled:opacity-50"
                       />
                     </div>
@@ -267,7 +267,7 @@ export default function ForgotPasswordPage() {
       {/* Footer Identity */}
       <footer className="p-8 text-center">
         <p className="font-['Inter'] font-semibold text-[10px] text-[#c6c6cd] uppercase tracking-[0.2em]">
-          © {new Date().getFullYear()} The Journal Editorial Board. All Rights
+          © {new Date().getFullYear()} E-Wakku Editorial Board. All Rights
           Reserved.
         </p>
       </footer>

@@ -9,7 +9,7 @@ import { Check, AlertCircle, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { HeadlineMd, BodyMd, LabelCaps } from "@/src/components/ui/typography";
+import { HeadlineMd, BodyMd } from "@/src/components/ui/typography";
 import { contactSchema, type ContactFormData } from "@/validation/contactSchema";
 import { submitContactForm } from "@/app/actions/contact";
 
@@ -49,7 +49,7 @@ export default function ContactForm() {
           setSubmitError("Failed to submit form. Please try again.");
         }
       }
-    } catch (error) {
+    } catch {
       setSubmitError("An unexpected error occurred. Please try again.");
     }
   };
@@ -84,7 +84,7 @@ export default function ContactForm() {
                 Message Sent Successfully
               </HeadlineMd>
               <BodyMd className="text-muted-foreground font-light max-w-md leading-relaxed">
-                Thank you for contacting The Journal. Our editorial team will review your message and get back to you shortly.
+                Thank you for contacting E-Wakku. Our editorial team will review your message and get back to you shortly.
               </BodyMd>
               <Button
                 variant="ghost"

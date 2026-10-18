@@ -7,7 +7,7 @@ import type { NewsletterSettings } from "@/components/magazine/types";
 export function getNewsletterSettings(): NewsletterSettings {
   return {
     heading: "Stay in the loop",
-    description: "Get each new issue of The Journal delivered straight to your inbox.",
+    description: "Get each new issue of E-Wakku delivered straight to your inbox.",
     buttonText: "Subscribe",
   };
 }

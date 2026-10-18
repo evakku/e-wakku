@@ -1,6 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { Section, Container } from "@/components/layout";
 import { ContactHero, ContactForm } from "@/components/contact";
 import { getContactPage } from "@/lib/queries/contact-settings";
@@ -13,13 +11,13 @@ export async function generateMetadata(): Promise<Metadata> {
   const contactData = getContactPage();
 
   return {
-    title: "Contact | The Journal",
-    description: contactData.contactDescription || "Get in touch with The Journal editorial team.",
+    title: "Contact",
+    description: contactData.contactDescription || "Get in touch with the E-Wakku editorial team.",
     openGraph: {
-      title: "Contact | The Journal",
-      description: contactData.contactDescription || "Get in touch with The Journal editorial team.",
+      title: "Contact | E-Wakku",
+      description: contactData.contactDescription || "Get in touch with the E-Wakku editorial team.",
       type: "website",
-      siteName: "The Journal",
+      siteName: "E-Wakku",
     },
   };
 }
@@ -31,11 +29,11 @@ export default function ContactPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ContactPage",
-    "name": "Contact The Journal",
-    "description": "Get in touch with The Journal's editorial, archives, or licensing team.",
+    "name": "Contact E-Wakku",
+    "description": "Get in touch with E-Wakku's editorial, archives, or licensing team.",
     "publisher": {
       "@type": "Organization",
-      "name": "The Journal Publishing",
+      "name": "E-Wakku Publishing",
       "logo": {
         "@type": "ImageObject",
         "url": "https://e-wakku.com/logo.png",
@@ -43,7 +41,7 @@ export default function ContactPage() {
     },
     "mainEntity": {
       "@type": "Organization",
-      "name": "The Journal",
+      "name": "E-Wakku",
 
     },
   };

@@ -39,7 +39,7 @@ export default function AdminLoginPage() {
             <div className="relative h-16 w-48">
               <Image
                 src={logo}
-                alt="The Journal Editorial Logo"
+                alt="E-Wakku Editorial Logo"
                 fill
                 className="object-contain transition-opacity hover:opacity-90"
               />
@@ -59,7 +59,7 @@ export default function AdminLoginPage() {
                 Sign in to Editorial HQ
               </h1>
               <p className="font-['Inter'] text-[16px] text-[#45464d]">
-                The Journal Administrative Portal
+                E-Wakku Administrative Portal
               </p>
             </header>
 
@@ -85,7 +85,7 @@ export default function AdminLoginPage() {
                     id="email"
                     name="email"
                     required
-                    placeholder="editor@thejournal.com"
+                    placeholder="editor@e-wakku.com"
                     className="w-full font-['Inter'] text-[16px] text-[#191c1e] placeholder:text-[#c6c6cd] border-0 border-b border-[#e0e3e5] bg-transparent py-3 focus:outline-none focus:ring-0 focus:border-b-[#059669] transition-all duration-300"
                   />
                 </div>
@@ -166,7 +166,7 @@ export default function AdminLoginPage() {
       {/* Footer Identity */}
       <footer className="p-8 text-center">
         <p className="font-['Inter'] font-semibold text-[10px] text-[#c6c6cd] uppercase tracking-[0.2em]">
-          © 2024 The Journal Editorial Board. All Rights Reserved.
+          © {new Date().getFullYear()} E-Wakku Editorial Board. All Rights Reserved.
         </p>
       </footer>
     </div>

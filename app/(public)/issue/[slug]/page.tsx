@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   if (!row) {
     return {
-      title: "Issue Not Found | The Journal",
+      title: "Issue Not Found",
       description: "The requested magazine issue could not be found.",
     };
   }
@@ -25,16 +25,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const issue = toDetailIssue(row);
 
   return {
-    title: `${issue.title} | The Journal`,
+    title: issue.title,
     description: `${issue.season} ${issue.year} — ${issue.description.substring(0, 100)}...`,
     openGraph: {
-      title: `${issue.title} | The Journal`,
+      title: `${issue.title} | E-Wakku`,
       description: `${issue.season} ${issue.year} — ${issue.title}`,
       images: issue.coverImage
         ? [{ url: issue.coverImage, width: 800, height: 1067, alt: `Cover art for ${issue.title}` }]
         : [],
       type: "article",
-      siteName: "The Journal",
+      siteName: "E-Wakku",
     },
   };
 }

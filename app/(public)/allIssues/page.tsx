@@ -3,23 +3,19 @@ import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
 import ArchiveIssuesGrid from "@/components/magazine/ArchiveIssuesGrid";
 import LoadingSkeleton from "@/components/magazine/LoadingSkeleton";
-import { getAllPublishedIssues, getNewsletterSettings } from "@/lib/queries/issue";
+import { getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export const metadata: Metadata = {
-  title: "All Issues | The Journal",
-  description: "Browse every published issue of The Journal — covers, editions, and full digital archives.",
+  title: "All Issues",
+  description: "Browse every published issue of E-Wakku — covers, editions, and full digital archives.",
 };
 
 export default async function AllIssuesPage() {
-  const [rows, newsletterSettings] = await Promise.all([
-    getAllPublishedIssues(),
-    Promise.resolve(getNewsletterSettings()),
-  ]);
-
+  const rows = await getAllPublishedIssues();
   const issues = rows.map(toMagazineIssue);
 
   return (
@@ -37,7 +33,7 @@ export default async function AllIssuesPage() {
 
             <p className="mb-0 max-w-[650px] text-[15px] sm:text-[16px] leading-relaxed text-[#4B5563] md:text-[18px]">
               Browse every published issue — covers, editions, and full digital
-              archives from The Journal.
+              archives from E-Wakku.
             </p>
           </div>
         </Container>

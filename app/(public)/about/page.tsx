@@ -15,14 +15,14 @@ export async function generateMetadata(): Promise<Metadata> {
     : "/images/media__1780745927835.png";
 
   return {
-    title: "About | The Journal",
-    description: "Learn about The Journal's editorial mission, philosophy, and team.",
+    title: "About",
+    description: "Learn about E-Wakku's editorial mission, philosophy, and team.",
     openGraph: {
-      title: "About | The Journal",
-      description: "Learn about The Journal's editorial mission, philosophy, and team.",
-      images: coverUrl ? [{ url: coverUrl, width: 1200, height: 857, alt: "The Journal Mission Image" }] : [],
+      title: "About | E-Wakku",
+      description: "Learn about E-Wakku's editorial mission, philosophy, and team.",
+      images: coverUrl ? [{ url: coverUrl, width: 1200, height: 857, alt: "E-Wakku Mission Image" }] : [],
       type: "website",
-      siteName: "The Journal",
+      siteName: "E-Wakku",
     },
   };
 }
@@ -34,11 +34,11 @@ export default async function AboutPage() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "AboutPage",
-    "name": "About The Journal",
-    "description": "Learn about The Journal's editorial mission, philosophy, and team.",
+    "name": "About E-Wakku",
+    "description": "Learn about E-Wakku's editorial mission, philosophy, and team.",
     "publisher": {
       "@type": "Organization",
-      "name": "The Journal Publishing",
+      "name": "E-Wakku Publishing",
       "logo": {
         "@type": "ImageObject",
         "url": "https://e-wakku.com/logo.png",
@@ -46,7 +46,7 @@ export default async function AboutPage() {
     },
     "mainEntity": {
       "@type": "Organization",
-      "name": "The Journal",
+      "name": "E-Wakku",
       "foundingDate": "2024",
       "knowsAbout": ["Culture", "Design", "Aesthetic Living", "In-depth Journalism"],
     },
