@@ -40,6 +40,8 @@ const securityHeaders = [
       "font-src 'self' https://fonts.gstatic.com",
       `img-src 'self' data: blob: https://${supabaseHostname} https://*.supabase.co`,
       `connect-src 'self' https://${supabaseHostname} https://*.supabase.co`,
+      `frame-src 'self' https://${supabaseHostname}`,
+      "object-src 'none'",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self'",
