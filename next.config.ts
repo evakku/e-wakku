@@ -1,16 +1,24 @@
 import type { NextConfig } from "next";
 
 function getSupabaseHostname(): string {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return "*.supabase.co";
+  const rawUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (!rawUrl) return "*.supabase.co";
   try {
-    return new URL(url).hostname;
+    const parsed = new URL(rawUrl);
+    if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+      // Validate RFC 1123 domain characters to prevent header injection
+      if (/^[a-zA-Z0-9.-]+$/.test(parsed.hostname)) {
+        return parsed.hostname;
+      }
+    }
   } catch {
-    return "*.supabase.co";
+    // Malformed URL fallback
   }
+  return "*.supabase.co";
 }
 
 const supabaseHostname = getSupabaseHostname();
+const isDev = process.env.NODE_ENV !== "production";
 
 const securityHeaders = [
   // Prevent browsers from MIME-sniffing a response away from the declared content-type
@@ -29,17 +37,17 @@ const securityHeaders = [
     key: "Permissions-Policy",
     value: "camera=(), microphone=(), geolocation=()",
   },
-  // Basic Content-Security-Policy — tighten further once you know all sources
+  // Content-Security-Policy — scoped strictly to required origins
   {
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      // Next.js inline scripts & framer-motion require 'unsafe-inline' for now
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      // 'unsafe-inline' is required for Next.js App Router inline script hydration; 'unsafe-eval' is only needed for dev HMR / source maps
+      `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ""}`,
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com",
-      `img-src 'self' data: blob: https://${supabaseHostname} https://*.supabase.co`,
-      `connect-src 'self' https://${supabaseHostname} https://*.supabase.co`,
+      `img-src 'self' data: blob: https://${supabaseHostname}`,
+      `connect-src 'self' https://${supabaseHostname} wss://${supabaseHostname}`,
       `frame-src 'self' https://${supabaseHostname}`,
       "object-src 'none'",
       "frame-ancestors 'self'",
@@ -58,11 +66,6 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: supabaseHostname,
-        pathname: "/storage/v1/object/public/**",
-      },
-      {
-        protocol: "https",
-        hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
     ],
