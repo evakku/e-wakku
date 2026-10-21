@@ -269,11 +269,15 @@ export default function AdminLayout({
                       <li key={item.href} role="none">
                         <Link
                           href={item.href}
-                          onClick={(e) =>
+                          onClick={(e) => {
+                            if (isActive) {
+                              closeDrawer();
+                              return;
+                            }
                             handleLinkClick(e, item.href, () => {
                               setTimeout(closeDrawer, 120);
-                            })
-                          }
+                            });
+                          }}
                           aria-current={isActive ? "page" : undefined}
                           aria-busy={isPending ? "true" : undefined}
                           aria-label={isPending ? `${item.label} (loading...)` : undefined}

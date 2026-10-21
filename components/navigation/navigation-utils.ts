@@ -45,10 +45,14 @@ export function shouldInterceptClick(options: ShouldInterceptClickOptions): bool
     return false;
   }
 
+  // In-page hash anchors (e.g. #section or /about#section while on /about)
   if (href.startsWith("#")) return false;
 
-  // Active route check
-  if (normalizeRoute(href) === normalizeRoute(currentPath)) {
+  const hrefBase = href.split("#")[0];
+  const currentBase = currentPath.split("#")[0];
+
+  // If the destination without hash is the same as the current path without hash, do not show loading state
+  if (normalizeRoute(hrefBase) === normalizeRoute(currentBase)) {
     return false;
   }
 
@@ -57,16 +61,17 @@ export function shouldInterceptClick(options: ShouldInterceptClickOptions): bool
 
 export function normalizeRoute(path: string): string {
   if (!path) return "/";
-  const trimmed = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
-  return trimmed;
+  const [pathname, search] = path.split("?");
+  const trimmed = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+  return search !== undefined ? `${trimmed}?${search}` : trimmed;
 }
 
 export function isRoutePending(pendingHref: string | null, targetHref: string): boolean {
   if (!pendingHref) return false;
   if (pendingHref === targetHref) return true;
 
-  const pendingBase = pendingHref.split("?")[0].split("#")[0];
-  const targetBase = targetHref.split("?")[0].split("#")[0];
+  const pendingBase = normalizeRoute(pendingHref.split("?")[0].split("#")[0]);
+  const targetBase = normalizeRoute(targetHref.split("?")[0].split("#")[0]);
 
   if (targetBase === "/") {
     return pendingBase === "/";

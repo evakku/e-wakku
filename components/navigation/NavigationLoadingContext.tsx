@@ -86,6 +86,10 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
     if (!isTransitionPending && pendingHref) {
       const fallback = setTimeout(() => {
         setPendingHref(null);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
       }, 400);
       return () => clearTimeout(fallback);
     }
@@ -118,11 +122,12 @@ export function NavigationLoadingProvider({ children }: { children: ReactNode })
 
       setPendingHref(href);
 
-      // Safety timeout: auto-clear after 8 seconds if navigation is aborted or hangs
+      // Safety timeout: auto-clear after 20 seconds if navigation is aborted or hangs indefinitely
+      // (20s avoids prematurely clearing legitimate slow connections or cold starts)
       timeoutRef.current = setTimeout(() => {
         setPendingHref(null);
         timeoutRef.current = null;
-      }, 8000);
+      }, 20000);
 
       startTransition(() => {
         router.push(href);

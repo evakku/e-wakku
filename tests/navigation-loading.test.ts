@@ -132,13 +132,28 @@ describe("shouldInterceptClick (Navigation Loading Safety)", () => {
     ).toBe(false);
   });
 
-  it("ignores same-page hash anchors", () => {
+  it("ignores same-page hash anchors with and without full path", () => {
     expect(
       shouldInterceptClick({
         href: "#features",
         currentPath: "/",
       })
     ).toBe(false);
+
+    expect(
+      shouldInterceptClick({
+        href: "/about#team",
+        currentPath: "/about",
+      })
+    ).toBe(false);
+
+    // But should intercept cross-page navigation with hash
+    expect(
+      shouldInterceptClick({
+        href: "/about#team",
+        currentPath: "/contact",
+      })
+    ).toBe(true);
   });
 
   it("ignores already defaultPrevented clicks", () => {
@@ -157,6 +172,11 @@ describe("isRoutePending (Destination Identification)", () => {
     expect(isRoutePending("/about", "/about")).toBe(true);
     expect(isRoutePending("/allIssues", "/allIssues")).toBe(true);
     expect(isRoutePending("/", "/")).toBe(true);
+  });
+
+  it("handles trailing slash equivalence in pending check", () => {
+    expect(isRoutePending("/about/", "/about")).toBe(true);
+    expect(isRoutePending("/about", "/about/")).toBe(true);
   });
 
   it("identifies matching destination with query parameters", () => {
@@ -181,5 +201,10 @@ describe("normalizeRoute", () => {
     expect(normalizeRoute("/about")).toBe("/about");
     expect(normalizeRoute("/")).toBe("/");
     expect(normalizeRoute("")).toBe("/");
+  });
+
+  it("normalizes trailing slashes before query parameters", () => {
+    expect(normalizeRoute("/allIssues/?page=2")).toBe("/allIssues?page=2");
+    expect(normalizeRoute("/allIssues?page=2")).toBe("/allIssues?page=2");
   });
 });

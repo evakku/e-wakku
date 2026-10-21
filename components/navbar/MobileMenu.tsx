@@ -91,12 +91,16 @@ export default function MobileMenu({
                 >
                   <Link
                     href={link.href}
-                    onClick={(e) =>
+                    onClick={(e) => {
+                      if (isActive) {
+                        onClose();
+                        return;
+                      }
                       handleLinkClick(e, link.href, () => {
                         // Brief delay allows the user to see the loading feedback before closing
                         setTimeout(onClose, 120);
-                      })
-                    }
+                      });
+                    }}
                     aria-current={isActive ? "page" : undefined}
                     aria-busy={isPending ? "true" : undefined}
                     aria-label={isPending ? `${link.label} (loading...)` : undefined}
