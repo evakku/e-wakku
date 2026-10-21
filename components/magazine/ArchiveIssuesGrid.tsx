@@ -4,7 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, Inbox, ArrowRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
 import { staggerContainer } from "@/lib/animations";
 import IssueArchiveCard from "./IssueArchiveCard";
 import type { Issue } from "./types";
@@ -43,7 +43,6 @@ export default function ArchiveIssuesGrid({
   showViewAll = false,
   viewAllHref = "/allIssues",
   viewAllLabel = "All Issues",
-  viewAllPlacement = "header",
   enableFilters = !showViewAll,
   enablePagination = !showViewAll,
 }: ArchiveIssuesGridProps) {
@@ -159,7 +158,7 @@ export default function ArchiveIssuesGrid({
       {/* Header Bar with Filter Tabs & Result Count */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full border-b border-border/20 pb-3 mb-3">
         {/* Dynamic Year Filter Tabs */}
-        {availableYears.length > 1 && (
+        {enableFilters && availableYears.length > 1 && (
           <div
             className="flex flex-wrap items-center gap-2"
             role="tablist"
@@ -225,7 +224,7 @@ export default function ArchiveIssuesGrid({
           </motion.div>
 
           {/* Pagination Controls */}
-          {totalPages > 1 && (
+          {enablePagination && totalPages > 1 && (
             <div className="mt-16 flex flex-wrap items-center justify-center gap-2">
               <button
                 type="button"

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
+import { BookOpen } from "lucide-react";
 
 interface IssueCoverProps {
   title: string;
@@ -10,6 +12,8 @@ interface IssueCoverProps {
 
 export default function IssueCover({ title, coverImage }: IssueCoverProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   // slideRight motion parameters
   const slideRightVariants = {
@@ -37,19 +41,32 @@ export default function IssueCover({ title, coverImage }: IssueCoverProps) {
           style={{ contentVisibility: "auto" }}
         >
           {/* Aspect ratio container: Portrait 3:4 aspect ratio */}
-          <div className="relative aspect-[3/4] w-full overflow-hidden">
-            {coverImage ? (
-              <Image
-                src={coverImage}
-                alt={`Cover art of the issue: ${title}`}
-                fill
-                priority
-                sizes="(max-width: 768px) 290px, 320px"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              />
+          <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100">
+            {coverImage && !imageError ? (
+              <>
+                {!imageLoaded && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 skeleton-shimmer z-0"
+                  />
+                )}
+                <Image
+                  src={coverImage}
+                  alt={`Cover art of the issue: ${title}`}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 290px, 320px"
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  className={`object-cover transition-all duration-700 ease-out group-hover:scale-[1.03] ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </>
             ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-slate-400 text-sm font-light">
-                No Cover Image
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400 text-sm font-light">
+                <BookOpen className="size-6 text-slate-400 stroke-[1.5]" />
+                <span>No Cover Image</span>
               </div>
             )}
 

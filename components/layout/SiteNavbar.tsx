@@ -1,12 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Navbar from "@/components/navbar/Navbar";
 import ArchiveSearchInput from "@/components/navbar/ArchiveSearchInput";
 import { UserCircle } from "lucide-react";
 import logo from "@/src/assets/logo.png";
 import { Suspense } from "react";
+import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
 
 /**
  * SiteNavbar
@@ -29,7 +30,7 @@ const NAV_LINKS = [
 
 export default function SiteNavbar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const { startNavigation } = useNavigationLoading();
 
   return (
     <Navbar
@@ -37,7 +38,7 @@ export default function SiteNavbar() {
       links={[...NAV_LINKS]}
       currentPath={pathname}
       profileIcon={<UserCircle size={18} strokeWidth={1.5} aria-hidden />}
-      onProfileClick={() => router.push("/admin")}
+      onProfileClick={() => startNavigation("/admin")}
       searchSlot={
         <Suspense fallback={<div className="w-full h-9" />}>
           <ArchiveSearchInput />
