@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
@@ -36,6 +37,8 @@ function formatMonthYear(issue: Issue): string | null {
 
 export default function IssueArchiveCard({ issue, className, from }: IssueArchiveCardProps) {
   const shouldReduceMotion = useReducedMotion() ?? false;
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const imageUrl = getImageUrl(issue.coverImage);
   const slugStr = typeof issue.slug === "string" ? issue.slug : issue.slug?.current || issue._id || "";
   const dateStr = formatMonthYear(issue);
@@ -55,15 +58,26 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
         <div
           className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl bg-[#F8FAFC] border border-slate-200/70 flex items-center justify-center p-3 transition-colors duration-300 group-hover:border-slate-300"
         >
-          {imageUrl ? (
-            <Image
-              src={imageUrl}
-              alt={`Cover of ${issue.title}`}
-              fill
-
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
-              className="object-contain object-center p-2 transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-            />
+          {imageUrl && !imageError ? (
+            <>
+              {!imageLoaded && (
+                <div
+                  aria-hidden="true"
+                  className="absolute inset-0 skeleton-shimmer z-0"
+                />
+              )}
+              <Image
+                src={imageUrl}
+                alt={`Cover of ${issue.title}`}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageError(true)}
+                className={`object-contain object-center p-2 transition-all duration-500 ease-out group-hover:scale-[1.03] ${
+                  imageLoaded ? "opacity-100" : "opacity-0"
+                }`}
+              />
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-xs font-light text-slate-400">
               <BookOpen className="size-6 text-slate-400 stroke-[1.5]" />

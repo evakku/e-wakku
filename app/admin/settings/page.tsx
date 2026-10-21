@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Settings, Shield, Sliders } from "lucide-react";
+import { Shield, Sliders } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Settings — Admin",

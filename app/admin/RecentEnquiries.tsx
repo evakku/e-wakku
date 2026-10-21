@@ -30,7 +30,7 @@ export default function RecentEnquiries({
 }) {
   const [enquiries, setEnquiries] = useState(initialEnquiries);
   const [selectedEnquiry, setSelectedEnquiry] = useState<ContactEnquiry | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   const showToast = (message: string, type: "success" | "error") => {

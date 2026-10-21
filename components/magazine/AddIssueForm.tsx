@@ -48,7 +48,7 @@ export function AddIssueForm() {
   const [description, setDescription] = useState("");
   const [month, setMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
   const [year, setYear] = useState(String(currentYear));
-  const [isDraft, setIsDraft] = useState(false);
+  const [isDraft, setIsDraft] = useState(true);
   const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,6 +69,7 @@ export function AddIssueForm() {
         setPdfFile(null);
         setTitle("");
         setDescription("");
+        setIsDraft(true);
       });
       if (coverInputRef.current) coverInputRef.current.value = "";
       if (pdfInputRef.current) pdfInputRef.current.value = "";

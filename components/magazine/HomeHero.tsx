@@ -21,6 +21,8 @@ export default function HomeHero({ issue }: HomeHeroProps) {
   const imageUrl = getImageUrl(issue.coverImage);
   const slugStr = typeof issue.slug === "string" ? issue.slug : issue.slug?.current || "";
   const [isDownloading, setIsDownloading] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const handleDownload = async () => {
     if (!issue.pdfUrl || isDownloading) return;
@@ -134,16 +136,27 @@ export default function HomeHero({ issue }: HomeHeroProps) {
       >
         <Link href={`/issue/${slugStr}?from=home`} className="group block focus:outline-none w-full max-w-[250px] sm:max-w-[290px] lg:max-w-[320px] mx-auto">
           <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-md group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-all duration-500 ease-out group-hover:shadow-xl">
-            {imageUrl ? (
-              <Image
-                src={imageUrl}
-                alt={`Cover of ${issue.title}`}
-                fill
-                priority
-
-                sizes="(max-width: 768px) 290px, 320px"
-                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
-              />
+            {imageUrl && !imageError ? (
+              <>
+                {!imageLoaded && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 skeleton-shimmer z-0"
+                  />
+                )}
+                <Image
+                  src={imageUrl}
+                  alt={`Cover of ${issue.title}`}
+                  fill
+                  priority
+                  sizes="(max-width: 768px) 290px, 320px"
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  className={`object-cover transition-all duration-700 ease-out group-hover:scale-[1.03] ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
+                />
+              </>
             ) : (
               <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-light">
                 No Cover Image

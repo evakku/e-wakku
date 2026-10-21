@@ -7,6 +7,8 @@ import NavItem from "./NavItem";
 import MobileMenu from "./MobileMenu";
 import Container from "@/components/layout/Container";
 import type { NavbarProps } from "./types";
+import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
+import Spinner from "@/components/ui/spinner";
 
 /**
  * Navbar
@@ -20,22 +22,10 @@ import type { NavbarProps } from "./types";
  * On mobile (< 768 px) the centre nav links are replaced with a hamburger
  * button that reveals an animated slide-down MobileMenu.
  *
- * Usage:
- * ```tsx
- * import Navbar from "@/components/navbar/Navbar";
- *
- * <Navbar
- *   logo={<YourLogo />}
- *   links={[
- *     { label: "Home",    href: "/" },
- *     { label: "About",   href: "/about" },
- *     { label: "Contact", href: "/contact" },
- *   ]}
- *   currentPath={pathname}          // from usePathname()
- *   profileIcon={<UserCircle />}
- *   onProfileClick={() => router.push("/admin")}
- * />
- * ```
+ * Features:
+ * - Persistent hairline progress bar on top header when navigating
+ * - Profile button loading feedback with inline spinner & disabled state
+ * - Zero layout shifts across desktop & mobile
  */
 export default function Navbar({
   logo,
@@ -48,9 +38,12 @@ export default function Navbar({
 }: NavbarProps) {
   const [isMobileMenuOpen, setMobileMenuOpen] = useState(false);
   const menuButtonId = useId();
+  const { isNavigating, isHrefPending, handleLinkClick } = useNavigationLoading();
 
   const toggleMenu = useCallback(() => setMobileMenuOpen((prev) => !prev), []);
   const closeMenu = useCallback(() => setMobileMenuOpen(false), []);
+
+  const isProfilePending = isHrefPending("/admin");
 
   return (
     /*
@@ -62,6 +55,19 @@ export default function Navbar({
       className="relative sticky top-0 z-50 w-full bg-white border-b border-[#E5E7EB]"
       style={{ transition: "box-shadow 300ms ease" }}
     >
+      {/* ── Persistent Navigation Hairline Indicator ───────────────── */}
+      {isNavigating && (
+        <div
+          role="progressbar"
+          aria-label="Navigation in progress"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden pointer-events-none z-30"
+        >
+          <div className="h-full w-full nav-progress-bar" />
+        </div>
+      )}
+
       {/* ── Inner layout ─────────────────────────────────────────────── */}
       <Container
         className="flex h-[72px] items-center justify-between"
@@ -70,6 +76,7 @@ export default function Navbar({
         {/* ── LEFT — Logo ──────────────────────────────────────────── */}
         <Link
           href="/"
+          onClick={(e) => handleLinkClick(e, "/")}
           aria-label="Go to homepage"
           className="shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2 rounded-sm"
         >
@@ -106,7 +113,9 @@ export default function Navbar({
             <button
               type="button"
               onClick={onProfileClick}
-              aria-label={profileAriaLabel}
+              disabled={isProfilePending}
+              aria-label={isProfilePending ? "Loading Admin Portal..." : profileAriaLabel}
+              aria-busy={isProfilePending ? "true" : undefined}
               className={[
                 "flex items-center justify-center",
                 "w-9 h-9 rounded-full",
@@ -116,9 +125,16 @@ export default function Navbar({
                 "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
                 "focus-visible:ring-offset-2",
                 "text-[#334155]",
+                isProfilePending
+                  ? "bg-[#F0FDF4] border-[#059669]/30 text-[#059669] cursor-wait opacity-90"
+                  : "",
               ].join(" ")}
             >
-              {profileIcon}
+              {isProfilePending ? (
+                <Spinner size="xs" color="emerald" label="Loading Admin Portal..." />
+              ) : (
+                profileIcon
+              )}
             </button>
           )}
 

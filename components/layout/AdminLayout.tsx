@@ -8,20 +8,18 @@ import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/src/assets/logo.png";
 import {
   LayoutDashboard,
-  BookOpen,
-  Archive,
-  Users,
   Settings,
   ChevronLeft,
   ChevronRight,
   Menu,
   X,
-  FilePlus,
   Files,
   BarChart3,
   Mail,
 } from "lucide-react";
 import type { AdminLayoutProps, AdminNavItem } from "./types";
+import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
+import Spinner from "@/components/ui/spinner";
 
 /**
  * AdminLayout
@@ -41,6 +39,7 @@ import type { AdminLayoutProps, AdminNavItem } from "./types";
  * - Responsive mobile drawer with overlay
  * - Active route detection via usePathname
  * - Role-based nav items passed via props
+ * - Immediate loading feedback on nav link clicks and top bar hairline
  *
  * Usage:
  * ```tsx
@@ -71,6 +70,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { isNavigating, isHrefPending, handleLinkClick } = useNavigationLoading();
 
   const toggleCollapsed = useCallback(() => setCollapsed((p) => !p), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -99,6 +99,7 @@ export default function AdminLayout({
           {!collapsed ? (
             <Link
               href="/admin"
+              onClick={(e) => handleLinkClick(e, "/admin")}
               className="relative h-9 w-28 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
               aria-label="Admin Dashboard"
             >
@@ -114,6 +115,7 @@ export default function AdminLayout({
           ) : (
             <Link
               href="/admin"
+              onClick={(e) => handleLinkClick(e, "/admin")}
               className="relative h-7 w-7 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
               aria-label="Admin Dashboard"
             >
@@ -145,11 +147,16 @@ export default function AdminLayout({
                 item.isActive ?? (item.href === "/admin"
                   ? pathname === "/admin"
                   : pathname.startsWith(item.href));
+              const isPending = isHrefPending(item.href);
+
               return (
                 <li key={item.href} role="none">
                   <Link
                     href={item.href}
+                    onClick={(e) => handleLinkClick(e, item.href)}
                     aria-current={isActive ? "page" : undefined}
+                    aria-busy={isPending ? "true" : undefined}
+                    aria-label={isPending ? `${item.label} (loading...)` : undefined}
                     className={[
                       "flex items-center gap-3 px-3 py-2 rounded-md",
                       "text-sm transition-colors duration-200 outline-none",
@@ -157,17 +164,36 @@ export default function AdminLayout({
                       collapsed ? "justify-center" : "",
                       isActive
                         ? "bg-[#059669]/8 text-[#059669] font-medium"
-                        : "text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A]",
+                        : isPending
+                          ? "bg-[#059669]/8 text-[#059669] font-medium"
+                          : "text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A]",
                     ].join(" ")}
                     title={collapsed ? item.label : undefined}
                   >
-                    {item.icon && (
-                      <span className="shrink-0" aria-hidden>
-                        {item.icon}
-                      </span>
-                    )}
-                    {!collapsed && (
-                      <span className="truncate">{item.label}</span>
+                    {collapsed ? (
+                      isPending ? (
+                        <Spinner size="xs" color="emerald" />
+                      ) : (
+                        item.icon && (
+                          <span className="shrink-0" aria-hidden>
+                            {item.icon}
+                          </span>
+                        )
+                      )
+                    ) : (
+                      <>
+                        {item.icon && (
+                          <span className="shrink-0" aria-hidden>
+                            {item.icon}
+                          </span>
+                        )}
+                        <span className="truncate">{item.label}</span>
+                        {isPending && (
+                          <span className="ml-auto flex items-center shrink-0" aria-hidden="true">
+                            <Spinner size="xs" color="emerald" />
+                          </span>
+                        )}
+                      </>
                     )}
                   </Link>
                 </li>
@@ -206,7 +232,7 @@ export default function AdminLayout({
               <div className="flex h-[64px] items-center justify-between border-b border-[#E2E8F0] px-4">
                 <Link
                   href="/admin"
-                  onClick={closeDrawer}
+                  onClick={(e) => handleLinkClick(e, "/admin", closeDrawer)}
                   className="relative h-9 w-28 block outline-none focus-visible:ring-2 focus-visible:ring-[#059669] rounded-sm"
                   aria-label="Admin Dashboard"
                 >
@@ -237,19 +263,33 @@ export default function AdminLayout({
                       item.isActive ?? (item.href === "/admin"
                         ? pathname === "/admin"
                         : pathname.startsWith(item.href));
+                    const isPending = isHrefPending(item.href);
+
                     return (
                       <li key={item.href} role="none">
                         <Link
                           href={item.href}
-                          onClick={closeDrawer}
+                          onClick={(e) => {
+                            if (isActive) {
+                              closeDrawer();
+                              return;
+                            }
+                            handleLinkClick(e, item.href, () => {
+                              setTimeout(closeDrawer, 120);
+                            });
+                          }}
                           aria-current={isActive ? "page" : undefined}
+                          aria-busy={isPending ? "true" : undefined}
+                          aria-label={isPending ? `${item.label} (loading...)` : undefined}
                           className={[
                             "flex items-center gap-3 px-3 py-2.5 rounded-md",
                             "text-sm transition-colors duration-200 outline-none",
                             "focus-visible:ring-2 focus-visible:ring-[#059669]",
                             isActive
                               ? "bg-[#059669]/8 text-[#059669] font-medium"
-                              : "text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A]",
+                              : isPending
+                                ? "bg-[#059669]/8 text-[#059669] font-medium"
+                                : "text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A]",
                           ].join(" ")}
                         >
                           {item.icon && (
@@ -257,7 +297,12 @@ export default function AdminLayout({
                               {item.icon}
                             </span>
                           )}
-                          <span>{item.label}</span>
+                          <span className="truncate">{item.label}</span>
+                          {isPending && (
+                            <span className="ml-auto flex items-center shrink-0" aria-hidden="true">
+                              <Spinner size="xs" color="emerald" />
+                            </span>
+                          )}
                         </Link>
                       </li>
                     );
@@ -272,7 +317,20 @@ export default function AdminLayout({
       {/* ── Main column ──────────────────────────────────────────────── */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 flex h-[64px] items-center gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:px-6">
+        <header className="sticky top-0 z-30 relative flex h-[64px] items-center gap-4 border-b border-[#E2E8F0] bg-white px-4 sm:px-6">
+          {/* Hairline indicator */}
+          {isNavigating && (
+            <div
+              role="progressbar"
+              aria-label="Navigation in progress"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              className="absolute bottom-0 left-0 right-0 h-[2px] overflow-hidden pointer-events-none z-30"
+            >
+              <div className="h-full w-full nav-progress-bar" />
+            </div>
+          )}
+
           {/* Mobile hamburger */}
           <button
             type="button"

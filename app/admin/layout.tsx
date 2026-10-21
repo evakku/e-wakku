@@ -22,6 +22,8 @@ import { logoutAdmin } from "@/app/admin/actions/auth";
  * If Server Component data needs to flow in, wrap only AdminLayout in a
  * client boundary and keep this file as a Server Component.
  */
+import SignOutButton from "@/components/admin/SignOutButton";
+
 export default function AdminGroupLayout({
   children,
 }: {
@@ -42,12 +44,7 @@ export default function AdminGroupLayout({
     <AdminLayout
       headerAction={
         <form action={logoutAdmin}>
-          <button
-            type="submit"
-            className="text-sm font-medium text-red-600 hover:text-red-700 px-3 py-1.5 rounded-md hover:bg-red-50 transition-colors"
-          >
-            Sign Out
-          </button>
+          <SignOutButton />
         </form>
       }
     >

@@ -641,6 +641,54 @@
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* ── Editorial Skeleton Shimmer ────────────────────────────────── */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #F1F5F9 0%,
+    #E2E8F0 45%,
+    #F8FAFC 55%,
+    #F1F5F9 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
+}
+
+/* ── Navigation Progress Hairline Bar ──────────────────────────── */
+@keyframes nav-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.nav-progress-bar {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #059669 35%,
+    #10B981 65%,
+    transparent 100%
+  );
+  animation: nav-progress 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+
+
 /* ── Reduce motion for accessibility ───────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
 
