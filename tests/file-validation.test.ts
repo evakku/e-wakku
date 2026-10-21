@@ -3,7 +3,6 @@ import {
   validateCoverImageFile,
   validatePdfDocumentFile,
   MAX_COVER_IMAGE_SIZE,
-  MAX_PDF_FILE_SIZE,
 } from "@/lib/validation/file-upload";
 
 describe("File Upload Validation (BE-04 Security)", () => {

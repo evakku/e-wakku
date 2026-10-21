@@ -6,7 +6,7 @@ import { useActionState, useState } from "react";
 import { loginAdmin, LoginState } from "@/app/admin/actions/auth";
 import logo from "@/src/assets/logo.png";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ArrowLeft, ShieldCheck, Loader2 } from "lucide-react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -132,12 +132,19 @@ export default function AdminLoginPage() {
                 <button
                   type="submit"
                   disabled={isPending}
-                  className="w-full py-4 rounded-lg font-['Inter'] text-[20px] font-medium text-white flex items-center justify-center gap-2 group transition-all duration-200 bg-[#059669] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full h-14 rounded-lg font-['Inter'] text-[18px] sm:text-[20px] font-medium text-white flex items-center justify-center gap-2 group transition-all duration-200 bg-[#059669] hover:bg-[#047857] active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
                   style={{ boxShadow: "inset 0 1px 0 0 rgba(255, 255, 255, 0.15)" }}
                 >
-                  <span>{isPending ? "Signing in..." : "Continue to Dashboard"}</span>
-                  {!isPending && (
-                    <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform" />
+                  {isPending ? (
+                    <>
+                      <Loader2 size={22} className="animate-spin shrink-0" />
+                      <span>Signing in...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Continue to Dashboard</span>
+                      <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform shrink-0" />
+                    </>
                   )}
                 </button>
               </div>

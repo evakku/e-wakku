@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition, useRef } from "react";
+import { useEffect, useState, useTransition, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw, Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -29,7 +29,7 @@ export default function RealtimeAnalyticsListener({
     });
   };
 
-  const debouncedRefresh = () => {
+  const debouncedRefresh = useCallback(() => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
@@ -39,7 +39,7 @@ export default function RealtimeAnalyticsListener({
         setLastSynced(new Date());
       });
     }, 3000);
-  };
+  }, [router]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -88,7 +88,7 @@ export default function RealtimeAnalyticsListener({
       }
       supabase.removeChannel(channel);
     };
-  }, [router]);
+  }, [debouncedRefresh]);
 
   if (!showBadge) return null;
 

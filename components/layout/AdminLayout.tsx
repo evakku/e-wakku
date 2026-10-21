@@ -8,15 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import logo from "@/src/assets/logo.png";
 import {
   LayoutDashboard,
-  BookOpen,
-  Archive,
-  Users,
   Settings,
   ChevronLeft,
   ChevronRight,
   Menu,
   X,
-  FilePlus,
   Files,
   BarChart3,
   Mail,

@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Section, Container } from "@/components/layout";
 import ArchiveIssuesGrid from "@/components/magazine/ArchiveIssuesGrid";
-import LoadingSkeleton from "@/components/magazine/LoadingSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { getAllPublishedIssues } from "@/lib/queries/issue";
 import { toMagazineIssue } from "@/lib/queries/issue-adapter";
 
@@ -45,7 +45,27 @@ export default async function AllIssuesPage() {
         className="!pt-0 !mt-0"
       >
         <Container size="lg">
-          <Suspense fallback={<LoadingSkeleton />}>
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="flex flex-col rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm gap-4"
+                  >
+                    <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+                    <Skeleton className="h-6 w-4/5 mt-1" />
+                    <div className="flex flex-col gap-2">
+                      <Skeleton className="h-3.5 w-full" />
+                      <Skeleton className="h-3.5 w-3/4" />
+                    </div>
+                    <Skeleton className="h-3.5 w-24 mt-1" />
+                    <Skeleton className="h-9 w-28 rounded-xl mt-2" />
+                  </div>
+                ))}
+              </div>
+            }
+          >
             <ArchiveIssuesGrid issues={issues} />
           </Suspense>
         </Container>

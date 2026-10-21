@@ -2,7 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import type { Variants } from "framer-motion";
-import { DisplayXL, LabelCaps, BodyLg } from "@/src/components/ui/typography";
+import { DisplayXL, BodyLg } from "@/src/components/ui/typography";
 
 interface AboutHeroProps {
   title: string;
