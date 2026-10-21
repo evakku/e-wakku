@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { MobileMenuProps } from "./types";
+import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
+import Spinner from "@/components/ui/spinner";
 
 /**
  * MobileMenu
@@ -16,6 +18,7 @@ import type { MobileMenuProps } from "./types";
  *  - The panel slides in from y -8 → 0 and fades opacity 0 → 1 on open,
  *    reverses on close.
  *  - Each nav item staggers in with a small delay for a polished feel.
+ *  - When tapped, displays inline loading spinner on the active row before closing.
  */
 
 const panelVariants = {
@@ -59,6 +62,8 @@ export default function MobileMenu({
   currentPath,
   onClose,
 }: MobileMenuProps) {
+  const { isHrefPending, handleLinkClick } = useNavigationLoading();
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -76,6 +81,8 @@ export default function MobileMenu({
           <ul role="list" className="flex flex-col px-4 py-3 gap-0.5">
             {links.map((link) => {
               const isActive = currentPath === link.href;
+              const isPending = isHrefPending(link.href);
+
               return (
                 <motion.li
                   key={link.href}
@@ -84,34 +91,55 @@ export default function MobileMenu({
                 >
                   <Link
                     href={link.href}
-                    onClick={onClose}
+                    onClick={(e) =>
+                      handleLinkClick(e, link.href, () => {
+                        // Brief delay allows the user to see the loading feedback before closing
+                        setTimeout(onClose, 120);
+                      })
+                    }
                     aria-current={isActive ? "page" : undefined}
+                    aria-busy={isPending ? "true" : undefined}
+                    aria-label={isPending ? `${link.label} (loading...)` : undefined}
                     className={[
-                      "flex items-center w-full px-3 py-3",
+                      "flex items-center justify-between w-full px-3 py-3",
                       "text-sm font-normal rounded-md",
                       "transition-colors duration-200 ease-in-out",
                       "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
                       "focus-visible:ring-inset",
                       isActive
-                        ? "text-[#059669] bg-[#059669]/5"
-                        : "text-[#334155] hover:text-[#059669] hover:bg-[#F8FAFC]",
+                        ? "text-[#059669] bg-[#059669]/5 font-medium"
+                        : isPending
+                          ? "text-[#059669] bg-[#059669]/5 font-medium"
+                          : "text-[#334155] hover:text-[#059669] hover:bg-[#F8FAFC]",
                     ].join(" ")}
                   >
-                    {/* Active indicator dot */}
-                    <motion.span
-                      aria-hidden="true"
-                      className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full"
-                      animate={{
-                        backgroundColor: isActive ? "rgba(5, 150, 105, 1)" : "rgba(5, 150, 105, 0)",
-                        scale: isActive ? 1 : 0.6,
-                      }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 400,
-                        damping: 20,
-                      }}
-                    />
-                    {link.label}
+                    <div className="flex items-center">
+                      {/* Active indicator dot */}
+                      <motion.span
+                        aria-hidden="true"
+                        className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full"
+                        animate={{
+                          backgroundColor:
+                            isActive || isPending
+                              ? "rgba(5, 150, 105, 1)"
+                              : "rgba(5, 150, 105, 0)",
+                          scale: isActive || isPending ? 1 : 0.6,
+                        }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 400,
+                          damping: 20,
+                        }}
+                      />
+                      <span>{link.label}</span>
+                    </div>
+
+                    {/* Inline spinner for pending state */}
+                    {isPending && (
+                      <span className="flex items-center text-[#059669] shrink-0" aria-hidden="true">
+                        <Spinner size="xs" color="emerald" />
+                      </span>
+                    )}
                   </Link>
                 </motion.li>
               );

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Noto_Serif } from "next/font/google";
 import "./globals.css";
+import { NavigationLoadingProvider } from "@/components/navigation/NavigationLoadingContext";
 
 /**
  * Root Layout — pure shell
@@ -52,7 +53,9 @@ export default function RootLayout({
       className={`${inter.variable} ${notoSerif.variable} h-full antialiased`}
       data-scroll-behavior="smooth"
     >
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <NavigationLoadingProvider>{children}</NavigationLoadingProvider>
+      </body>
     </html>
   );
 }

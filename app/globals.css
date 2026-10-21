@@ -663,6 +663,32 @@
   animation: shimmer 1.8s ease-in-out infinite;
 }
 
+/* ── Navigation Progress Hairline Bar ──────────────────────────── */
+@keyframes nav-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.nav-progress-bar {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #059669 35%,
+    #10B981 65%,
+    transparent 100%
+  );
+  animation: nav-progress 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+
+
 /* ── Reduce motion for accessibility ───────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
 
