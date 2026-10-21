@@ -22,8 +22,8 @@ export default function IssueDetailsView({ issue }: IssueDetailsViewProps) {
   const from = searchParams.get("from");
   const hasTrackedView = useRef(false);
 
-  const backHref = from === "home" ? "/" : "/allIssues";
-  const backLabel = from === "home" ? "Home" : "All Issues";
+  const backHref = from === "home" ? "/" : from === "about" ? "/about" : "/allIssues";
+  const backLabel = from === "home" ? "Home" : from === "about" ? "About" : "All Issues";
   useEffect(() => {
     if (issue?.id && !hasTrackedView.current) {
       hasTrackedView.current = true;

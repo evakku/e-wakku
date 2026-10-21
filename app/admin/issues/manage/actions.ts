@@ -89,12 +89,19 @@ export async function toggleDraftStatus(
   const supabase = auth.supabase;
   const newDraft = !currentDraft;
 
+  // When moving to draft, preserve existing published_at history.
+  // When publishing from draft, assign new published_at timestamp.
+  const updatePayload: { is_draft: boolean; published_at?: string } = {
+    is_draft: newDraft,
+  };
+
+  if (!newDraft) {
+    updatePayload.published_at = new Date().toISOString();
+  }
+
   const { error } = await supabase
     .from("issues")
-    .update({
-      is_draft: newDraft,
-      published_at: newDraft ? null : new Date().toISOString(),
-    })
+    .update(updatePayload)
     .eq("id", id);
 
   if (error) {
@@ -107,6 +114,7 @@ export async function toggleDraftStatus(
   revalidatePath("/archive");
   revalidatePath("/archives");
   revalidatePath("/issues");
+  revalidatePath("/about");
   revalidatePath("/");
   return {
     success: true,
@@ -168,6 +176,7 @@ export async function deleteIssue(id: string): Promise<ActionResult> {
   revalidatePath("/archive");
   revalidatePath("/archives");
   revalidatePath("/issues");
+  revalidatePath("/about");
   revalidatePath("/");
   return { success: true, message: "Issue deleted successfully" };
 }
@@ -228,11 +237,10 @@ export async function updateIssue(
     is_draft: parsed.data.isDraft,
   };
 
-  // If status changed from draft to published, ensure published_at is set
+  // If status changed from draft to published, ensure published_at is set.
+  // When moving to draft, preserve existing published_at history.
   if (currentIssue.is_draft && !parsed.data.isDraft) {
     updates.published_at = new Date().toISOString();
-  } else if (!currentIssue.is_draft && parsed.data.isDraft) {
-    updates.published_at = null;
   }
 
   // Handle optional new cover image
@@ -307,6 +315,7 @@ export async function updateIssue(
   revalidatePath("/archive");
   revalidatePath("/archives");
   revalidatePath("/issues");
+  revalidatePath("/about");
   revalidatePath("/");
 
   return { success: true, message: "Issue updated successfully!" };

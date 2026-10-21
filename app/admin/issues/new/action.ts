@@ -103,6 +103,7 @@ export async function createIssue(
   revalidatePath("/archive");
   revalidatePath("/archives");
   revalidatePath("/issues");
+  revalidatePath("/about");
   revalidatePath("/");
   return { success: true };
 }
