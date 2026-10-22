@@ -16,12 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     title: {
-      absolute: "E-Wakku | Premium Digital Magazine",
+      absolute: "E-Wakku | Malayalam Digital Magazine",
     },
-    description: "A curated collection of modern thought, culture, design, and editorial storytelling.",
+    description: "E-Wakku is a Malayalam digital magazine dedicated to digital literacy, curated thoughts, and meaningful ideas.",
     openGraph: {
-      title: "E-Wakku | Premium Digital Magazine",
-      description: "A curated collection of modern thought, culture, design, and editorial storytelling.",
+      title: "E-Wakku | Malayalam Digital Magazine",
+      description: "E-Wakku is a Malayalam digital magazine dedicated to digital literacy, curated thoughts, and meaningful ideas.",
       images: coverUrl ? [{ url: coverUrl, width: 1200, height: 857, alt: "Latest Issue Cover" }] : [],
       type: "website",
       siteName: "E-Wakku",
@@ -52,7 +52,8 @@ export default async function HomePage() {
     "@context": "https://schema.org",
     "@type": "Periodical",
     "name": "E-Wakku",
-    "description": "A curated collection of modern thought, culture, design, and editorial storytelling.",
+    "description": "E-Wakku is a Malayalam digital magazine dedicated to digital literacy, curated thoughts, and meaningful ideas.",
+    "inLanguage": "ml",
     "publisher": {
       "@type": "Organization",
       "name": "E-Wakku Publishing",

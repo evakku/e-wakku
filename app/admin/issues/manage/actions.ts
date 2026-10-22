@@ -193,6 +193,10 @@ const updateSchema = z.object({
 
 export type UpdateIssueState = ActionResult;
 
+function sanitizeStorageFileName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
 export async function updateIssue(
   prevState: UpdateIssueState,
   formData: FormData
@@ -243,6 +247,11 @@ export async function updateIssue(
     updates.published_at = new Date().toISOString();
   }
 
+  let newCoverPathToRollback: string | null = null;
+  let newPdfPathToRollback: string | null = null;
+  let oldCoverPathToDelete: string | null = null;
+  let oldPdfPathToDelete: string | null = null;
+
   // Handle optional new cover image
   const coverImage = formData.get("coverImage") as File | null;
   if (coverImage && coverImage.size > 0) {
@@ -250,24 +259,27 @@ export async function updateIssue(
     if (!coverValidation.valid) {
       return { error: coverValidation.error || "Invalid cover image." };
     }
-    const coverPath = `${crypto.randomUUID()}-${coverImage.name}`;
+    const safeCoverName = sanitizeStorageFileName(coverImage.name);
+    const coverPath = `${crypto.randomUUID()}-${safeCoverName}`;
     const { error: coverErr } = await supabase.storage
       .from("covers")
-      .upload(coverPath, coverImage);
+      .upload(coverPath, coverImage, {
+        contentType: coverImage.type || "image/png",
+        upsert: false,
+      });
 
     if (coverErr) {
       return { error: `Cover image upload failed: ${coverErr.message}` };
     }
 
+    newCoverPathToRollback = coverPath;
     const { data: coverUrlData } = supabase.storage
       .from("covers")
       .getPublicUrl(coverPath);
     updates.cover_image_url = coverUrlData.publicUrl;
 
-    // Clean up old cover
     if (currentIssue.cover_image_url) {
-      const oldCover = extractStoragePath(currentIssue.cover_image_url, "covers");
-      if (oldCover) await supabase.storage.from("covers").remove([oldCover]);
+      oldCoverPathToDelete = extractStoragePath(currentIssue.cover_image_url, "covers");
     }
   }
 
@@ -276,26 +288,35 @@ export async function updateIssue(
   if (pdfFile && pdfFile.size > 0) {
     const pdfValidation = await validatePdfDocumentFile(pdfFile);
     if (!pdfValidation.valid) {
+      if (newCoverPathToRollback) {
+        await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+      }
       return { error: pdfValidation.error || "Invalid PDF file." };
     }
-    const pdfPath = `${crypto.randomUUID()}-${pdfFile.name}`;
+    const safePdfName = sanitizeStorageFileName(pdfFile.name);
+    const pdfPath = `${crypto.randomUUID()}-${safePdfName}`;
     const { error: pdfErr } = await supabase.storage
       .from("issue-pdfs")
-      .upload(pdfPath, pdfFile);
+      .upload(pdfPath, pdfFile, {
+        contentType: "application/pdf",
+        upsert: false,
+      });
 
     if (pdfErr) {
+      if (newCoverPathToRollback) {
+        await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+      }
       return { error: `PDF upload failed: ${pdfErr.message}` };
     }
 
+    newPdfPathToRollback = pdfPath;
     const { data: pdfUrlData } = supabase.storage
       .from("issue-pdfs")
       .getPublicUrl(pdfPath);
     updates.pdf_url = pdfUrlData.publicUrl;
 
-    // Clean up old PDF
     if (currentIssue.pdf_url) {
-      const oldPdf = extractStoragePath(currentIssue.pdf_url, "issue-pdfs");
-      if (oldPdf) await supabase.storage.from("issue-pdfs").remove([oldPdf]);
+      oldPdfPathToDelete = extractStoragePath(currentIssue.pdf_url, "issue-pdfs");
     }
   }
 
@@ -306,7 +327,22 @@ export async function updateIssue(
     .eq("id", id);
 
   if (updateErr) {
+    // Rollback any newly uploaded files
+    if (newCoverPathToRollback) {
+      await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+    }
+    if (newPdfPathToRollback) {
+      await supabase.storage.from("issue-pdfs").remove([newPdfPathToRollback]);
+    }
     return { error: `Database update failed: ${updateErr.message}` };
+  }
+
+  // Clean up old files only after database write succeeds
+  if (oldCoverPathToDelete) {
+    await supabase.storage.from("covers").remove([oldCoverPathToDelete]);
+  }
+  if (oldPdfPathToDelete) {
+    await supabase.storage.from("issue-pdfs").remove([oldPdfPathToDelete]);
   }
 
   revalidatePath("/admin/issues/manage");

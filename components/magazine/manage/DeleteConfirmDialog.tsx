@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { Trash2, AlertCircle, Loader2 } from "lucide-react";
 import { deleteIssue, type Issue } from "@/app/admin/issues/manage/actions";
 
@@ -17,6 +17,17 @@ export function DeleteConfirmDialog({
 }: DeleteConfirmDialogProps) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  // Close dialog on Escape key press (WCAG 2.2 AA)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   function handleDelete() {
     startTransition(async () => {

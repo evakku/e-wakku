@@ -254,6 +254,7 @@ export default async function AdminDashboardPage() {
           <div className="flex items-center gap-5">
             <div className="w-16 h-20 rounded-md overflow-hidden bg-slate-800 shrink-0 border border-white/20 shadow-md">
               {latestPublished.cover_image_url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={latestPublished.cover_image_url}
                   alt={latestPublished.title}
@@ -294,7 +295,7 @@ export default async function AdminDashboardPage() {
           </div>
           <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
             <Link
-              href={`/issues/${latestPublished.id}`}
+              href={`/issue/${latestPublished.id}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs font-medium backdrop-blur-sm transition-all border border-white/10"
@@ -383,6 +384,7 @@ export default async function AdminDashboardPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-12 rounded bg-slate-100 overflow-hidden shrink-0 border border-[#E2E8F0]">
                             {issue.cover_image_url ? (
+                              /* eslint-disable-next-line @next/next/no-img-element */
                               <img
                                 src={issue.cover_image_url}
                                 alt={issue.title}

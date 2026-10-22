@@ -151,6 +151,7 @@ export function IssueTableRow({
             onClick={handleToggle}
             disabled={isPending}
             title={issue.is_draft ? "Publish issue" : "Move to draft"}
+            aria-label={issue.is_draft ? `Publish ${issue.title}` : `Move ${issue.title} to draft`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#059669] transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isPending ? (
@@ -167,6 +168,7 @@ export function IssueTableRow({
             type="button"
             onClick={onEdit}
             title="Edit issue"
+            aria-label={`Edit ${issue.title}`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A] transition-colors cursor-pointer"
           >
             <Pencil size={15} />
@@ -177,6 +179,7 @@ export function IssueTableRow({
             type="button"
             onClick={onDelete}
             title="Delete issue"
+            aria-label={`Delete ${issue.title}`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
           >
             <Trash2 size={15} />

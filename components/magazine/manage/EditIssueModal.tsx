@@ -7,6 +7,10 @@ import {
   type Issue,
   type UpdateIssueState,
 } from "@/app/admin/issues/manage/actions";
+import {
+  validateCoverImageFile,
+  validatePdfDocumentFile,
+} from "@/lib/validation/file-upload";
 
 const MONTHS = [
   "January",
@@ -50,6 +54,19 @@ export function EditIssueModal({
   const [newCover, setNewCover] = useState<File | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const [newPdf, setNewPdf] = useState<File | null>(null);
+  const [coverError, setCoverError] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  // Close modal on Escape key press (WCAG 2.2 AA)
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     if (newCover) {
@@ -67,6 +84,34 @@ export function EditIssueModal({
       onClose();
     }
   }, [state.success, state.message, onClose, onSuccess]);
+
+  async function handleCoverChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const validation = await validateCoverImageFile(f);
+    if (!validation.valid) {
+      setCoverError(validation.error || "Please select a supported cover image format.");
+      setNewCover(null);
+      e.target.value = "";
+      return;
+    }
+    setCoverError(null);
+    setNewCover(f);
+  }
+
+  async function handlePdfChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const validation = await validatePdfDocumentFile(f);
+    if (!validation.valid) {
+      setPdfError(validation.error || "Please select a valid PDF file.");
+      setNewPdf(null);
+      e.target.value = "";
+      return;
+    }
+    setPdfError(null);
+    setNewPdf(f);
+  }
 
   return (
     <div
@@ -196,7 +241,7 @@ export function EditIssueModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Replace Cover */}
               <div className="flex flex-col gap-1.5">
-                <span className="text-xs text-[#64748B] font-medium">Cover Image (.png)</span>
+                <span className="text-xs text-[#64748B] font-medium">Cover Image (.png, .jpg, .webp)</span>
                 <label className="flex items-center gap-2 cursor-pointer rounded-lg border border-dashed border-[#CBD5E1] bg-white px-3 py-2 text-xs text-[#0F172A] hover:border-[#059669]">
                   <Upload size={14} className="text-[#059669] shrink-0" />
                   <span className="truncate">
@@ -205,14 +250,17 @@ export function EditIssueModal({
                   <input
                     type="file"
                     name="coverImage"
-                    accept="image/png"
+                    accept="image/png,image/jpeg,image/webp"
                     className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) setNewCover(f);
-                    }}
+                    onChange={handleCoverChange}
                   />
                 </label>
+                {coverError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
+                    <AlertCircle size={12} className="shrink-0" />
+                    <span>{coverError}</span>
+                  </p>
+                )}
                 {coverPreview && (
                   /* eslint-disable-next-line @next/next/no-img-element */
                   <img
@@ -236,12 +284,15 @@ export function EditIssueModal({
                     name="pdfFile"
                     accept="application/pdf"
                     className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) setNewPdf(f);
-                    }}
+                    onChange={handlePdfChange}
                   />
                 </label>
+                {pdfError && (
+                  <p className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
+                    <AlertCircle size={12} className="shrink-0" />
+                    <span>{pdfError}</span>
+                  </p>
+                )}
                 {issue.pdf_url && !newPdf && (
                   <a
                     href={issue.pdf_url}

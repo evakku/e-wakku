@@ -322,6 +322,7 @@ export default async function AnalyticsPage() {
               <div className="flex items-start gap-3">
                 <div className="w-12 h-16 rounded bg-slate-200 overflow-hidden shrink-0 border border-[#E2E8F0]">
                   {item.cover_image_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={item.cover_image_url}
                       alt={item.title}
@@ -639,6 +640,7 @@ export default async function AnalyticsPage() {
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-12 rounded bg-slate-100 overflow-hidden shrink-0 border border-[#E2E8F0]">
                           {issue.cover_image_url ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
                             <img
                               src={issue.cover_image_url}
                               alt={issue.title}
@@ -708,7 +710,7 @@ export default async function AnalyticsPage() {
                       <div className="flex items-center justify-end gap-3">
                         {!issue.is_draft && (
                           <Link
-                            href={`/issues/${issue.id}`}
+                            href={`/issue/${issue.id}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-xs font-medium text-[#64748B] hover:text-[#0F172A] inline-flex items-center gap-1"
