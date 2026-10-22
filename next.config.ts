@@ -83,9 +83,10 @@ const nextConfig: NextConfig = {
   },
 
   experimental: {
+    // Prevent request body truncation in Next.js 16 proxy for file uploads (up to 7.5MB cover + 7.5MB PDF + multipart overhead)
+    proxyClientMaxBodySize: "20mb",
     serverActions: {
-      // Default is 1 MB; PDF + cover uploads need more headroom.
-      bodySizeLimit: "50mb",
+      bodySizeLimit: "20mb",
     },
   },
 };
