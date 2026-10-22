@@ -34,7 +34,7 @@ vi.mock("@/lib/supabase/auth", () => ({
             getPublicUrl: (path: string) => mockStorageGetPublicUrl(bucket, path),
           }),
         },
-        from: (_table: string) => ({
+        from: () => ({
           insert: (...args: unknown[]) => {
             mockDbInsert(...args);
             return {
@@ -55,7 +55,7 @@ describe("Issue Upload Server Action Workflow (SEC-Upload)", () => {
     mockAuthorized = true;
 
     mockStorageUpload.mockResolvedValue({ data: { path: "mock-path" }, error: null });
-    mockStorageDownload.mockImplementation(async (bucket: string, _path: string) => {
+    mockStorageDownload.mockImplementation(async (bucket: string) => {
       if (bucket === "covers") {
         const header = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]);
         return { data: new Blob([header]), error: null };
@@ -171,7 +171,7 @@ describe("Issue Upload Server Action Workflow (SEC-Upload)", () => {
 
     it("rejects if uploaded storage asset exceeds 7.5 MiB and cleans up files", async () => {
       // Mock storage download returning an oversized blob for PDF
-      mockStorageDownload.mockImplementation(async (bucket: string, _path: string) => {
+      mockStorageDownload.mockImplementation(async (bucket: string) => {
         if (bucket === "covers") {
           const header = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]);
           return { data: new Blob([header]), error: null };
@@ -204,7 +204,7 @@ describe("Issue Upload Server Action Workflow (SEC-Upload)", () => {
     });
 
     it("rejects if storage PDF has invalid header bytes and cleans up files", async () => {
-      mockStorageDownload.mockImplementation(async (bucket: string, _path: string) => {
+      mockStorageDownload.mockImplementation(async (bucket: string) => {
         if (bucket === "covers") {
           const header = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0]);
           return { data: new Blob([header]), error: null };
