@@ -65,6 +65,22 @@ const DEFAULT_NAV: AdminNavItem[] = [
 
 const sidebarEase = [0.4, 0, 0.2, 1] as [number, number, number, number];
 
+/**
+ * Shell layout for authenticated administrative dashboard pages.
+ *
+ * Architecture & Dynamic Identity:
+ * - Reads `adminName` from `AdminProfileContext` (via `useAdminProfile()`).
+ * - Top-Bar Resolution: If `adminName` is populated, renders it as the page header `<h1>`;
+ *   otherwise falls back to `pageTitle` (defaults to "Admin").
+ * - Sidebar: Responsive desktop collapsible navigation and mobile slide-out drawer with
+ *   immediate loading feedback (`useNavigationLoading`).
+ *
+ * @param props - Layout component properties.
+ * @param props.children - Route view component to render in the main content canvas.
+ * @param props.navItems - Array of navigation links (defaults to `DEFAULT_NAV`).
+ * @param props.pageTitle - Fallback page heading title when no administrator name is set.
+ * @param props.headerAction - Optional action element rendered on the right side of the header (e.g. SignOutButton).
+ */
 export default function AdminLayout({
   children,
   navItems = DEFAULT_NAV,

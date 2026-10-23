@@ -1,3 +1,18 @@
+/**
+ * @file Unit and Regression Tests: Administrator Password Validation & CSPRNG Generator
+ *
+ * Verifies compliance with the 7 strict password composition and anti-pattern
+ * rules enforced across administrator creation and password change workflows.
+ *
+ * Regression & Security Intent:
+ * - Prevents dictionary attacks and low-entropy credentials in privileged accounts.
+ * - Enforces ASCII sequential digit detection to thwart keyboard walk patterns.
+ * - Prevents personal identity components (name, email username/domain) from being
+ *   embedded inside administrator credentials.
+ * - Validates that the Web Crypto CSPRNG password generator deterministically produces
+ *   passwords compliant with all 7 rules across repeated executions without infinite loops.
+ */
+
 import { describe, it, expect } from "vitest";
 import {
   validateAdminPassword,
@@ -16,6 +31,7 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   };
 
   describe("1. Length requirements", () => {
+    // Enforces minimum length baseline (>= 8 chars) to ensure brute-force search space.
     it("rejects passwords with fewer than 8 characters", () => {
       const res = validateAdminPassword("Ab1!xyz");
       expect(res.valid).toBe(false);
@@ -30,6 +46,7 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("2. Character composition requirements", () => {
+    // Ensures presence of all four character classes: uppercase, lowercase, digits, and symbols.
     it("rejects password missing uppercase letter", () => {
       const res = validateAdminPassword("password1!a", identity);
       expect(res.rules.hasUppercase).toBe(false);
@@ -56,6 +73,9 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("3. Consecutive ascending digits rule", () => {
+    // Tests detection of strictly ascending 3-digit sequences based on ASCII code point arithmetic.
+    // Explicitly verifies policy boundary: ascending runs like '123' are forbidden, but descending
+    // runs like '321' and non-consecutive runs like '135' or identical digits '111' are intentionally allowed.
     it("detects and rejects '123'", () => {
       expect(hasConsecutiveAscendingDigits("Secr123!Ab")).toBe(true);
       const res = validateAdminPassword("Secr123!Ab", identity);
@@ -95,6 +115,8 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("4. Identity component exclusion rule", () => {
+    // Verifies tokenization and substring matching against personal identifiers (name, email parts).
+    // Tests case-insensitivity, custom domain extraction, and filtering of common TLDs to prevent false rejections.
     it("extracts meaningful name and email tokens", () => {
       const tokens = extractIdentityTokens(identity);
       expect(tokens).toContain("anu");
@@ -138,6 +160,8 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("5. Cryptographically secure password generation", () => {
+    // Tests Web Crypto CSPRNG generator across multiple iterations (20 cycles) to stochastically
+    // verify that random candidates consistently satisfy all 7 rules and avoid infinite retry rejection.
     it("generates passwords that strictly satisfy all 7 conditions", () => {
       for (let i = 0; i < 20; i++) {
         const generated = generateSecureAdminPassword(identity);
@@ -158,6 +182,7 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("6. Checklist helper", () => {
+    // Verifies reactive checklist state used by UI password strength indicators in modals and forms.
     it("provides accurate live checklist status", () => {
       const checklist = getPasswordRuleChecklist("Weak", identity);
       expect(checklist.find((c) => c.id === "minLength")?.satisfied).toBe(false);
@@ -169,6 +194,8 @@ describe("Admin Password Validation & Generator (Section 8 & 9)", () => {
   });
 
   describe("7. Credential-sharing message formatting", () => {
+    // Ensures clipboard handoff message explicitly contains clear onboarding instructions,
+    // credentials, and mandatory security/confidentiality notices.
     it("formats a clean message including name, email, password, and security notice", () => {
       const message = formatCredentialSharingMessage("Anu Thomas", "anu@e-wakku.com", "Secret#948K");
       expect(message).toContain("E-Wakku Administrator Account");

@@ -10,10 +10,17 @@ import {
 } from "react";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Context state shape for administrator profile data across the admin dashboard.
+ */
 interface AdminProfileContextType {
+  /** The currently authenticated administrator's display name. */
   adminName: string;
+  /** The currently authenticated administrator's email address. */
   adminEmail: string;
+  /** Synchronous state updater to reflect display name changes immediately across layout components. */
   setAdminName: (name: string) => void;
+  /** Asynchronously re-fetches administrator metadata from the active Supabase session. */
   refreshProfile: () => Promise<void>;
 }
 
@@ -24,6 +31,22 @@ const AdminProfileContext = createContext<AdminProfileContextType>({
   refreshProfile: async () => {},
 });
 
+/**
+ * Top-level React Context Provider for administrator identity and navigation synchronization.
+ *
+ * Architecture & Data Flow:
+ * 1. Scope: Wraps the entire administrative dashboard shell in `app/admin/layout.tsx`.
+ * 2. Top-Bar Propagation: Consumed by `<AdminLayout />` to dynamically render the administrator's
+ *    display name in the sticky top header (falling back to "Admin" if unset).
+ * 3. Immediate Optimistic Sync: When an administrator saves a new display name in `<AdminProfileView />`,
+ *    calling `setAdminName(newName)` immediately updates the header title without requiring a page reload.
+ * 4. Auth State Synchronization: Automatically registers a Supabase `onAuthStateChange` listener on mount
+ *    to synchronize name and email whenever the browser session is initialized or refreshed.
+ *
+ * @param props.children - Child component tree.
+ * @param props.initialName - Optional server-rendered display name to prevent layout shift during SSR.
+ * @param props.initialEmail - Optional server-rendered email address.
+ */
 export function AdminProfileProvider({
   children,
   initialName = "",

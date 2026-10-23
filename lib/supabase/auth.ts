@@ -1,16 +1,38 @@
 import { createClient } from "./server";
 import type { User } from "@supabase/supabase-js";
 
+/**
+ * Discriminated union representing the outcome of an administrator authentication check.
+ *
+ * Callers must inspect `authorized` before accessing the `user` or `supabase` client.
+ */
 export type AdminAuthResult =
-  | { authorized: true; user: User; supabase: Awaited<ReturnType<typeof createClient>> }
-  | { authorized: false; error: string; user?: null; supabase?: null };
+  | {
+      authorized: true;
+      user: User;
+      supabase: Awaited<ReturnType<typeof createClient>>;
+      error?: never;
+    }
+  | {
+      authorized: false;
+      error: string;
+      user?: null;
+      supabase?: null;
+    };
 
 /**
- * Server-side helper to verify that the incoming request has a valid,
- * active Supabase authenticated session with admin privileges (BE-02).
+ * Server-side security guard that authenticates and authorizes administrator requests.
  *
- * Uses `supabase.auth.getUser()` which cryptographically verifies the auth token
- * against the Supabase Auth server on every request.
+ * Enforces a two-tier defense-in-depth verification strategy:
+ * 1. Cryptographic Authentication: Uses `supabase.auth.getUser()`, which validates the
+ *    session token with the Supabase Auth server on every invocation rather than relying
+ *    on unverified cookie payloads.
+ * 2. Authoritative Database Authorization: Directly queries `public.admins` for the caller's
+ *    `user.id`. This ensures that removed or demoted administrators cannot execute actions
+ *    merely by presenting an unexpired browser JWT/session.
+ *
+ * @returns A promise resolving to an `AdminAuthResult`. If authorized, includes the validated
+ * `User` object and an authenticated `SupabaseClient` bound to the caller's session cookies.
  */
 export async function requireAdminAuth(): Promise<AdminAuthResult> {
   try {

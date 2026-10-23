@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse, type NextRequest } from "next/server";
 
+/**
+ * Whitelist of permitted internal redirect destination prefixes.
+ * Restricts post-authentication redirection strictly to verified administrative paths.
+ */
 const ALLOWED_REDIRECT_PREFIXES = [
   "/admin",
   "/admin/profile",
@@ -12,8 +16,18 @@ const ALLOWED_REDIRECT_PREFIXES = [
 const DEFAULT_REDIRECT = "/admin/reset-password";
 
 /**
- * Validates and sanitizes destination paths to prevent open redirects (BE-03).
- * Rejects protocol-relative URLs (//evil.com), absolute external URLs, and non-whitelisted paths.
+ * Validates and sanitizes destination paths to prevent Open Redirect vulnerabilities (CWE-601).
+ *
+ * Security Constraints:
+ * 1. Rejects null, empty, or whitespace inputs (defaults to `/admin/reset-password`).
+ * 2. Rejects protocol-relative URLs (`//evil.com`) and backslash bypass attempts (`/\\evil.com`).
+ * 3. Parses the target path against a fixed dummy origin (`http://localhost`) to accurately
+ *    extract `pathname` and query parameters without protocol manipulation.
+ * 4. Whitelist check: Compares the parsed pathname against `ALLOWED_REDIRECT_PREFIXES`.
+ *    Any path not strictly matching or prefixed by a whitelisted directory is rejected.
+ *
+ * @param rawPath - The untrusted `next` query parameter value from the incoming request.
+ * @returns A safe, internal relative URI with query string, or `DEFAULT_REDIRECT`.
  */
 export function getSafeRedirectPath(rawPath: string | null): string {
   if (!rawPath) return DEFAULT_REDIRECT;
@@ -41,10 +55,19 @@ export function getSafeRedirectPath(rawPath: string | null): string {
 }
 
 /**
- * Auth Callback Route Handler
+ * Auth Callback Route Handler (PKCE Flow).
  *
- * Handles the PKCE exchange for Supabase Auth redirect links
+ * Handles the Proof Key for Code Exchange (PKCE) exchange for Supabase Auth redirect links
  * (e.g. Password Reset, Magic Link, Email Confirmation).
+ *
+ * Flow:
+ * 1. Extracts the authorization `code` and sanitized `next` destination from query parameters.
+ * 2. Exchanges the short-lived code for a persistent session via `supabase.auth.exchangeCodeForSession(code)`.
+ * 3. On success, redirects the authenticated user to `trustedOrigin + safeNext`.
+ * 4. On exchange failure or auth provider error, redirects to password reset page with an error parameter.
+ *
+ * @param request - Incoming Next.js HTTP GET request.
+ * @returns Next.js redirect response.
  */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);

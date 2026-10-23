@@ -39,11 +39,36 @@ import {
 import { useAdminProfile } from "@/components/admin/AdminProfileContext";
 import { createClient } from "@/lib/supabase/client";
 
+/**
+ * Properties passed to `<AdminProfileView />` from the SSR page component.
+ */
 interface AdminProfileViewProps {
+  /** Authenticated administrator's profile loaded server-side. */
   initialProfile: AdminProfileData;
+  /** Initial directory of authorized administrators loaded server-side. */
   initialAdmins: AdminUserItem[];
 }
 
+/**
+ * Interactive Client Component for Admin Profile & Administrator Management.
+ *
+ * Component Responsibilities:
+ * 1. My Profile: Displays administrator identity and allows editing the display name.
+ * 2. Change Password: Form with real-time 7-rule checklist and reauthentication verification.
+ * 3. Administrator Directory: Table displaying all authorized administrators with 'Primary'
+ *    and 'You' badges, plus protected status indicators.
+ * 4. Add Administrator: Modal with cryptographically secure password generator, pre-creation
+ *    confirmation dialog, and post-creation one-time credential sharing modal.
+ * 5. Remove Administrator: Confirmation dialog that executes permanent privilege revocation.
+ *
+ * Non-Obvious State Synchronization:
+ * - Top Navigation: Synchronizes `setAdminName` in `AdminProfileContext` on mount and after
+ *   saving a new name so `<AdminLayout />` updates immediately without a page refresh.
+ * - Session Cache: Calls `supabase.auth.refreshSession()` after profile update so downstream
+ *   client components read updated metadata from browser cookies.
+ * - Authoritative Directory Fetching: Re-fetches `listAdministrators()` after both creation
+ *   and removal to guarantee the UI mirrors true PostgreSQL persistence.
+ */
 export default function AdminProfileView({
   initialProfile,
   initialAdmins,
@@ -111,6 +136,16 @@ export default function AdminProfileView({
   // 1. Profile Handlers
   // ─────────────────────────────────────────────────────────────────────────────
 
+  /**
+   * Commits the edited administrator display name.
+   *
+   * Flow:
+   * 1. Validates non-empty string and min length of 2 characters.
+   * 2. Executes `updateAdminDisplayName(trimmed)` in a React transition.
+   * 3. On success, updates local state, propagates to `AdminProfileContext` (updating top bar),
+   *    updates the current user in `adminsList`, and triggers `refreshSession()` on the browser
+   *    Supabase client to align cookie caches.
+   */
   const handleSaveName = () => {
     setProfileMessage(null);
     const trimmed = nameInput.trim();
@@ -171,6 +206,10 @@ export default function AdminProfileView({
     newPasswordChecklist.every((c) => c.satisfied) &&
     newPassword === confirmPassword;
 
+  /**
+   * Verifies current password and updates to the newly selected password.
+   * Password fields are submitted using standard FormData to the server action.
+   */
   const handleChangePassword = (e: React.FormEvent) => {
     e.preventDefault();
     setPasswordMessage(null);
@@ -228,6 +267,10 @@ export default function AdminProfileView({
     email: newAdminEmail,
   });
 
+  /**
+   * Generates a cryptographically secure 15-character password strictly conforming
+   * to all 7 security rules, factoring in the newly entered administrator's name/email.
+   */
   const handleGeneratePassword = () => {
     try {
       const generated = generateSecureAdminPassword({
@@ -247,6 +290,10 @@ export default function AdminProfileView({
     }
   };
 
+  /**
+   * Validates new administrator input before opening the confirmation dialog.
+   * Note: The confirmation dialog displays name and email, intentionally omitting the password.
+   */
   const handleOpenConfirmDialog = (e: React.FormEvent) => {
     e.preventDefault();
     setAddAdminError(null);
@@ -283,6 +330,13 @@ export default function AdminProfileView({
     setIsConfirmDialogOpen(true);
   };
 
+  /**
+   * Executes the server action to create the administrator account.
+   * On success:
+   * - Retains credentials in component memory for one-time sharing dialog display.
+   * - Uses authoritative server UUID (`result.id`) for optimistic directory update.
+   * - Re-fetches `listAdministrators()` to guarantee database persistence.
+   */
   const handleConfirmCreateAdmin = () => {
     startCreateTransition(async () => {
       const result = await createAdministrator({
@@ -342,6 +396,9 @@ export default function AdminProfileView({
     });
   };
 
+  /**
+   * Copies formatted confidential credentials to the user's system clipboard.
+   */
   const handleCopyCredentials = async () => {
     if (!createdAdminCredentials) return;
 
@@ -360,6 +417,9 @@ export default function AdminProfileView({
     }
   };
 
+  /**
+   * Closes the credential sharing dialog and completely flushes temporary credentials from memory.
+   */
   const handleCloseCredentialsDialog = () => {
     // Clear temporary credentials completely from memory
     setCreatedAdminCredentials(null);
@@ -383,6 +443,16 @@ export default function AdminProfileView({
     setRemoveAdminError(null);
   };
 
+  /**
+   * Executes permanent administrator removal.
+   *
+   * Flow:
+   * 1. Invokes server action `removeAdministrator(adminToRemove.id)`.
+   * 2. On success, removes administrator from local state.
+   * 3. Authoritatively re-fetches `listAdministrators()` from the server to ensure UI
+   *    reflects true database state.
+   * 4. Shows temporary success notification banner.
+   */
   const handleConfirmRemoveAdmin = () => {
     if (!adminToRemove) return;
 

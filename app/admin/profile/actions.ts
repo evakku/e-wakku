@@ -7,22 +7,46 @@ import { validateAdminPassword } from "@/lib/validation/password";
 import { logAuditEvent } from "@/lib/logging/audit";
 import { z } from "zod";
 
+/**
+ * Administrator representation in directory listings.
+ */
 export interface AdminUserItem {
+  /** Supabase Auth user UUID. */
   id: string;
+  /** Administrator display name. */
   name: string;
+  /** Primary login email address. */
   email: string;
+  /** Account status: active, inactive (banned), or pending. */
   status: "active" | "inactive" | "pending";
+  /** ISO-8601 creation timestamp. */
   createdAt?: string;
+  /** Whether this record represents the currently authenticated session administrator. */
   isCurrentAdmin: boolean;
+  /** Whether this record is the protected primary administrator account. */
   isPrimaryAdmin: boolean;
 }
 
+/**
+ * Current administrator's personal profile data.
+ */
 export interface AdminProfileData {
+  /** Supabase Auth user UUID. */
   id: string;
+  /** Verified login email address. */
   email: string;
+  /** Administrator display name. */
   name: string;
 }
 
+/**
+ * Server-side input validation schemas (Zod).
+ *
+ * DEFENSE-IN-DEPTH ARCHITECTURE:
+ * While client-side forms in `<AdminProfileView />` perform real-time validation to improve
+ * user experience, server actions unconditionally parse and sanitize all payloads using
+ * these schemas before executing privileged database operations.
+ */
 const updateNameSchema = z.object({
   name: z
     .string()
@@ -50,7 +74,17 @@ const createAdminSchema = z.object({
 
 /**
  * Loads the currently authenticated administrator's profile data.
- * Authoritatively reads from database metadata via admin client when available.
+ *
+ * Security & Data Flow:
+ * 1. Derives caller identity exclusively from the authenticated session (`requireAdminAuth()`).
+ *    Client-provided user IDs are never trusted or accepted.
+ * 2. Authoritative Lookup: If `SUPABASE_SERVICE_ROLE_KEY` is present, queries `auth.users`
+ *    directly via `getUserById()` to retrieve the most recent database metadata, bypassing
+ *    potentially stale session cookie snapshots.
+ * 3. Fallback: If service-role lookup is unavailable or encounters a transient error,
+ *    gracefully reads from the verified session user metadata.
+ *
+ * @returns Object containing `profile` on success or `error` string on failure.
  */
 export async function getAdminProfile(): Promise<{
   profile?: AdminProfileData;
@@ -100,7 +134,21 @@ export async function getAdminProfile(): Promise<{
 
 /**
  * Updates the display name of the currently authenticated administrator.
- * Updates the authoritative profile metadata in Supabase Auth and verifies persistence.
+ *
+ * Security & Persistence Pipeline:
+ * 1. Authorization: Only authenticated administrators can update their profile; the target ID
+ *    is strictly locked to `auth.user.id` (preventing IDOR/privilege escalation).
+ * 2. Input Sanitization: Validates via Zod (`min: 2, max: 100`, trimmed).
+ * 3. Session Client Sync: Updates active session cookies via `auth.supabase.auth.updateUser`.
+ * 4. Authoritative Write: If service-role key is present, updates `auth.users.raw_user_meta_data`
+ *    directly via `adminClient.auth.admin.updateUserById(callerId, ...)` to ensure persistence.
+ * 5. Persistence Verification: Explicitly executes `getUserById` and asserts that the persisted
+ *    name matches `trimmedName` before returning `{ success: true }`. If database verification
+ *    fails, returns an explicit error to prevent false-success notifications.
+ * 6. Cache Invalidation: Calls `revalidatePath` on `/admin` and `/admin/profile`.
+ *
+ * @param newName - The desired new display name string.
+ * @returns Object with `success: true` and updated `name`, or `success: false` with `error`.
  */
 export async function updateAdminDisplayName(
   newName: string
@@ -192,6 +240,19 @@ export async function updateAdminDisplayName(
 
 /**
  * Changes the authenticated administrator's password after verifying their current password.
+ *
+ * Security & Verification Flow:
+ * 1. Authorization: Requires valid administrator session (`requireAdminAuth()`).
+ * 2. Zod & Confirmation: Verifies presence and exact equality of `newPassword` and `confirmPassword`.
+ * 3. 7-Rule Password Policy: Validates `newPassword` using `validateAdminPassword()` passing the
+ *    administrator's active name and email to enforce identity component exclusion.
+ * 4. Reauthentication Check: Verifies knowledge of `currentPassword` by calling
+ *    `supabase.auth.signInWithPassword()`. This guarantees that an unattended or hijacked session
+ *    cannot change credentials without knowing the existing password.
+ * 5. Update: Invokes `supabase.auth.updateUser({ password })` to commit the new credential.
+ *
+ * @param formData - Form data containing `currentPassword`, `newPassword`, and `confirmPassword`.
+ * @returns Object with `success: true` or `success: false` with error message.
  */
 export async function changeAdminPassword(
   formData: FormData
@@ -262,7 +323,24 @@ export async function changeAdminPassword(
 }
 
 /**
- * Lists administrators authorized to access the dashboard.
+ * Lists all authorized administrators for display in the administrator directory.
+ *
+ * Multi-Tier Retrieval Architecture:
+ * - Strategy A (Preferred RPC): Calls `public.get_admin_directory()` database function.
+ *   This returns only verified users joined between `public.admins` and `auth.users` with
+ *   `is_primary` flag, display names, and creation timestamps.
+ * - Strategy B (Server-Side Admin Client): If RPC is missing before migration, reads all
+ *   rows from `public.admins` and reconciles against `auth.admin.listUsers()`.
+ *   IMPORTANT: Only users whose `id` exists in `public.admins` (or matches the active caller)
+ *   are included in the returned list, guaranteeing that revoked users never appear.
+ * - Strategy C (Safe Fallback): If both database strategies fail, returns a safe baseline
+ *   single-item list containing the authenticated caller marked as current and primary.
+ *
+ * Primary Admin Designation:
+ * If no admin has `is_primary = true` stored in the database, the earliest-created administrator
+ * (by `created_at` timestamp) is deterministically designated as primary.
+ *
+ * @returns Object with `admins` array or `error` string.
  */
 export async function listAdministrators(): Promise<{
   admins?: AdminUserItem[];
@@ -410,17 +488,40 @@ export async function listAdministrators(): Promise<{
   }
 }
 
+/**
+ * Input payload for administrator account creation.
+ */
 export interface CreateAdminInput {
+  /** Full display name of the new administrator. */
   name: string;
+  /** Primary login email address. */
   email: string;
+  /** Initial password meeting all 7 security requirements. */
   password: string;
+  /** Confirmation password matching `password`. */
   confirmPassword: string;
 }
 
 /**
- * Creates a new administrator account.
- * Requires an authenticated, authorized admin session.
- * Provisions Auth user and records privileges in public.admins atomically.
+ * Creates a new administrator account with dashboard access.
+ *
+ * Security & Provisioning Pipeline:
+ * 1. Authorization: Verifies caller has an active, authenticated administrator session (`requireAdminAuth()`).
+ * 2. Input Validation: Enforces Zod schema (name min 2 / max 100, valid email, matching passwords).
+ * 3. 7-Rule Password Policy: Validates password against all 7 rules (`validateAdminPassword()`), passing
+ *    the candidate's name and email to enforce identity component exclusion.
+ * 4. Configuration Check: Fails closed if `SUPABASE_SERVICE_ROLE_KEY` is missing from runtime environment.
+ * 5. Auth User Provisioning: Calls `adminClient.auth.admin.createUser()` with `email_confirm: true` so the
+ *    administrator can immediately sign in with temporary credentials.
+ * 6. Privilege Assignment: Inserts `{ user_id }` record into `public.admins`.
+ * 7. Compensating Rollback: If `public.admins` insertion fails or throws an exception, immediately invokes
+ *    `adminClient.auth.admin.deleteUser(createdUserId)` to purge the newly created Auth user, guaranteeing
+ *    that no unprivileged zombie accounts linger in Supabase Auth.
+ * 8. Return Payload: Returns the authoritative database `id` (UUID) so the client UI can track the new
+ *    record without synthesizing placeholder client-side IDs.
+ *
+ * @param input - Administrator creation fields (name, email, password, confirmPassword).
+ * @returns Object with `success: true` and created user details, or `success: false` with `error`.
  */
 export async function createAdministrator(
   input: CreateAdminInput
@@ -543,6 +644,10 @@ export async function createAdministrator(
   }
 }
 
+/**
+ * Validation schema for administrator removal requests.
+ * Validates that `targetUserId` conforms to standard RFC 4122 UUID format (or test UUID format).
+ */
 const removeAdminSchema = z.object({
   targetUserId: z
     .string()
@@ -557,15 +662,25 @@ const removeAdminSchema = z.object({
 });
 
 /**
- * Safely revokes an administrator's privileges.
+ * Safely and permanently revokes an administrator's access and privileges.
  *
- * CRITICAL SECURITY CONSTRAINTS:
- * 1. Requires valid, authorized administrator session (caller verified server-side).
- * 2. Caller cannot remove their own account (self-lockout prevention).
- * 3. Primary administrator account is permanently protected and cannot be removed.
- * 4. At least one administrator must always remain in the system.
- * 5. Demotes Auth metadata (role: 'user', is_admin: false) so requireAdminAuth immediately rejects subsequent requests.
- * 6. Audit logged with actor, target, timestamp, and outcome (no secrets).
+ * CRITICAL SECURITY INVARIANTS & INTEGRITY CONSTRAINTS:
+ * 1. Authentication & Caller Identity: Validates caller session via `requireAdminAuth()`.
+ *    Caller identity (`callerId`) is strictly derived from session cookies, never client parameters.
+ * 2. Self-Removal Prohibition: `callerId === targetUserId` is rejected to prevent accidental self-lockout.
+ * 3. Primary Administrator Protection: The designated primary administrator account is permanently
+ *    protected against removal by both application logic and database triggers.
+ * 4. Zero-Admin Prevention: At least one administrator account must always remain in the system.
+ * 5. Dual-Strategy Architecture:
+ *    - Strategy A (RPC): Calls `public.remove_admin(target_user_id)` database function.
+ *    - Strategy B (Fallback): If RPC is missing in schema cache (`PGRST202` / `42883`), falls back
+ *      to server-side service-role client. Verifies existence, primary status, and minimum count;
+ *      deletes row from `public.admins`; confirms deletion; and deletes Auth user via `deleteUser()`.
+ * 6. Audit Logging: Every removal attempt (success or failure) is emitted as a structured audit
+ *    event (`logAuditEvent`), strictly omitting sensitive credentials.
+ *
+ * @param targetUserId - UUID of the administrator to remove.
+ * @returns Object with `success: true` on completion, or `success: false` with error message.
  */
 export async function removeAdministrator(
   targetUserId: string
@@ -830,4 +945,3 @@ export async function removeAdministrator(
     return { success: false, error: msg };
   }
 }
-

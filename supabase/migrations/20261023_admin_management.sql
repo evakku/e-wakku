@@ -1,19 +1,27 @@
 -- Migration: 20261023_admin_management.sql
 -- Description: Admin directory query RPC and administrator management RLS policies.
 --
--- Preserves existing public.is_admin() and public.admins table structure.
--- Provides a secure, authorized server-side function to list administrators with display names and emails.
+-- Security Architecture:
+-- 1. Authorization Core: Preserves `public.admins` as the authoritative source of truth
+--    for administrator privileges. Function `public.is_admin()` relies on this table.
+-- 2. Row Level Security: Enforces strict table-level boundaries on `public.admins`.
+-- 3. Definer Isolation: `public.get_admin_directory()` is marked SECURITY DEFINER with
+--    a fixed search_path to securely join `auth.users` without exposing raw auth tables.
+-- 4. Principle of Least Privilege: Default public and anon execute rights are revoked.
 
 BEGIN;
 
 -- 1. Ensure public.admins table exists with RLS enabled
+-- Purpose: Authoritative registry of user UUIDs possessing administrative privileges.
 CREATE TABLE IF NOT EXISTS public.admins (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
 
--- 2. Ensure existing baseline policy allows users to read own admin row
+-- 2. Baseline Policy: Users can read own admin row
+-- Purpose: Allows any authenticated user to verify whether their own session possesses
+-- an admin record (e.g. used during login verification).
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -30,7 +38,9 @@ BEGIN
     END IF;
 END $$;
 
--- 3. Policy: Allow verified admins to read all admin rows in public.admins
+-- 3. Directory Policy: Admins can view all admin rows
+-- Purpose: Allows verified administrators (evaluated via public.is_admin()) to inspect
+-- the full membership list in public.admins.
 DO $$
 BEGIN
     IF NOT EXISTS (
@@ -48,7 +58,12 @@ BEGIN
 END $$;
 
 -- 4. Secure RPC function: public.get_admin_directory()
--- Returns directory of authorized administrators for authenticated admins only.
+-- Purpose: Returns a clean directory of authorized administrators.
+-- Security Guarantees:
+-- - `SECURITY DEFINER`: Runs with creator rights to read display metadata from `auth.users`,
+--   which standard authenticated clients cannot directly query under default Supabase RLS.
+-- - `SET search_path = public, auth, pg_temp`: Guards against search-path injection attacks.
+-- - Caller must be a verified administrator (`IF NOT public.is_admin() THEN RAISE EXCEPTION`).
 CREATE OR REPLACE FUNCTION public.get_admin_directory()
 RETURNS TABLE (
     user_id UUID,

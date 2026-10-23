@@ -4,6 +4,13 @@ import { requireAdminAuth } from "@/lib/supabase/auth";
 import { getAdminProfile, listAdministrators } from "./actions";
 import AdminProfileView from "./AdminProfileView";
 
+/**
+ * Route Segment Configuration:
+ * - `dynamic = "force-dynamic"`: Disables static page pre-rendering at build time.
+ * - `revalidate = 0`: Disables Next.js Data Cache caching to guarantee that every
+ *   navigation to /admin/profile authoritatively evaluates active session credentials
+ *   and fetches the latest database directory records.
+ */
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -12,6 +19,21 @@ export const metadata: Metadata = {
   description: "Manage your administrator profile, password, and authorized administrators.",
 };
 
+/**
+ * Server Component for the Admin Profile & Administrator Management view.
+ *
+ * Data Flow & Security Architecture:
+ * 1. Authentication Guard: Evaluates `requireAdminAuth()` server-side before rendering.
+ *    If unauthenticated or not registered in `public.admins`, immediately issues an HTTP
+ *    redirect to `/admin/login?error=unauthorized`.
+ * 2. Parallel Pre-fetching: Concurrently executes `getAdminProfile()` and `listAdministrators()`
+ *    via `Promise.all` to minimize SSR response latency.
+ * 3. Fallback Integrity: If directory retrieval encounters an infrastructure glitch or
+ *    missing RPC before migration, builds a safe single-admin fallback record bound to the
+ *    authenticated session user.
+ * 4. Hydration: Passes authoritative `initialProfile` and `initialAdmins` down to the
+ *    interactive Client Component `<AdminProfileView />`.
+ */
 export default async function AdminProfilePage() {
   const auth = await requireAdminAuth();
   if (!auth.authorized || !auth.user) {

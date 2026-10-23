@@ -1,3 +1,28 @@
+/**
+ * @file Unit, Security, and Regression Tests: Admin Profile & Administrator Management Server Actions
+ *
+ * Verifies end-to-end security contracts, input validation, authorization gates, and data persistence
+ * across all Server Actions implemented in `app/admin/profile/actions.ts`:
+ * - `getAdminProfile`
+ * - `updateAdminDisplayName`
+ * - `changeAdminPassword`
+ * - `listAdministrators`
+ * - `createAdministrator`
+ * - `removeAdministrator`
+ *
+ * Key Security & Architectural Scenarios Covered:
+ * 1. Authorization boundaries (`requireAdminAuth` rejects unauthenticated/non-admin callers).
+ * 2. Re-authentication verification prior to sensitive password mutations (`signInWithPassword`).
+ * 3. Two-phase administrator creation with compensating rollback on partial failure.
+ * 4. Multi-strategy admin directory retrieval (RPC vs service client fallback).
+ * 5. Robust administrator removal protections:
+ *    - Caller self-removal prevention.
+ *    - Primary administrator protection (both SQL RPC business errors and application fallbacks).
+ *    - Zero-admin prevention (preserving at least one administrator account).
+ *    - Graceful degradation on PostgREST schema cache misses (`PGRST202`).
+ * 6. Explicit regression suite preventing false-success reporting on failed database mutations.
+ */
+
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
   getAdminProfile,
@@ -14,7 +39,7 @@ import {
   formatCredentialSharingMessage,
 } from "@/lib/validation/password";
 
-// Mock next/cache
+// Mock Next.js path revalidation to prevent SSR cache side-effects in unit test runner
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
@@ -30,7 +55,7 @@ interface MockAuthUser {
   };
 }
 
-// State variables for mocking auth and supabase
+// State variables for controlling authentication and database mocking states
 let mockAuthorized = true;
 let mockAuthUser: MockAuthUser = {
   id: "admin-uuid-1",
@@ -167,6 +192,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 5: Editing Admin Profile Name", () => {
+    // Tests authoritative profile loading and input validation boundaries (2-100 characters).
     it("loads current profile correctly", async () => {
       const res = await getAdminProfile();
       expect(res.error).toBeUndefined();
@@ -223,6 +249,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 6: Change Password", () => {
+    // Verifies mandatory re-authentication via `signInWithPassword` and strict 7-rule validation
+    // before allowing password modification on the active administrator session.
     it("rejects change password when unauthorized", async () => {
       mockAuthorized = false;
       const formData = new FormData();
@@ -306,6 +334,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 7: Administrator Directory", () => {
+    // Verifies directory resolution via SQL RPC `get_admin_directory()` and graceful fallback
+    // to service-role `listUsers()` filtered against `public.admins` when the RPC is absent.
     it("returns directory from RPC when get_admin_directory is available", async () => {
       mockRpc.mockResolvedValueOnce({
         data: [
@@ -373,6 +403,11 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 11: Create Administrator & Safety Guarantees", () => {
+    // Tests two-phase administrator provisioning:
+    // 1. Validates input and password rules.
+    // 2. Creates Supabase Auth user.
+    // 3. Inserts privilege record into `public.admins`.
+    // 4. Executes compensating rollback (deleting Auth user) if database privilege insertion fails.
     const validNewAdmin: CreateAdminInput = {
       name: "Rahul Sharma",
       email: "rahul@example.com",
@@ -440,6 +475,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(mockAdminDeleteUser).not.toHaveBeenCalled();
     });
 
+    // Regression prevention: Ensures failed database privilege insertion triggers immediate compensating
+    // deletion of the Auth user, eliminating dangling or unprivileged administrative accounts.
     it("triggers compensating rollback (deletes auth user) if public.admins insert fails", async () => {
       mockFromInsert.mockResolvedValueOnce({
         error: { message: "violates foreign key constraint" },
@@ -455,6 +492,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 12: Credential-Sharing Message & Safeguards", () => {
+    // Tests generation of clean clipboard sharing text and stochastic robustness of the CSPRNG generator.
     it("formats clean credentials message with email, password, and security notice", () => {
       const msg = formatCredentialSharingMessage(
         "New Administrator",
@@ -487,6 +525,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 13: Secure Admin Removal & Primary Administrator Protection", () => {
+    // Verifies multi-layered safeguards protecting against unauthorized removal, self-lockout,
+    // primary admin deletion, zero-admin lockout, and PostgREST schema cache misses.
     it("rejects removal when unauthorized or unauthenticated", async () => {
       mockAuthorized = false;
       const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
@@ -500,6 +540,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toContain("Invalid administrator ID");
     });
 
+    // Invariant: Caller cannot remove their own administrator membership.
     it("rejects self-removal (caller cannot remove own account)", async () => {
       // Caller ID is admin-uuid-1
       const res = await removeAdministrator("admin-uuid-1");
@@ -508,6 +549,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(mockFromDelete).not.toHaveBeenCalled();
     });
 
+    // Database RPC layer: Verifies handling of SQL exception raised by `remove_admin`.
     it("rejects removing the primary administrator account (via RPC business error)", async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
@@ -519,6 +561,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toBe("The primary administrator account cannot be removed.");
     });
 
+    // Strategy B Fallback: Verifies application-level protection when RPC is absent.
     it("rejects removing the primary administrator account (via fallback check)", async () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
       mockFromSelect.mockResolvedValueOnce({
@@ -535,6 +578,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(mockFromDelete).not.toHaveBeenCalled();
     });
 
+    // Fallback: If `is_primary` column is unset or missing, oldest admin by created_at is protected.
     it("rejects removing the earliest administrator when is_primary column is not yet set", async () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
       mockFromSelect.mockResolvedValueOnce({
@@ -560,6 +604,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(mockFromDelete).not.toHaveBeenCalled();
     });
 
+    // Invariant: At least one administrator account must always remain in the system.
     it("rejects removing the last remaining administrator account", async () => {
       mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
       mockFromSelect.mockResolvedValueOnce({
@@ -604,6 +649,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       );
     });
 
+    // Regression prevention: Specifically tests recovery when PostgREST has not reloaded schema cache
+    // and throws error PGRST202 for `remove_admin`. Verifies seamless failover to Strategy B.
     it("gracefully falls back to Strategy B when PostgREST returns 'Could not find the function public.remove_admin(target_user_id) in the schema cache' (PGRST202)", async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
@@ -637,6 +684,10 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
   });
 
   describe("Section 14: Regression Suite — Reliable Persistence for Admin Removal and Profile Save", () => {
+    // Regression suite ensuring data modifications are authoritatively verified against the database
+    // before actions return success, eliminating false-positive optimistic responses.
+    // Regression prevention: Ensures created user UUID is returned to caller so UI can highlight/select
+    // the newly provisioned row immediately without waiting for background re-sync.
     it("createAdministrator returns the created user UUID for UI state tracking", async () => {
       const input: CreateAdminInput = {
         name: "Editor Assistant",
@@ -652,6 +703,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.name).toBe("Editor Assistant");
     });
 
+    // Regression prevention: Verifies that database deletion failures return structured failure results
+    // and do not trigger Auth account deletion or metadata demotion prematurely.
     it("rejects removal when database DELETE fails with explicit safe error", async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
@@ -674,6 +727,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(mockAdminDeleteUser).not.toHaveBeenCalled();
     });
 
+    // Regression prevention: Guards against silent failure or false-success reporting when a database
+    // DELETE appears successful but the record remains present on immediate verification query.
     it("prevents false-success when public.admins deletion cannot be verified", async () => {
       mockRpc.mockResolvedValueOnce({
         data: null,
@@ -699,6 +754,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toContain("Failed to confirm administrator removal from database.");
     });
 
+    // Invariant: `public.admins` is authoritative. Users with lingering `role: admin` in Auth metadata
+    // who have been deleted from `public.admins` must be excluded from active administrator lists.
     it("listAdministrators excludes removed administrators whose Auth metadata still has role admin", async () => {
       // Auth user has role admin, but is NOT in public.admins
       mockAdminListUsers.mockResolvedValueOnce({
@@ -734,6 +791,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.admins?.some((a) => a.id === "revoked-admin-uuid")).toBe(false);
     });
 
+    // Regression prevention: Confirms that updateAdminDisplayName performs write verification via
+    // `getUserById` before reporting success back to the caller.
     it("updateAdminDisplayName confirms database persistence and returns updated name", async () => {
       mockAdminGetUserById.mockResolvedValueOnce({
         data: {
@@ -756,6 +815,8 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       );
     });
 
+    // Regression prevention: Ensures action fails gracefully with actionable error if write verification reveals
+    // that the database still stores the old display name.
     it("updateAdminDisplayName fails if database persistence verification fails", async () => {
       mockAdminGetUserById.mockResolvedValueOnce({
         data: {
@@ -773,6 +834,7 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toContain("Failed to confirm profile name persistence in database.");
     });
 
+    // Invariant: Profile fetching queries the authoritative service-role client rather than stale session cookies.
     it("getAdminProfile authoritatively loads persisted name from Supabase Auth via admin client", async () => {
       mockAdminGetUserById.mockResolvedValueOnce({
         data: {

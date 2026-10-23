@@ -2,25 +2,45 @@
  * Admin Password Validation & Cryptographic Generator
  *
  * Enforces the 7 security conditions required for manual entry and automatic generation:
- * 1. At least 8 characters.
- * 2. At least one uppercase letter (A-Z).
- * 3. At least one lowercase letter (a-z).
- * 4. At least one number (0-9).
- * 5. At least one special character.
- * 6. No three or more consecutive ascending digits (e.g. 123, 234, 567, 789).
- * 7. No word or meaningful component derived from the administrator's name or email address.
+ * 1. Minimum Length: At least 8 characters (provides baseline search-space entropy).
+ * 2. Uppercase Letters: At least one [A-Z] character (expands keyspace diversity).
+ * 3. Lowercase Letters: At least one [a-z] character (expands keyspace diversity).
+ * 4. Numbers: At least one digit [0-9] (expands keyspace diversity).
+ * 5. Special Characters: At least one accepted symbol (resists dictionary attacks).
+ * 6. No Ascending Consecutive Digits: Forbids sequences like '123', '234', '789'
+ *    (mitigates common predictable keyboard patterns; note: descending sequences
+ *    like '321' are intentionally not penalized by this specific rule).
+ * 7. Identity Exclusion: Forbids tokens derived from the administrator's name,
+ *    email handle, or organization domain (mitigates targeted social engineering).
  */
 
+/**
+ * Live validation state for an individual password requirement rule.
+ * Consumed by UI components to render interactive checklists.
+ */
 export interface PasswordRuleState {
+  /** Unique identifier for the rule (e.g. 'minLength', 'hasUppercase'). */
   id: string;
+  /** Human-readable label displayed in the UI checklist. */
   label: string;
+  /** Whether the password currently meets this rule requirement. */
   satisfied: boolean;
-  isViolation?: boolean; // For negative rules like consecutive digits or name components
+  /**
+   * For negative rules (e.g. ascending digits, identity tokens), indicates that
+   * the user has actively violated the condition rather than merely not yet meeting it.
+   */
+  isViolation?: boolean;
 }
 
+/**
+ * Result structure returned by `validateAdminPassword`.
+ */
 export interface PasswordValidationResult {
+  /** True if every single rule is satisfied; false if any error exists. */
   valid: boolean;
+  /** List of user-facing failure error messages. Empty when `valid` is true. */
   errors: string[];
+  /** Granular boolean breakdown of each individual condition evaluated. */
   rules: {
     minLength: boolean;
     hasUppercase: boolean;
@@ -32,12 +52,21 @@ export interface PasswordValidationResult {
   };
 }
 
+/**
+ * Contextual administrator identity details evaluated for password exclusion.
+ */
 export interface UserIdentityContext {
+  /** Display or legal name of the administrator (e.g. 'Rahul Menon'). */
   name?: string | null;
+  /** Login email address of the administrator (e.g. 'rahul@e-wakku.com'). */
   email?: string | null;
 }
 
-// Special characters accepted for password validation
+/**
+ * Set of accepted special characters for password validation.
+ * Includes common punctuation, math symbols, and keyboard glyphs:
+ * `!@#$%^&*()_+-=[]{};':"|,.<>/?`~`
+ */
 export const SPECIAL_CHAR_REGEX = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?`~]/;
 
 // Generic email provider domain tokens to ignore to prevent false positives
@@ -77,8 +106,16 @@ const COMMON_TLDS = new Set([
 ]);
 
 /**
- * Normalizes name and email into meaningful component tokens.
- * Extracts word tokens of length >= 3 while filtering generic domain fragments.
+ * Normalizes name and email strings into meaningful token components for exclusion matching.
+ *
+ * Algorithm:
+ * 1. Tokenizes `name` by non-alphanumeric boundaries, retaining tokens with length >= 3.
+ * 2. Tokenizes the local part of `email` (before '@') by non-alphanumerics, retaining tokens length >= 3.
+ * 3. Tokenizes the domain part of `email`, ignoring generic webmail providers (gmail, yahoo, etc.)
+ *    and standard top-level domains (com, net, org, in, etc.) to prevent false-positive rejections.
+ *
+ * @param identity - Context containing administrator name and email.
+ * @returns Array of unique lowercased identity substrings of length >= 3.
  */
 export function extractIdentityTokens(identity?: UserIdentityContext): string[] {
   if (!identity) return [];
@@ -139,7 +176,19 @@ export function extractIdentityTokens(identity?: UserIdentityContext): string[] 
 }
 
 /**
- * Checks if the password contains 3 or more consecutive ascending digits (e.g. 123, 234, 789).
+ * Evaluates whether a password contains 3 or more consecutive ascending digits.
+ *
+ * Purpose & Scope:
+ * Prevents predictable numeric runs (e.g. '123', '234', '567', '789', '012', '1234')
+ * which are heavily represented in common dictionary attack dictionaries.
+ *
+ * Limitation:
+ * Only evaluates strictly ascending consecutive numerical runs (where each digit equals
+ * previous digit + 1). It intentionally does not restrict descending sequences (e.g. '321')
+ * or repeated digits (e.g. '111') unless ruled out by other criteria.
+ *
+ * @param password - The candidate password string to inspect.
+ * @returns `true` if 3 or more consecutive ascending digits are found; otherwise `false`.
  */
 export function hasConsecutiveAscendingDigits(password: string): boolean {
   if (password.length < 3) return false;
@@ -164,7 +213,13 @@ export function hasConsecutiveAscendingDigits(password: string): boolean {
 }
 
 /**
- * Checks if the password contains any meaningful component derived from name or email.
+ * Checks whether the password contains any meaningful component derived from name or email.
+ *
+ * Performs case-insensitive substring search against all tokens extracted by `extractIdentityTokens`.
+ *
+ * @param password - The password string being evaluated.
+ * @param identity - Context containing administrator name and email.
+ * @returns `true` if any identity token is a substring of the candidate password; otherwise `false`.
  */
 export function containsIdentityComponents(
   password: string,
@@ -187,7 +242,18 @@ export function containsIdentityComponents(
 }
 
 /**
- * Full validator checking all 7 password conditions.
+ * Validates a candidate password against all 7 administrative security conditions.
+ *
+ * Evaluated conditions:
+ * - Length: At least 8 characters.
+ * - Character Composition: At least one uppercase [A-Z], one lowercase [a-z],
+ *   one number [0-9], and one special character matching `SPECIAL_CHAR_REGEX`.
+ * - Negative Constraints: No 3+ ascending consecutive digits, and no identity tokens.
+ *
+ * @param password - The raw candidate password to validate.
+ * @param identity - Optional identity context (name and email) for identity component exclusion.
+ * @returns An object containing a master `valid` boolean, list of user-facing `errors`,
+ * and an exhaustive boolean breakdown in `rules`.
  */
 export function validateAdminPassword(
   password: string,
@@ -241,7 +307,14 @@ export function validateAdminPassword(
 }
 
 /**
- * Returns checklist items for live UI validation rendering.
+ * Transforms password validation results into an array of checklist states for live UI feedback.
+ *
+ * Used by `<AdminProfileView />` to render real-time color-coded indicators
+ * (green check, gray neutral, red violation) as the administrator types.
+ *
+ * @param password - The current password input value.
+ * @param identity - The administrator identity context for name/email checking.
+ * @returns Array of `PasswordRuleState` objects corresponding to each rule.
  */
 export function getPasswordRuleChecklist(
   password: string,
@@ -291,8 +364,22 @@ export function getPasswordRuleChecklist(
 }
 
 /**
- * Generates a cryptographically secure random password meeting all 7 conditions.
- * Uses Web Crypto API (crypto.getRandomValues) for true randomness (never Math.random).
+ * Generates a cryptographically secure random password strictly satisfying all 7 security rules.
+ *
+ * Entropy and Security Guarantees:
+ * - Uses Web Crypto API (`crypto.getRandomValues`) for cryptographically secure pseudo-randomness
+ *   (never `Math.random`).
+ * - Length: 15 characters (well in excess of the 8-character minimum).
+ * - Excludes visually ambiguous characters (e.g. 'I', 'O', 'l', '0', '1') to prevent transcription errors.
+ * - Guaranteed distribution: Explicitly seeds at least 2 uppercase letters, 2 lowercase letters,
+ *   2 numbers, and 2 special symbols before filling remaining positions.
+ * - Permutation: Uses the Fisher-Yates shuffle with cryptographic random indices.
+ * - Verification: Every candidate password is validated against `validateAdminPassword(candidate, identity)`.
+ *   If any rule fails (or if accidental consecutive digits occur), the loop retries up to 50 times.
+ *
+ * @param identity - Optional identity context to ensure generated password does not conflict with name/email.
+ * @returns A cryptographically secure 15-character password string.
+ * @throws {Error} If unable to satisfy all constraints after 50 generation attempts.
  */
 export function generateSecureAdminPassword(identity?: UserIdentityContext): string {
   const UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ"; // exclude easily confused I, O
@@ -351,7 +438,15 @@ export function generateSecureAdminPassword(identity?: UserIdentityContext): str
 }
 
 /**
- * Formats credential sharing message for copy to clipboard.
+ * Formats a clean, confidential credential sharing message for copy to clipboard.
+ *
+ * Includes administrator name, login email, temporary password, and a clear security notice
+ * warning that credentials must only be transmitted via private, encrypted communication channels.
+ *
+ * @param adminName - The display name of the new administrator.
+ * @param adminEmail - The login email address for the account.
+ * @param temporaryPassword - The generated temporary password.
+ * @returns A formatted multi-line plain text message suitable for clipboard copy.
  */
 export function formatCredentialSharingMessage(
   adminName: string,
