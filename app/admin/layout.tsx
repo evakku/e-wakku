@@ -23,6 +23,7 @@ import { logoutAdmin } from "@/app/admin/actions/auth";
  * client boundary and keep this file as a Server Component.
  */
 import SignOutButton from "@/components/admin/SignOutButton";
+import { AdminProfileProvider } from "@/components/admin/AdminProfileContext";
 
 export default function AdminGroupLayout({
   children,
@@ -41,14 +42,16 @@ export default function AdminGroupLayout({
   }
 
   return (
-    <AdminLayout
-      headerAction={
-        <form action={logoutAdmin}>
-          <SignOutButton />
-        </form>
-      }
-    >
-      {children}
-    </AdminLayout>
+    <AdminProfileProvider>
+      <AdminLayout
+        headerAction={
+          <form action={logoutAdmin}>
+            <SignOutButton />
+          </form>
+        }
+      >
+        {children}
+      </AdminLayout>
+    </AdminProfileProvider>
   );
 }

@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const ALLOWED_REDIRECT_PREFIXES = [
   "/admin",
+  "/admin/profile",
   "/admin/reset-password",
   "/admin/issues/manage",
   "/admin/analytics",
