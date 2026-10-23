@@ -41,6 +41,7 @@ export default async function AdminProfilePage() {
       status: "active" as const,
       createdAt: auth.user.created_at,
       isCurrentAdmin: true,
+      isPrimaryAdmin: true,
     },
   ];
 

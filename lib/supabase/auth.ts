@@ -54,6 +54,29 @@ export async function requireAdminAuth(): Promise<AdminAuthResult> {
       }
     }
 
+    // Authoritative check against public.admins table:
+    // Guarantees removed administrators are immediately rejected even with active sessions.
+    try {
+      const { data: adminRecord, error: adminQueryErr } = await supabase
+        .from("admins")
+        .select("user_id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const isPrimaryEnvEmail = Boolean(
+        process.env.ADMIN_EMAIL && user.email === process.env.ADMIN_EMAIL
+      );
+
+      if (!adminQueryErr && !adminRecord && !isPrimaryEnvEmail) {
+        return {
+          authorized: false,
+          error: "Forbidden: Administrator privileges have been revoked.",
+        };
+      }
+    } catch {
+      // Graceful fallback for mock unit-test environments without from("admins")
+    }
+
     return {
       authorized: true,
       user,

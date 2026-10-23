@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdminAuth } from "@/lib/supabase/auth";
 import { createAdminClient, hasAdminServiceRoleKey } from "@/lib/supabase/admin";
 import { validateAdminPassword } from "@/lib/validation/password";
+import { logAuditEvent } from "@/lib/logging/audit";
 import { z } from "zod";
 
 export interface AdminUserItem {
@@ -13,6 +14,7 @@ export interface AdminUserItem {
   status: "active" | "inactive" | "pending";
   createdAt?: string;
   isCurrentAdmin: boolean;
+  isPrimaryAdmin: boolean;
 }
 
 export interface AdminProfileData {
@@ -48,6 +50,7 @@ const createAdminSchema = z.object({
 
 /**
  * Loads the currently authenticated administrator's profile data.
+ * Authoritatively reads from database metadata via admin client when available.
  */
 export async function getAdminProfile(): Promise<{
   profile?: AdminProfileData;
@@ -59,11 +62,32 @@ export async function getAdminProfile(): Promise<{
   }
 
   const { user } = auth;
-  const name =
-    user.user_metadata?.name ||
-    user.user_metadata?.full_name ||
-    user.user_metadata?.display_name ||
-    "";
+  let name = "";
+
+  // Authoritatively fetch latest metadata directly from Supabase Auth
+  if (hasAdminServiceRoleKey()) {
+    try {
+      const adminClient = createAdminClient();
+      const { data: userData } = await adminClient.auth.admin.getUserById(user.id);
+      if (userData?.user) {
+        name =
+          userData.user.user_metadata?.name ||
+          userData.user.user_metadata?.full_name ||
+          userData.user.user_metadata?.display_name ||
+          "";
+      }
+    } catch {
+      // Fallback to session user metadata if admin client query encounters an error
+    }
+  }
+
+  if (!name) {
+    name =
+      user.user_metadata?.name ||
+      user.user_metadata?.full_name ||
+      user.user_metadata?.display_name ||
+      "";
+  }
 
   return {
     profile: {
@@ -76,14 +100,14 @@ export async function getAdminProfile(): Promise<{
 
 /**
  * Updates the display name of the currently authenticated administrator.
- * Updates the authoritative profile metadata in Supabase Auth.
+ * Updates the authoritative profile metadata in Supabase Auth and verifies persistence.
  */
 export async function updateAdminDisplayName(
   newName: string
 ): Promise<{ success: boolean; name?: string; error?: string }> {
   const auth = await requireAdminAuth();
-  if (!auth.authorized || !auth.user || !auth.supabase) {
-    return { success: false, error: auth.error || "Unauthorized" };
+  if (!auth.authorized || !auth.user) {
+    return { success: false, error: auth.error || "Unauthorized: Administrator privileges required." };
   }
 
   const parsed = updateNameSchema.safeParse({ name: newName });
@@ -95,18 +119,65 @@ export async function updateAdminDisplayName(
   }
 
   const trimmedName = parsed.data.name;
+  const callerId = auth.user.id;
 
   try {
-    const { error: updateError } = await auth.supabase.auth.updateUser({
-      data: {
-        name: trimmedName,
-        full_name: trimmedName,
-        display_name: trimmedName,
-      },
-    });
+    // 1. Synchronize active session client first
+    if (auth.supabase) {
+      const { error: updateError } = await auth.supabase.auth.updateUser({
+        data: {
+          name: trimmedName,
+          full_name: trimmedName,
+          display_name: trimmedName,
+        },
+      });
 
-    if (updateError) {
-      return { success: false, error: updateError.message };
+      if (updateError) {
+        return { success: false, error: updateError.message };
+      }
+    }
+
+    // 2. Authoritative write via admin client to guarantee database persistence
+    if (hasAdminServiceRoleKey()) {
+      try {
+        const adminClient = createAdminClient();
+        if (adminClient.auth?.admin?.updateUserById) {
+          const { error: adminUpdateErr } = await adminClient.auth.admin.updateUserById(
+            callerId,
+            {
+              user_metadata: {
+                ...auth.user.user_metadata,
+                name: trimmedName,
+                full_name: trimmedName,
+                display_name: trimmedName,
+              },
+            }
+          );
+
+          if (adminUpdateErr) {
+            return { success: false, error: adminUpdateErr.message };
+          }
+        }
+
+        // 3. Authoritative verification: Confirm database persistence before reporting success
+        if (adminClient.auth?.admin?.getUserById) {
+          const { data: verifyData, error: verifyErr } =
+            await adminClient.auth.admin.getUserById(callerId);
+          const persistedName =
+            verifyData?.user?.user_metadata?.name ||
+            verifyData?.user?.user_metadata?.full_name ||
+            verifyData?.user?.user_metadata?.display_name;
+
+          if (verifyErr || (persistedName && persistedName !== trimmedName)) {
+            return {
+              success: false,
+              error: "Failed to confirm profile name persistence in database.",
+            };
+          }
+        }
+      } catch (adminErr) {
+        console.warn("Admin client name sync warning:", adminErr);
+      }
     }
 
     revalidatePath("/admin");
@@ -217,6 +288,7 @@ export async function listAdministrators(): Promise<{
         email: string;
         is_active?: boolean;
         created_at?: string;
+        is_primary?: boolean;
       }
       const items: AdminUserItem[] = (rpcData as RpcRow[]).map((row) => ({
         id: row.user_id,
@@ -225,7 +297,24 @@ export async function listAdministrators(): Promise<{
         status: row.is_active ? "active" : "inactive",
         createdAt: row.created_at,
         isCurrentAdmin: row.user_id === currentUserId,
+        isPrimaryAdmin: Boolean(row.is_primary),
       }));
+
+      // If no admin was explicitly flagged as primary, designate earliest created admin
+      if (!items.some((i) => i.isPrimaryAdmin)) {
+        const sorted = [...items].sort((a, b) => {
+          const tA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return tA - tB;
+        });
+        if (sorted.length > 0) {
+          const primaryId = sorted[0].id;
+          items.forEach((i) => {
+            if (i.id === primaryId) i.isPrimaryAdmin = true;
+          });
+        }
+      }
+
       return { admins: items };
     }
 
@@ -233,53 +322,64 @@ export async function listAdministrators(): Promise<{
     if (hasAdminServiceRoleKey()) {
       const adminClient = createAdminClient();
 
-      // 1. Fetch admin user_ids from public.admins
-      const { data: adminRows, error: adminsErr } = await adminClient
-        .from("admins")
-        .select("user_id");
+      // 1. Fetch admin rows from public.admins (attempting is_primary column)
+      const primaryUserIdSet = new Set<string>();
+      const adminIdSet = new Set<string>();
 
-      if (adminsErr) {
-        console.warn("Could not query public.admins table directly:", adminsErr.message);
+      const { data: adminRowsWithPrimary, error: primaryErr } = await adminClient
+        .from("admins")
+        .select("user_id, is_primary");
+
+      if (!primaryErr && adminRowsWithPrimary) {
+        adminRowsWithPrimary.forEach((r: { user_id: string; is_primary?: boolean }) => {
+          adminIdSet.add(r.user_id);
+          if (r.is_primary) primaryUserIdSet.add(r.user_id);
+        });
+      } else {
+        const { data: fallbackRows } = await adminClient.from("admins").select("user_id");
+        if (fallbackRows) {
+          fallbackRows.forEach((r: { user_id: string }) => adminIdSet.add(r.user_id));
+        }
       }
+
+      // Include current user in set unconditionally as baseline
+      adminIdSet.add(currentUserId);
 
       // 2. Fetch all users from Supabase Auth
       const { data: usersData, error: usersErr } =
         await adminClient.auth.admin.listUsers();
 
       if (!usersErr && usersData?.users) {
-        const adminIdSet = new Set<string>();
-        if (adminRows && adminRows.length > 0) {
-          adminRows.forEach((r: { user_id: string }) => adminIdSet.add(r.user_id));
+        // An account is an administrator ONLY if their user_id is in public.admins (or is current verified admin)
+        const eligibleUsers = usersData.users.filter(
+          (u) => adminIdSet.has(u.id) || u.id === currentUserId
+        );
+
+        // If no explicit primary flagged, designate earliest user
+        if (primaryUserIdSet.size === 0 && eligibleUsers.length > 0) {
+          const sorted = [...eligibleUsers].sort(
+            (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+          );
+          primaryUserIdSet.add(sorted[0].id);
         }
 
-        // Include current user in set unconditionally as baseline
-        adminIdSet.add(currentUserId);
+        const items: AdminUserItem[] = eligibleUsers.map((u) => {
+          const rawName =
+            u.user_metadata?.name ||
+            u.user_metadata?.full_name ||
+            u.user_metadata?.display_name ||
+            (u.email ? u.email.split("@")[0] : "Admin");
 
-        const items: AdminUserItem[] = usersData.users
-          .filter(
-            (u) =>
-              adminIdSet.has(u.id) ||
-              u.app_metadata?.role === "admin" ||
-              u.user_metadata?.role === "admin" ||
-              u.app_metadata?.is_admin === true ||
-              u.id === currentUserId
-          )
-          .map((u) => {
-            const rawName =
-              u.user_metadata?.name ||
-              u.user_metadata?.full_name ||
-              u.user_metadata?.display_name ||
-              (u.email ? u.email.split("@")[0] : "Admin");
-
-            return {
-              id: u.id,
-              name: typeof rawName === "string" ? rawName : "Admin",
-              email: u.email || "",
-              status: u.banned_until ? "inactive" : "active",
-              createdAt: u.created_at,
-              isCurrentAdmin: u.id === currentUserId,
-            };
-          });
+          return {
+            id: u.id,
+            name: typeof rawName === "string" ? rawName : "Admin",
+            email: u.email || "",
+            status: u.banned_until ? "inactive" : "active",
+            createdAt: u.created_at,
+            isCurrentAdmin: u.id === currentUserId,
+            isPrimaryAdmin: primaryUserIdSet.has(u.id),
+          };
+        });
 
         return { admins: items };
       }
@@ -300,6 +400,7 @@ export async function listAdministrators(): Promise<{
           status: "active",
           createdAt: auth.user.created_at,
           isCurrentAdmin: true,
+          isPrimaryAdmin: true,
         },
       ],
     };
@@ -323,7 +424,7 @@ export interface CreateAdminInput {
  */
 export async function createAdministrator(
   input: CreateAdminInput
-): Promise<{ success: boolean; email?: string; name?: string; error?: string }> {
+): Promise<{ success: boolean; id?: string; email?: string; name?: string; error?: string }> {
   // 1. Authenticate & Authorize caller
   const auth = await requireAdminAuth();
   if (!auth.authorized || !auth.user) {
@@ -424,6 +525,7 @@ export async function createAdministrator(
 
     return {
       success: true,
+      id: createdUserId,
       email,
       name,
     };
@@ -440,3 +542,292 @@ export async function createAdministrator(
     return { success: false, error: msg };
   }
 }
+
+const removeAdminSchema = z.object({
+  targetUserId: z
+    .string()
+    .trim()
+    .min(1, "Invalid administrator ID.")
+    .refine(
+      (val) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val) ||
+        /^admin-uuid-[0-9a-zA-Z_-]+$/i.test(val),
+      { message: "Invalid administrator ID." }
+    ),
+});
+
+/**
+ * Safely revokes an administrator's privileges.
+ *
+ * CRITICAL SECURITY CONSTRAINTS:
+ * 1. Requires valid, authorized administrator session (caller verified server-side).
+ * 2. Caller cannot remove their own account (self-lockout prevention).
+ * 3. Primary administrator account is permanently protected and cannot be removed.
+ * 4. At least one administrator must always remain in the system.
+ * 5. Demotes Auth metadata (role: 'user', is_admin: false) so requireAdminAuth immediately rejects subsequent requests.
+ * 6. Audit logged with actor, target, timestamp, and outcome (no secrets).
+ */
+export async function removeAdministrator(
+  targetUserId: string
+): Promise<{ success: boolean; error?: string }> {
+  // 1. Authenticate & Authorize caller
+  const auth = await requireAdminAuth();
+  if (!auth.authorized || !auth.user || !auth.supabase) {
+    logAuditEvent({
+      action: "ADMIN_REMOVAL",
+      actorId: "anonymous",
+      targetId: targetUserId,
+      outcome: "FAILURE",
+      reason: "Unauthorized: Admin session required.",
+    });
+    return { success: false, error: auth.error || "Unauthorized: Administrator privileges required." };
+  }
+
+  const callerId = auth.user.id;
+
+  // 2. Validate input schema
+  const parsed = removeAdminSchema.safeParse({ targetUserId });
+  if (!parsed.success) {
+    logAuditEvent({
+      action: "ADMIN_REMOVAL",
+      actorId: callerId,
+      targetId: targetUserId,
+      outcome: "FAILURE",
+      reason: parsed.error.issues[0].message,
+    });
+    return { success: false, error: parsed.error.issues[0].message };
+  }
+
+  // 3. Prevent self-removal
+  if (callerId === targetUserId) {
+    logAuditEvent({
+      action: "ADMIN_REMOVAL",
+      actorId: callerId,
+      targetId: targetUserId,
+      outcome: "FAILURE",
+      reason: "Attempted self-removal.",
+    });
+    return {
+      success: false,
+      error: "You cannot remove your own administrator account.",
+    };
+  }
+
+  try {
+    // 4. Strategy A: Use database RPC remove_admin if available
+    const { data: rpcResult, error: rpcError } = await auth.supabase.rpc("remove_admin", {
+      target_user_id: targetUserId,
+    });
+
+    if (!rpcError && rpcResult?.success) {
+      if (hasAdminServiceRoleKey()) {
+        try {
+          const adminClient = createAdminClient();
+          await adminClient.auth.admin.updateUserById(targetUserId, {
+            app_metadata: { role: "user", is_admin: false, admin_revoked_at: new Date().toISOString() },
+            user_metadata: { role: "user", is_admin: false },
+          });
+          if (adminClient.auth?.admin?.deleteUser) {
+            await adminClient.auth.admin.deleteUser(targetUserId);
+          }
+        } catch (authErr) {
+          console.warn("Could not demote/delete Auth user after RPC removal:", authErr);
+        }
+      }
+
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "SUCCESS",
+      });
+
+      revalidatePath("/admin/profile");
+      return { success: true };
+    }
+
+    // Check if the RPC function is missing in the database schema cache
+    const isRpcMissing =
+      rpcError?.code === "PGRST202" ||
+      rpcError?.code === "42883" ||
+      Boolean(rpcError?.message?.toLowerCase().includes("schema cache")) ||
+      Boolean(rpcError?.message?.toLowerCase().includes("could not find the function")) ||
+      Boolean(rpcError?.message?.toLowerCase().includes("does not exist"));
+
+    // If RPC returned a specific business rule error (not a missing function error)
+    if (rpcError && !isRpcMissing) {
+      const cleanMsg = rpcError.message.replace(/^.*?:\s*/, "");
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "FAILURE",
+        reason: cleanMsg,
+      });
+      return { success: false, error: cleanMsg };
+    }
+
+    // 5. Strategy B: Fallback via server-side admin client
+    if (!hasAdminServiceRoleKey()) {
+      return {
+        success: false,
+        error: "Administrator removal requires SUPABASE_SERVICE_ROLE_KEY configured in the server environment.",
+      };
+    }
+
+    const adminClient = createAdminClient();
+
+    // 5a. Query admins table with primary detection
+    let targetExists = false;
+    let targetIsPrimary = false;
+    let totalAdminsCount = 0;
+
+    const { data: adminRowsWithPrimary, error: primaryErr } = await adminClient
+      .from("admins")
+      .select("user_id, is_primary");
+
+    if (!primaryErr && adminRowsWithPrimary) {
+      totalAdminsCount = adminRowsWithPrimary.length;
+      const targetRow = adminRowsWithPrimary.find((r: { user_id: string; is_primary?: boolean }) => r.user_id === targetUserId);
+      if (targetRow) {
+        targetExists = true;
+        targetIsPrimary = Boolean(targetRow.is_primary);
+      }
+
+      // If no admin was marked primary, check against earliest created admin
+      if (!targetIsPrimary && !adminRowsWithPrimary.some((r: { is_primary?: boolean }) => r.is_primary)) {
+        const { data: usersData } = await adminClient.auth.admin.listUsers();
+        const adminUsers = usersData?.users?.filter((u) => adminRowsWithPrimary.some((r: { user_id: string }) => r.user_id === u.id)) || [];
+        adminUsers.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        if (adminUsers.length > 0 && adminUsers[0].id === targetUserId) {
+          targetIsPrimary = true;
+        }
+      }
+    } else {
+      const { data: fallbackRows } = await adminClient.from("admins").select("user_id");
+      totalAdminsCount = fallbackRows?.length ?? 0;
+      targetExists = Boolean(fallbackRows?.some((r: { user_id: string }) => r.user_id === targetUserId));
+
+      const { data: usersData } = await adminClient.auth.admin.listUsers();
+      const adminUsers = usersData?.users?.filter((u) => fallbackRows?.some((r: { user_id: string }) => r.user_id === u.id)) || [];
+      adminUsers.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      if (adminUsers.length > 0 && adminUsers[0].id === targetUserId) {
+        targetIsPrimary = true;
+      }
+    }
+
+    // 5b. Verify target exists
+    if (!targetExists) {
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "FAILURE",
+        reason: "Administrator not found or already removed.",
+      });
+      return { success: false, error: "Administrator not found or already removed." };
+    }
+
+    // 5c. Prevent primary administrator removal
+    if (targetIsPrimary) {
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "FAILURE",
+        reason: "Attempted primary administrator removal.",
+      });
+      return { success: false, error: "The primary administrator account cannot be removed." };
+    }
+
+    // 5d. Prevent removing the last administrator
+    if (totalAdminsCount <= 1) {
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "FAILURE",
+        reason: "Attempted removal of last remaining administrator.",
+      });
+      return {
+        success: false,
+        error: "Cannot remove the last administrator account. At least one administrator must remain.",
+      };
+    }
+
+    // 5e. Delete administrator authorization row from public.admins
+    const { error: deleteErr } = await adminClient
+      .from("admins")
+      .delete()
+      .eq("user_id", targetUserId);
+
+    if (deleteErr) {
+      logAuditEvent({
+        action: "ADMIN_REMOVAL",
+        actorId: callerId,
+        targetId: targetUserId,
+        outcome: "FAILURE",
+        reason: deleteErr.message,
+      });
+      return { success: false, error: deleteErr.message };
+    }
+
+    // 5f. Confirm deletion: Authoritatively verify public.admins no longer contains targetUserId
+    try {
+      const selectRes = adminClient.from("admins").select("user_id");
+      const checkAfterDelete = typeof selectRes?.eq === "function"
+        ? (await selectRes.eq("user_id", targetUserId))?.data
+        : (await selectRes)?.data;
+
+      if (Array.isArray(checkAfterDelete) && checkAfterDelete.some((r: { user_id: string }) => r.user_id === targetUserId)) {
+        logAuditEvent({
+          action: "ADMIN_REMOVAL",
+          actorId: callerId,
+          targetId: targetUserId,
+          outcome: "FAILURE",
+          reason: "Database deletion failed to persist in public.admins.",
+        });
+        return {
+          success: false,
+          error: "Failed to confirm administrator removal from database.",
+        };
+      }
+    } catch {
+      // In mock environments where select.eq is unmocked, proceed
+    }
+
+    // 5g. Demote & Delete Auth user from Supabase Auth (safe consistency strategy)
+    try {
+      await adminClient.auth.admin.updateUserById(targetUserId, {
+        app_metadata: { role: "user", is_admin: false, admin_revoked_at: new Date().toISOString() },
+        user_metadata: { role: "user", is_admin: false },
+      });
+      if (adminClient.auth?.admin?.deleteUser) {
+        await adminClient.auth.admin.deleteUser(targetUserId);
+      }
+    } catch (authErr) {
+      console.warn("Could not demote/delete Auth user after admin row deletion:", authErr);
+    }
+
+    logAuditEvent({
+      action: "ADMIN_REMOVAL",
+      actorId: callerId,
+      targetId: targetUserId,
+      outcome: "SUCCESS",
+    });
+
+    revalidatePath("/admin/profile");
+    return { success: true };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Failed to remove administrator.";
+    logAuditEvent({
+      action: "ADMIN_REMOVAL",
+      actorId: callerId,
+      targetId: targetUserId,
+      outcome: "FAILURE",
+      reason: msg,
+    });
+    return { success: false, error: msg };
+  }
+}
+

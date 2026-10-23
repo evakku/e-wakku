@@ -5,6 +5,7 @@ import {
   changeAdminPassword,
   listAdministrators,
   createAdministrator,
+  removeAdministrator,
   type CreateAdminInput,
 } from "@/app/admin/profile/actions";
 import {
@@ -45,9 +46,12 @@ const mockSignInWithPassword = vi.fn();
 const mockRpc = vi.fn();
 const mockFromSelect = vi.fn();
 const mockFromInsert = vi.fn();
+const mockFromDelete = vi.fn();
 const mockAdminCreateUser = vi.fn();
 const mockAdminDeleteUser = vi.fn();
 const mockAdminListUsers = vi.fn();
+const mockAdminUpdateUserById = vi.fn();
+const mockAdminGetUserById = vi.fn();
 
 let mockHasServiceRoleKey = true;
 
@@ -78,11 +82,19 @@ vi.mock("@/lib/supabase/admin", () => ({
         return {
           select: mockFromSelect,
           insert: mockFromInsert,
+          delete: () => {
+            return {
+              eq: (col: string, val: unknown) => {
+                return mockFromDelete(col, val);
+              },
+            };
+          },
         };
       }
       return {
         select: vi.fn(),
         insert: vi.fn(),
+        delete: vi.fn(),
       };
     },
     auth: {
@@ -90,6 +102,8 @@ vi.mock("@/lib/supabase/admin", () => ({
         createUser: mockAdminCreateUser,
         deleteUser: mockAdminDeleteUser,
         listUsers: mockAdminListUsers,
+        updateUserById: mockAdminUpdateUserById,
+        getUserById: mockAdminGetUserById,
       },
     },
   })),
@@ -114,11 +128,29 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
     mockRpc.mockResolvedValue({ data: null, error: { message: "RPC not found" } });
     mockFromSelect.mockResolvedValue({ data: [{ user_id: "admin-uuid-1" }], error: null });
     mockFromInsert.mockResolvedValue({ error: null });
+    mockFromDelete.mockResolvedValue({ error: null });
     mockAdminCreateUser.mockResolvedValue({
       data: { user: { id: "new-admin-uuid", email: "newadmin@e-wakku.com" } },
       error: null,
     });
     mockAdminDeleteUser.mockResolvedValue({ data: {}, error: null });
+    mockAdminUpdateUserById.mockImplementation(async (_id, payload) => {
+      if (payload?.user_metadata) {
+        mockAuthUser.user_metadata = { ...mockAuthUser.user_metadata, ...payload.user_metadata };
+      }
+      return { data: { user: mockAuthUser }, error: null };
+    });
+    mockAdminGetUserById.mockImplementation(async () => {
+      return {
+        data: {
+          user: {
+            ...mockAuthUser,
+            user_metadata: { ...mockAuthUser.user_metadata },
+          },
+        },
+        error: null,
+      };
+    });
     mockAdminListUsers.mockResolvedValue({
       data: {
         users: [
@@ -299,7 +331,9 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toBeUndefined();
       expect(res.admins).toHaveLength(2);
       expect(res.admins![0].isCurrentAdmin).toBe(true);
+      expect(res.admins![0].isPrimaryAdmin).toBe(true);
       expect(res.admins![1].isCurrentAdmin).toBe(false);
+      expect(res.admins![1].isPrimaryAdmin).toBe(false);
     });
 
     it("falls back to admin client listUsers when RPC is unavailable", async () => {
@@ -332,7 +366,9 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
       expect(res.error).toBeUndefined();
       expect(res.admins).toHaveLength(2);
       expect(res.admins![0].name).toBe("Master Admin");
+      expect(res.admins![0].isPrimaryAdmin).toBe(true);
       expect(res.admins![1].name).toBe("Editor Admin");
+      expect(res.admins![1].isPrimaryAdmin).toBe(false);
     });
   });
 
@@ -447,6 +483,309 @@ describe("Admin Profile & Admin Management Server Actions (Sections 5, 6, 7, 11)
         expect(validation.valid).toBe(true);
         expect(validation.errors).toHaveLength(0);
       }
+    });
+  });
+
+  describe("Section 13: Secure Admin Removal & Primary Administrator Protection", () => {
+    it("rejects removal when unauthorized or unauthenticated", async () => {
+      mockAuthorized = false;
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("Unauthorized");
+    });
+
+    it("rejects invalid UUID target ID", async () => {
+      const res = await removeAdministrator("not-a-valid-uuid");
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("Invalid administrator ID");
+    });
+
+    it("rejects self-removal (caller cannot remove own account)", async () => {
+      // Caller ID is admin-uuid-1
+      const res = await removeAdministrator("admin-uuid-1");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("You cannot remove your own administrator account.");
+      expect(mockFromDelete).not.toHaveBeenCalled();
+    });
+
+    it("rejects removing the primary administrator account (via RPC business error)", async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { message: "Forbidden: The primary administrator account cannot be removed." },
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("The primary administrator account cannot be removed.");
+    });
+
+    it("rejects removing the primary administrator account (via fallback check)", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "admin-uuid-1", is_primary: false },
+          { user_id: "22222222-2222-2222-2222-222222222222", is_primary: true },
+        ],
+        error: null,
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("The primary administrator account cannot be removed.");
+      expect(mockFromDelete).not.toHaveBeenCalled();
+    });
+
+    it("rejects removing the earliest administrator when is_primary column is not yet set", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "11111111-1111-1111-1111-111111111111", is_primary: false },
+          { user_id: "22222222-2222-2222-2222-222222222222", is_primary: false },
+        ],
+        error: null,
+      });
+      mockAdminListUsers.mockResolvedValueOnce({
+        data: {
+          users: [
+            { id: "11111111-1111-1111-1111-111111111111", created_at: "2026-01-01T00:00:00Z" },
+            { id: "22222222-2222-2222-2222-222222222222", created_at: "2026-06-01T00:00:00Z" },
+          ],
+        },
+        error: null,
+      });
+
+      const res = await removeAdministrator("11111111-1111-1111-1111-111111111111");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("The primary administrator account cannot be removed.");
+      expect(mockFromDelete).not.toHaveBeenCalled();
+    });
+
+    it("rejects removing the last remaining administrator account", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [{ user_id: "22222222-2222-2222-2222-222222222222", is_primary: false }],
+        error: null,
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Cannot remove the last administrator account. At least one administrator must remain.");
+    });
+
+    it("rejects removing a non-existent administrator safely", async () => {
+      mockRpc.mockResolvedValueOnce({ data: null, error: { message: "function remove_admin does not exist" } });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "admin-uuid-1", is_primary: true },
+          { user_id: "other-admin-uuid", is_primary: false },
+        ],
+        error: null,
+      });
+
+      const res = await removeAdministrator("33333333-3333-3333-3333-333333333333");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Administrator not found or already removed.");
+    });
+
+    it("successfully removes eligible administrator via RPC and demotes Auth metadata", async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: { success: true },
+        error: null,
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(true);
+      expect(mockAdminUpdateUserById).toHaveBeenCalledWith(
+        "22222222-2222-2222-2222-222222222222",
+        expect.objectContaining({
+          app_metadata: expect.objectContaining({ role: "user", is_admin: false }),
+          user_metadata: expect.objectContaining({ role: "user", is_admin: false }),
+        })
+      );
+    });
+
+    it("gracefully falls back to Strategy B when PostgREST returns 'Could not find the function public.remove_admin(target_user_id) in the schema cache' (PGRST202)", async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: {
+          code: "PGRST202",
+          details: "Searched for the function public.remove_admin with parameter target_user_id... but no matches were found in the schema cache.",
+          hint: "Perhaps you meant to call the function public.is_admin",
+          message: "Could not find the function public.remove_admin(target_user_id) in the schema cache",
+        },
+      });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "admin-uuid-1", is_primary: true },
+          { user_id: "22222222-2222-2222-2222-222222222222", is_primary: false },
+        ],
+        error: null,
+      });
+      mockFromDelete.mockResolvedValueOnce({ error: null });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(true);
+      expect(mockFromDelete).toHaveBeenCalled();
+      expect(mockAdminUpdateUserById).toHaveBeenCalledWith(
+        "22222222-2222-2222-2222-222222222222",
+        expect.objectContaining({
+          app_metadata: expect.objectContaining({ role: "user", is_admin: false }),
+          user_metadata: expect.objectContaining({ role: "user", is_admin: false }),
+        })
+      );
+    });
+  });
+
+  describe("Section 14: Regression Suite — Reliable Persistence for Admin Removal and Profile Save", () => {
+    it("createAdministrator returns the created user UUID for UI state tracking", async () => {
+      const input: CreateAdminInput = {
+        name: "Editor Assistant",
+        email: "editor@e-wakku.com",
+        password: "K#m9Pq!vL2zW",
+        confirmPassword: "K#m9Pq!vL2zW",
+      };
+
+      const res = await createAdministrator(input);
+      expect(res.success).toBe(true);
+      expect(res.id).toBe("new-admin-uuid");
+      expect(res.email).toBe("editor@e-wakku.com");
+      expect(res.name).toBe("Editor Assistant");
+    });
+
+    it("rejects removal when database DELETE fails with explicit safe error", async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { code: "PGRST202", message: "RPC not found" },
+      });
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "admin-uuid-1", is_primary: true },
+          { user_id: "22222222-2222-2222-2222-222222222222", is_primary: false },
+        ],
+        error: null,
+      });
+      mockFromDelete.mockResolvedValueOnce({
+        error: { message: "Database connection failed" },
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toBe("Database connection failed");
+      expect(mockAdminDeleteUser).not.toHaveBeenCalled();
+    });
+
+    it("prevents false-success when public.admins deletion cannot be verified", async () => {
+      mockRpc.mockResolvedValueOnce({
+        data: null,
+        error: { code: "PGRST202", message: "RPC not found" },
+      });
+      // First select for admin existence check
+      mockFromSelect.mockResolvedValueOnce({
+        data: [
+          { user_id: "admin-uuid-1", is_primary: true },
+          { user_id: "22222222-2222-2222-2222-222222222222", is_primary: false },
+        ],
+        error: null,
+      });
+      mockFromDelete.mockResolvedValueOnce({ error: null });
+      // Second select (confirmation query) returns the row still present!
+      mockFromSelect.mockResolvedValueOnce({
+        data: [{ user_id: "22222222-2222-2222-2222-222222222222" }],
+        error: null,
+      });
+
+      const res = await removeAdministrator("22222222-2222-2222-2222-222222222222");
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("Failed to confirm administrator removal from database.");
+    });
+
+    it("listAdministrators excludes removed administrators whose Auth metadata still has role admin", async () => {
+      // Auth user has role admin, but is NOT in public.admins
+      mockAdminListUsers.mockResolvedValueOnce({
+        data: {
+          users: [
+            {
+              id: "admin-uuid-1",
+              email: "master@e-wakku.com",
+              created_at: "2026-01-01T00:00:00Z",
+              user_metadata: { name: "Master Admin" },
+            },
+            {
+              id: "revoked-admin-uuid",
+              email: "revoked@e-wakku.com",
+              created_at: "2026-02-01T00:00:00Z",
+              user_metadata: { name: "Revoked Admin", role: "admin" },
+              app_metadata: { role: "admin" },
+            },
+          ],
+        },
+        error: null,
+      });
+      // public.admins only contains admin-uuid-1
+      mockFromSelect.mockResolvedValueOnce({
+        data: [{ user_id: "admin-uuid-1", is_primary: true }],
+        error: null,
+      });
+
+      const res = await listAdministrators();
+      expect(res.admins).toBeDefined();
+      expect(res.admins).toHaveLength(1);
+      expect(res.admins?.[0].id).toBe("admin-uuid-1");
+      expect(res.admins?.some((a) => a.id === "revoked-admin-uuid")).toBe(false);
+    });
+
+    it("updateAdminDisplayName confirms database persistence and returns updated name", async () => {
+      mockAdminGetUserById.mockResolvedValueOnce({
+        data: {
+          user: {
+            id: "admin-uuid-1",
+            user_metadata: { name: "Persisted Master Admin" },
+          },
+        },
+        error: null,
+      });
+
+      const res = await updateAdminDisplayName("Persisted Master Admin");
+      expect(res.success).toBe(true);
+      expect(res.name).toBe("Persisted Master Admin");
+      expect(mockAdminUpdateUserById).toHaveBeenCalledWith(
+        "admin-uuid-1",
+        expect.objectContaining({
+          user_metadata: expect.objectContaining({ name: "Persisted Master Admin" }),
+        })
+      );
+    });
+
+    it("updateAdminDisplayName fails if database persistence verification fails", async () => {
+      mockAdminGetUserById.mockResolvedValueOnce({
+        data: {
+          user: {
+            id: "admin-uuid-1",
+            // Still returns old name!
+            user_metadata: { name: "Old Master Admin" },
+          },
+        },
+        error: null,
+      });
+
+      const res = await updateAdminDisplayName("New Name Failed Persist");
+      expect(res.success).toBe(false);
+      expect(res.error).toContain("Failed to confirm profile name persistence in database.");
+    });
+
+    it("getAdminProfile authoritatively loads persisted name from Supabase Auth via admin client", async () => {
+      mockAdminGetUserById.mockResolvedValueOnce({
+        data: {
+          user: {
+            id: "admin-uuid-1",
+            user_metadata: { name: "Authoritative Database Profile Name" },
+          },
+        },
+        error: null,
+      });
+
+      const res = await getAdminProfile();
+      expect(res.profile?.name).toBe("Authoritative Database Profile Name");
     });
   });
 });

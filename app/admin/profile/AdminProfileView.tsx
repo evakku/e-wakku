@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useEffect, useTransition } from "react";
 import {
   User,
   Mail,
@@ -16,6 +16,8 @@ import {
   Copy,
   CheckCircle2,
   UserPlus,
+  UserMinus,
+  AlertTriangle,
   Sparkles,
   Loader2,
 } from "lucide-react";
@@ -23,6 +25,8 @@ import {
   updateAdminDisplayName,
   changeAdminPassword,
   createAdministrator,
+  removeAdministrator,
+  listAdministrators,
   type AdminUserItem,
   type AdminProfileData,
 } from "./actions";
@@ -33,6 +37,7 @@ import {
   validateAdminPassword,
 } from "@/lib/validation/password";
 import { useAdminProfile } from "@/components/admin/AdminProfileContext";
+import { createClient } from "@/lib/supabase/client";
 
 interface AdminProfileViewProps {
   initialProfile: AdminProfileData;
@@ -44,6 +49,13 @@ export default function AdminProfileView({
   initialAdmins,
 }: AdminProfileViewProps) {
   const { setAdminName: setContextAdminName } = useAdminProfile();
+
+  // Synchronize top navigation immediately with authoritative profile name
+  useEffect(() => {
+    if (initialProfile.name && initialProfile.name.trim()) {
+      setContextAdminName(initialProfile.name.trim());
+    }
+  }, [initialProfile.name, setContextAdminName]);
 
   // Profile Section State
   const [displayName, setDisplayName] = useState(initialProfile.name);
@@ -88,6 +100,13 @@ export default function AdminProfileView({
   } | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
+  // Remove Admin Dialog State
+  const [adminToRemove, setAdminToRemove] = useState<AdminUserItem | null>(null);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = useState(false);
+  const [removeAdminError, setRemoveAdminError] = useState<string | null>(null);
+  const [adminListSuccessMessage, setAdminListSuccessMessage] = useState<string | null>(null);
+  const [isRemovingAdmin, startRemoveTransition] = useTransition();
+
   // ─────────────────────────────────────────────────────────────────────────────
   // 1. Profile Handlers
   // ─────────────────────────────────────────────────────────────────────────────
@@ -118,6 +137,14 @@ export default function AdminProfileView({
         setAdminsList((prev) =>
           prev.map((adm) => (adm.isCurrentAdmin ? { ...adm, name: result.name! } : adm))
         );
+
+        // Synchronize client-side Supabase session cache so all layout and child components reflect the new name
+        try {
+          const supabase = createClient();
+          await supabase.auth.refreshSession();
+        } catch {
+          // Non-critical session refresh error
+        }
       } else {
         setProfileMessage({ type: "error", text: result.error || "Failed to update display name." });
       }
@@ -276,18 +303,31 @@ export default function AdminProfileView({
           password: newAdminPassword,
         });
 
-        // Add to active table view
-        setAdminsList((prev) => [
-          ...prev,
-          {
-            id: `admin-${Date.now()}`,
-            name: newAdminName.trim(),
-            email: newAdminEmail.trim(),
-            status: "active",
-            createdAt: new Date().toISOString(),
-            isCurrentAdmin: false,
-          },
-        ]);
+        // Add to active table view using authoritative server UUID
+        if (result.id) {
+          setAdminsList((prev) => [
+            ...prev,
+            {
+              id: result.id!,
+              name: newAdminName.trim(),
+              email: newAdminEmail.trim(),
+              status: "active",
+              createdAt: new Date().toISOString(),
+              isCurrentAdmin: false,
+              isPrimaryAdmin: false,
+            },
+          ]);
+        }
+
+        // Authoritatively refresh the list from the server to guarantee persistence
+        try {
+          const fresh = await listAdministrators();
+          if (fresh.admins) {
+            setAdminsList(fresh.admins);
+          }
+        } catch {
+          // Retain optimistic table update
+        }
 
         // Reset creation form state
         setNewAdminName("");
@@ -324,6 +364,52 @@ export default function AdminProfileView({
     // Clear temporary credentials completely from memory
     setCreatedAdminCredentials(null);
     setIsCopied(false);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // 4. Administrator Removal Handlers
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  const handleOpenRemoveDialog = (admin: AdminUserItem) => {
+    setRemoveAdminError(null);
+    setAdminToRemove(admin);
+    setIsRemoveDialogOpen(true);
+  };
+
+  const handleCloseRemoveDialog = () => {
+    if (isRemovingAdmin) return;
+    setIsRemoveDialogOpen(false);
+    setAdminToRemove(null);
+    setRemoveAdminError(null);
+  };
+
+  const handleConfirmRemoveAdmin = () => {
+    if (!adminToRemove) return;
+
+    setRemoveAdminError(null);
+    startRemoveTransition(async () => {
+      const result = await removeAdministrator(adminToRemove.id);
+
+      if (result.success) {
+        setAdminsList((prev) => prev.filter((adm) => adm.id !== adminToRemove.id));
+        setIsRemoveDialogOpen(false);
+        setAdminToRemove(null);
+        setAdminListSuccessMessage("Administrator access removed successfully.");
+        setTimeout(() => setAdminListSuccessMessage(null), 5000);
+
+        // Authoritatively refresh the administrators list from the server
+        try {
+          const fresh = await listAdministrators();
+          if (fresh.admins) {
+            setAdminsList(fresh.admins);
+          }
+        } catch {
+          // Retain state update
+        }
+      } else {
+        setRemoveAdminError(result.error || "Failed to remove administrator.");
+      }
+    });
   };
 
   return (
@@ -660,6 +746,22 @@ export default function AdminProfileView({
           </button>
         </div>
 
+        {adminListSuccessMessage && (
+          <div className="p-3.5 bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs sm:text-sm rounded-lg flex items-center justify-between gap-2 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-emerald-600 shrink-0" />
+              <span>{adminListSuccessMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAdminListSuccessMessage(null)}
+              className="text-emerald-700 hover:text-emerald-900 p-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+
         {/* Admins Table / Responsive List */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
@@ -669,18 +771,24 @@ export default function AdminProfileView({
                 <th className="py-3 px-4">Email</th>
                 <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Created Date</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E2E8F0] text-sm text-[#0F172A]">
               {adminsList.map((admin) => (
                 <tr key={admin.id} className="hover:bg-[#F8FAFC]/80 transition-colors">
                   <td className="py-3.5 px-4 font-medium flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-700 shrink-0">
                       {admin.name.charAt(0).toUpperCase()}
                     </div>
-                    <span>{admin.name}</span>
+                    <span className="truncate max-w-[140px] sm:max-w-none">{admin.name}</span>
+                    {admin.isPrimaryAdmin && (
+                      <span className="text-[11px] font-semibold text-purple-800 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded-full ml-1 shrink-0">
+                        Primary
+                      </span>
+                    )}
                     {admin.isCurrentAdmin && (
-                      <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full ml-1">
+                      <span className="text-[11px] font-semibold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-full ml-1 shrink-0">
                         You
                       </span>
                     )}
@@ -700,6 +808,34 @@ export default function AdminProfileView({
                           day: "numeric",
                         })
                       : "—"}
+                  </td>
+                  <td className="py-3.5 px-4 text-right">
+                    {admin.isPrimaryAdmin ? (
+                      <div className="flex items-center justify-end" title="The primary administrator account cannot be removed">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-normal text-[#94A3B8] bg-slate-50 border border-slate-200 cursor-not-allowed">
+                          <Lock size={12} />
+                          Protected
+                        </span>
+                      </div>
+                    ) : admin.isCurrentAdmin ? (
+                      <div className="flex items-center justify-end" title="You cannot remove your own administrator account">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-normal text-[#94A3B8] bg-slate-50 border border-slate-200 cursor-not-allowed">
+                          <Lock size={12} />
+                          Current User
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-end">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenRemoveDialog(admin)}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500"
+                        >
+                          <UserMinus size={13} />
+                          Remove Admin
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -942,6 +1078,72 @@ export default function AdminProfileView({
                   </>
                 ) : (
                   "Confirm & Create"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Dialog: Confirmation Before Removal ───────────────────── */}
+      {isRemoveDialogOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="remove-admin-dialog-title"
+        >
+          <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-xl w-full max-w-md p-6 flex flex-col gap-4">
+            <div className="w-12 h-12 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-600 mx-auto">
+              <UserMinus size={24} />
+            </div>
+
+            <div className="text-center">
+              <h4 id="remove-admin-dialog-title" className="font-heading text-lg font-semibold text-[#0F172A]">
+                Remove Administrator?
+              </h4>
+              <p className="font-sans text-xs sm:text-sm text-[#475569] mt-2 leading-relaxed">
+                Are you sure you want to remove{" "}
+                <span className="font-semibold text-[#0F172A]">{adminToRemove?.name}</span> (
+                <span className="font-semibold text-[#0F172A]">{adminToRemove?.email}</span>) from E-Wakku administrator access? This action will revoke their administrative privileges. They may lose access to the dashboard immediately.
+              </p>
+              <div className="mt-3 p-2.5 bg-amber-50 border border-amber-200 rounded-lg text-left">
+                <p className="text-xs text-amber-800 flex items-start gap-1.5 leading-relaxed">
+                  <AlertTriangle size={14} className="text-amber-600 shrink-0 mt-0.5" />
+                  <span>This action cannot be undone from this screen. Make sure you have selected the correct administrator.</span>
+                </p>
+              </div>
+            </div>
+
+            {removeAdminError && (
+              <div className="p-3 bg-red-50 text-red-800 border border-red-200 text-xs rounded-lg flex items-center gap-2">
+                <AlertCircle size={15} className="shrink-0 text-red-600" />
+                <span>{removeAdminError}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-4 border-t border-[#E2E8F0]">
+              <button
+                type="button"
+                onClick={handleCloseRemoveDialog}
+                disabled={isRemovingAdmin}
+                className="px-4 py-2 text-xs font-medium text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmRemoveAdmin}
+                disabled={isRemovingAdmin}
+                className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg transition-colors shadow-sm outline-none focus-visible:ring-2 focus-visible:ring-red-600 disabled:opacity-50"
+              >
+                {isRemovingAdmin ? (
+                  <>
+                    <Loader2 size={14} className="animate-spin" />
+                    Removing...
+                  </>
+                ) : (
+                  "Remove Admin"
                 )}
               </button>
             </div>
