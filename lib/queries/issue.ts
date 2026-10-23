@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { resolveCreatorNames } from "@/app/admin/issues/manage/actions";
 
 export interface Issue {
   id: string;
@@ -11,6 +12,10 @@ export interface Issue {
   is_draft: boolean;
   published_at: string | null;
   created_at: string;
+  /** Supabase Auth UUID of the administrator who created the issue. */
+  created_by?: string | null;
+  /** Resolved human-readable display name of the creator. */
+  created_by_name?: string | null;
 }
 
 const isUuid = (str: string) =>
@@ -144,17 +149,30 @@ export async function getIssueByIdAdmin(id: string): Promise<Issue | null> {
 
   const { data, error } = await query.maybeSingle();
 
-  if (error) {
-    console.error("getIssueByIdAdmin failed:", error.message);
+  if (error || !data) {
+    if (error) console.error("getIssueByIdAdmin failed:", error.message);
     return null;
   }
-  return data ?? null;
+
+  const creatorId = (data as { created_by?: string | null }).created_by ?? null;
+  let creatorName: string | null = null;
+  if (creatorId) {
+    const nameMap = await resolveCreatorNames([creatorId], supabase);
+    creatorName = nameMap.get(creatorId) ?? "Admin";
+  }
+
+  return {
+    ...(data as Issue),
+    created_by: creatorId,
+    created_by_name: creatorName,
+  };
 }
 
 /**
  * getAllIssuesAdmin
  * All issues (published + draft) — for the admin "Issues" list/dashboard.
  * Supports pagination (BE-05).
+ * Resolves creator display names in batch with zero N+1 queries.
  */
 export async function getAllIssuesAdmin(
   limit?: number,
@@ -180,7 +198,20 @@ export async function getAllIssuesAdmin(
     console.error("getAllIssuesAdmin failed:", error.message);
     return [];
   }
-  return data ?? [];
+
+  const rawIssues = (data as (Issue & { created_by?: string | null })[]) ?? [];
+  const creatorIds = rawIssues.map((i) => i.created_by);
+  const nameMap = await resolveCreatorNames(creatorIds, supabase);
+
+  return rawIssues.map((item) => {
+    const creatorId = item.created_by ?? null;
+    const creatorName = creatorId ? nameMap.get(creatorId) ?? "Admin" : null;
+    return {
+      ...item,
+      created_by: creatorId,
+      created_by_name: creatorName,
+    };
+  });
 }
 
 export interface IssueStatsAdmin {

@@ -203,7 +203,9 @@ export async function createIssue(
     finalPdfUrl = pdfUrlData.publicUrl;
   }
 
-  // Insert the issue row into public.issues
+  // Insert the issue row into public.issues.
+  // Security Guarantee: `created_by` is strictly obtained from the verified server-side session (`auth.user.id`).
+  // It cannot be supplied, spoofed, or overridden by client parameters or FormData fields.
   const { data: insertedData, error: insertErr } = await supabase
     .from("issues")
     .insert({
@@ -215,6 +217,7 @@ export async function createIssue(
       year: parsed.data.year,
       is_draft: parsed.data.isDraft,
       published_at: parsed.data.isDraft ? null : new Date().toISOString(),
+      created_by: auth.user.id,
     })
     .select("id")
     .single();

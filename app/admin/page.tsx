@@ -16,6 +16,7 @@ import {
   Download,
 } from "lucide-react";
 import { getAllIssuesAdmin, getIssueStatsAdmin } from "@/lib/queries/issue";
+import { formatCreatorLabel } from "@/lib/utils/creator";
 import { getAnalyticsSummary } from "@/lib/analytics";
 import { getEnquiries } from "@/lib/queries/enquiries";
 import RecentEnquiries from "./RecentEnquiries";
@@ -445,7 +446,10 @@ export default async function AdminDashboardPage() {
                         )}
                       </td>
                       <td className="py-3 px-4 text-xs text-[#64748B] whitespace-nowrap">
-                        {formatDate(issue.created_at)}
+                        <div>{formatDate(issue.created_at)}</div>
+                        <div className="text-[11px] text-[#94A3B8] mt-0.5">
+                          Added by: {formatCreatorLabel(issue.created_by_name, issue.created_by)}
+                        </div>
                       </td>
                       <td className="py-3 px-6 text-right whitespace-nowrap">
                         <Link
