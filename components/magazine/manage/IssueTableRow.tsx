@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toggleDraftStatus, type Issue } from "@/app/admin/issues/manage/actions";
+import { formatCreatorLabel } from "@/lib/utils/creator";
 
 const MONTHS = [
   "January",
@@ -116,6 +117,13 @@ export function IssueTableRow({
             {issue.description}
           </p>
         )}
+        {/* Creator Attribution */}
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#64748B]">
+          <span className="text-[#94A3B8]">Added by:</span>
+          <span className="font-medium text-[#334155]">
+            {formatCreatorLabel(issue.created_by_name, issue.created_by)}
+          </span>
+        </div>
       </td>
 
       {/* Status Badge */}
@@ -139,7 +147,12 @@ export function IssueTableRow({
 
       {/* Date */}
       <td className="py-3.5 px-5 whitespace-nowrap text-xs text-[#64748B]">
-        {issue.is_draft ? "—" : dateLabel}
+        <div>{issue.is_draft ? "—" : dateLabel}</div>
+        {issue.created_at && (
+          <div className="text-[11px] text-[#94A3B8] mt-0.5">
+            Created {new Date(issue.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </div>
+        )}
       </td>
 
       {/* Actions */}
@@ -151,6 +164,7 @@ export function IssueTableRow({
             onClick={handleToggle}
             disabled={isPending}
             title={issue.is_draft ? "Publish issue" : "Move to draft"}
+            aria-label={issue.is_draft ? `Publish ${issue.title}` : `Move ${issue.title} to draft`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#059669] transition-colors disabled:opacity-50 cursor-pointer"
           >
             {isPending ? (
@@ -167,6 +181,7 @@ export function IssueTableRow({
             type="button"
             onClick={onEdit}
             title="Edit issue"
+            aria-label={`Edit ${issue.title}`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-[#F0F2F4] hover:text-[#0F172A] transition-colors cursor-pointer"
           >
             <Pencil size={15} />
@@ -177,6 +192,7 @@ export function IssueTableRow({
             type="button"
             onClick={onDelete}
             title="Delete issue"
+            aria-label={`Delete ${issue.title}`}
             className="flex items-center justify-center w-8 h-8 rounded-lg text-[#64748B] hover:bg-red-50 hover:text-red-600 transition-colors cursor-pointer"
           >
             <Trash2 size={15} />

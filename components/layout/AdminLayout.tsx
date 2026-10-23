@@ -16,10 +16,12 @@ import {
   Files,
   BarChart3,
   Mail,
+  UserCircle,
 } from "lucide-react";
 import type { AdminLayoutProps, AdminNavItem } from "./types";
 import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
 import Spinner from "@/components/ui/spinner";
+import { useAdminProfile } from "@/components/admin/AdminProfileContext";
 
 /**
  * AdminLayout
@@ -40,13 +42,14 @@ import Spinner from "@/components/ui/spinner";
  * - Active route detection via usePathname
  * - Role-based nav items passed via props
  * - Immediate loading feedback on nav link clicks and top bar hairline
+ * - Displays authenticated administrator's display name or 'Admin' in top bar
  *
  * Usage:
  * ```tsx
  * // app/admin/layout.tsx
  * import AdminLayout from "@/components/layout/AdminLayout";
  * export default function Layout({ children }) {
- *   return <AdminLayout pageTitle="Dashboard">{children}</AdminLayout>;
+ *   return <AdminLayout pageTitle="Admin">{children}</AdminLayout>;
  * }
  * ```
  */
@@ -57,10 +60,27 @@ const DEFAULT_NAV: AdminNavItem[] = [
   { label: "Analytics", href: "/admin/analytics", icon: <BarChart3 size={18} /> },
   { label: "Enquiries", href: "/admin/enquiries", icon: <Mail size={18} /> },
   { label: "Settings", href: "/admin/settings", icon: <Settings size={18} /> },
+  { label: "Admin Profile", href: "/admin/profile", icon: <UserCircle size={18} /> },
 ];
 
 const sidebarEase = [0.4, 0, 0.2, 1] as [number, number, number, number];
 
+/**
+ * Shell layout for authenticated administrative dashboard pages.
+ *
+ * Architecture & Dynamic Identity:
+ * - Reads `adminName` from `AdminProfileContext` (via `useAdminProfile()`).
+ * - Top-Bar Resolution: If `adminName` is populated, renders it as the page header `<h1>`;
+ *   otherwise falls back to `pageTitle` (defaults to "Admin").
+ * - Sidebar: Responsive desktop collapsible navigation and mobile slide-out drawer with
+ *   immediate loading feedback (`useNavigationLoading`).
+ *
+ * @param props - Layout component properties.
+ * @param props.children - Route view component to render in the main content canvas.
+ * @param props.navItems - Array of navigation links (defaults to `DEFAULT_NAV`).
+ * @param props.pageTitle - Fallback page heading title when no administrator name is set.
+ * @param props.headerAction - Optional action element rendered on the right side of the header (e.g. SignOutButton).
+ */
 export default function AdminLayout({
   children,
   navItems = DEFAULT_NAV,
@@ -71,6 +91,7 @@ export default function AdminLayout({
   const [collapsed, setCollapsed] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const { isNavigating, isHrefPending, handleLinkClick } = useNavigationLoading();
+  const { adminName } = useAdminProfile();
 
   const toggleCollapsed = useCallback(() => setCollapsed((p) => !p), []);
   const closeDrawer = useCallback(() => setDrawerOpen(false), []);
@@ -341,9 +362,9 @@ export default function AdminLayout({
             <Menu size={18} />
           </button>
 
-          {/* Page title */}
+          {/* Page title / Admin Name */}
           <h1 className="flex-1 font-sans text-base font-medium text-[#0F172A] tracking-tight truncate">
-            {pageTitle}
+            {adminName && adminName.trim() ? adminName : pageTitle}
           </h1>
 
           {/* Optional right action */}

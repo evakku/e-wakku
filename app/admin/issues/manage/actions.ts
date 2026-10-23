@@ -17,9 +17,82 @@ export type Issue = {
   is_draft: boolean;
   published_at: string | null;
   created_at: string;
+  /** Supabase Auth UUID of administrator who originally added the issue. Null for legacy issues. */
+  created_by?: string | null;
+  /** Resolved human-readable display name of the creator administrator. */
+  created_by_name?: string | null;
 };
 
 export type ActionResult = { error?: string; success?: boolean; message?: string };
+
+/**
+ * Resolves creator display names for a collection of creator user UUIDs in a single batch query.
+ *
+ * Guarantees zero N+1 queries by executing at most 1 RPC query to `public.get_admin_directory()`
+ * (or falling back to the service-role admin client listUsers if RPC is unavailable).
+ *
+ * @param creatorIds - Array of creator UUIDs (can contain duplicates or nulls).
+ * @param supabase - Authenticated Supabase client.
+ * @returns Map of userId -> display_name.
+ */
+export async function resolveCreatorNames(
+  creatorIds: (string | null | undefined)[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  supabase: any
+): Promise<Map<string, string>> {
+  const nameMap = new Map<string, string>();
+  const validIds = Array.from(
+    new Set(creatorIds.filter((id): id is string => typeof id === "string" && id.trim().length > 0))
+  );
+
+  if (validIds.length === 0) {
+    return nameMap;
+  }
+
+  // Strategy A: Call get_admin_directory() RPC (covers all authorized administrators)
+  try {
+    const { data: adminList, error: rpcErr } = await supabase.rpc("get_admin_directory");
+    if (!rpcErr && Array.isArray(adminList)) {
+      for (const admin of adminList) {
+        if (admin.user_id && admin.display_name) {
+          nameMap.set(admin.user_id, admin.display_name);
+        }
+      }
+    }
+  } catch {
+    // Graceful fallback if RPC is unavailable in test runner or legacy DB
+  }
+
+  // Strategy B: If any creator IDs are still unresolved, try service-role client
+  const unresolvedIds = validIds.filter((id) => !nameMap.has(id));
+  if (unresolvedIds.length > 0) {
+    try {
+      const { hasAdminServiceRoleKey, createAdminClient } = await import("@/lib/supabase/admin");
+      if (hasAdminServiceRoleKey()) {
+        const adminClient = createAdminClient();
+        const { data: usersData } = await adminClient.auth.admin.listUsers();
+        if (usersData?.users) {
+          for (const u of usersData.users) {
+            if (unresolvedIds.includes(u.id)) {
+              const meta = u.user_metadata || {};
+              const name =
+                (typeof meta.name === "string" && meta.name.trim()) ||
+                (typeof meta.full_name === "string" && meta.full_name.trim()) ||
+                (typeof meta.display_name === "string" && meta.display_name.trim()) ||
+                (u.email ? u.email.split("@")[0] : "Admin");
+              nameMap.set(u.id, name);
+            }
+          }
+        }
+      }
+    } catch {
+      // Graceful fallback
+    }
+  }
+
+  return nameMap;
+}
+
 
 // Helper to extract storage path from public URL
 function extractStoragePath(url: string | null, bucket: string): string | null {
@@ -73,7 +146,21 @@ export async function getIssues(
     return { issues: [], total: 0, error: error.message };
   }
 
-  return { issues: (data as Issue[]) ?? [], total: count ?? 0 };
+  const rawIssues = (data as (Issue & { created_by?: string | null })[]) ?? [];
+  const creatorIds = rawIssues.map((i) => i.created_by);
+  const nameMap = await resolveCreatorNames(creatorIds, supabase);
+
+  const issues: Issue[] = rawIssues.map((item) => {
+    const creatorId = item.created_by ?? null;
+    const creatorName = creatorId ? nameMap.get(creatorId) ?? "Admin" : null;
+    return {
+      ...item,
+      created_by: creatorId,
+      created_by_name: creatorName,
+    };
+  });
+
+  return { issues, total: count ?? 0 };
 }
 
 // ─── Toggle draft / published ─────────────────────────────────────────────────
@@ -193,6 +280,10 @@ const updateSchema = z.object({
 
 export type UpdateIssueState = ActionResult;
 
+function sanitizeStorageFileName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]/g, "_");
+}
+
 export async function updateIssue(
   prevState: UpdateIssueState,
   formData: FormData
@@ -229,6 +320,8 @@ export async function updateIssue(
     return { error: "Issue not found." };
   }
 
+  // Security Guarantee: Updating an issue NEVER touches or overwrites `created_by`.
+  // The original creator attribution is immutable and preserved across all edits.
   const updates: Record<string, unknown> = {
     title: parsed.data.title,
     description: parsed.data.description,
@@ -243,6 +336,11 @@ export async function updateIssue(
     updates.published_at = new Date().toISOString();
   }
 
+  let newCoverPathToRollback: string | null = null;
+  let newPdfPathToRollback: string | null = null;
+  let oldCoverPathToDelete: string | null = null;
+  let oldPdfPathToDelete: string | null = null;
+
   // Handle optional new cover image
   const coverImage = formData.get("coverImage") as File | null;
   if (coverImage && coverImage.size > 0) {
@@ -250,24 +348,27 @@ export async function updateIssue(
     if (!coverValidation.valid) {
       return { error: coverValidation.error || "Invalid cover image." };
     }
-    const coverPath = `${crypto.randomUUID()}-${coverImage.name}`;
+    const safeCoverName = sanitizeStorageFileName(coverImage.name);
+    const coverPath = `${crypto.randomUUID()}-${safeCoverName}`;
     const { error: coverErr } = await supabase.storage
       .from("covers")
-      .upload(coverPath, coverImage);
+      .upload(coverPath, coverImage, {
+        contentType: coverImage.type || "image/png",
+        upsert: false,
+      });
 
     if (coverErr) {
       return { error: `Cover image upload failed: ${coverErr.message}` };
     }
 
+    newCoverPathToRollback = coverPath;
     const { data: coverUrlData } = supabase.storage
       .from("covers")
       .getPublicUrl(coverPath);
     updates.cover_image_url = coverUrlData.publicUrl;
 
-    // Clean up old cover
     if (currentIssue.cover_image_url) {
-      const oldCover = extractStoragePath(currentIssue.cover_image_url, "covers");
-      if (oldCover) await supabase.storage.from("covers").remove([oldCover]);
+      oldCoverPathToDelete = extractStoragePath(currentIssue.cover_image_url, "covers");
     }
   }
 
@@ -276,26 +377,35 @@ export async function updateIssue(
   if (pdfFile && pdfFile.size > 0) {
     const pdfValidation = await validatePdfDocumentFile(pdfFile);
     if (!pdfValidation.valid) {
+      if (newCoverPathToRollback) {
+        await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+      }
       return { error: pdfValidation.error || "Invalid PDF file." };
     }
-    const pdfPath = `${crypto.randomUUID()}-${pdfFile.name}`;
+    const safePdfName = sanitizeStorageFileName(pdfFile.name);
+    const pdfPath = `${crypto.randomUUID()}-${safePdfName}`;
     const { error: pdfErr } = await supabase.storage
       .from("issue-pdfs")
-      .upload(pdfPath, pdfFile);
+      .upload(pdfPath, pdfFile, {
+        contentType: "application/pdf",
+        upsert: false,
+      });
 
     if (pdfErr) {
+      if (newCoverPathToRollback) {
+        await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+      }
       return { error: `PDF upload failed: ${pdfErr.message}` };
     }
 
+    newPdfPathToRollback = pdfPath;
     const { data: pdfUrlData } = supabase.storage
       .from("issue-pdfs")
       .getPublicUrl(pdfPath);
     updates.pdf_url = pdfUrlData.publicUrl;
 
-    // Clean up old PDF
     if (currentIssue.pdf_url) {
-      const oldPdf = extractStoragePath(currentIssue.pdf_url, "issue-pdfs");
-      if (oldPdf) await supabase.storage.from("issue-pdfs").remove([oldPdf]);
+      oldPdfPathToDelete = extractStoragePath(currentIssue.pdf_url, "issue-pdfs");
     }
   }
 
@@ -306,7 +416,22 @@ export async function updateIssue(
     .eq("id", id);
 
   if (updateErr) {
+    // Rollback any newly uploaded files
+    if (newCoverPathToRollback) {
+      await supabase.storage.from("covers").remove([newCoverPathToRollback]);
+    }
+    if (newPdfPathToRollback) {
+      await supabase.storage.from("issue-pdfs").remove([newPdfPathToRollback]);
+    }
     return { error: `Database update failed: ${updateErr.message}` };
+  }
+
+  // Clean up old files only after database write succeeds
+  if (oldCoverPathToDelete) {
+    await supabase.storage.from("covers").remove([oldCoverPathToDelete]);
+  }
+  if (oldPdfPathToDelete) {
+    await supabase.storage.from("issue-pdfs").remove([oldPdfPathToDelete]);
   }
 
   revalidatePath("/admin/issues/manage");
