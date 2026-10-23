@@ -12,6 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toggleDraftStatus, type Issue } from "@/app/admin/issues/manage/actions";
+import { formatCreatorLabel } from "@/lib/utils/creator";
 
 const MONTHS = [
   "January",
@@ -116,6 +117,13 @@ export function IssueTableRow({
             {issue.description}
           </p>
         )}
+        {/* Creator Attribution */}
+        <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[#64748B]">
+          <span className="text-[#94A3B8]">Added by:</span>
+          <span className="font-medium text-[#334155]">
+            {formatCreatorLabel(issue.created_by_name, issue.created_by)}
+          </span>
+        </div>
       </td>
 
       {/* Status Badge */}
@@ -139,7 +147,12 @@ export function IssueTableRow({
 
       {/* Date */}
       <td className="py-3.5 px-5 whitespace-nowrap text-xs text-[#64748B]">
-        {issue.is_draft ? "—" : dateLabel}
+        <div>{issue.is_draft ? "—" : dateLabel}</div>
+        {issue.created_at && (
+          <div className="text-[11px] text-[#94A3B8] mt-0.5">
+            Created {new Date(issue.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </div>
+        )}
       </td>
 
       {/* Actions */}

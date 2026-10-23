@@ -7,6 +7,7 @@ import {
   type Issue,
   type UpdateIssueState,
 } from "@/app/admin/issues/manage/actions";
+import { formatCreatorLabel } from "@/lib/utils/creator";
 import {
   validateCoverImageFile,
   validatePdfDocumentFile,
@@ -159,6 +160,25 @@ export function EditIssueModal({
               <span>{state.error}</span>
             </div>
           )}
+
+          {/* Read-only Attribution Info */}
+          <div className="flex items-center justify-between rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] px-3.5 py-2.5 text-xs text-[#64748B]">
+            <div className="flex items-center gap-1.5">
+              <span className="text-[#94A3B8]">Added by:</span>
+              <span className="font-semibold text-[#0F172A]">
+                {formatCreatorLabel(issue.created_by_name, issue.created_by)}
+              </span>
+            </div>
+            {issue.created_at && (
+              <span className="text-[#94A3B8] text-[11px]">
+                {new Date(issue.created_at).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </span>
+            )}
+          </div>
 
           {/* Title */}
           <div className="flex flex-col gap-1.5">
