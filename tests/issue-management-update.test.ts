@@ -40,11 +40,14 @@ vi.mock("@/lib/supabase/auth", () => ({
         from: (table: string) => ({
           select: (...args: unknown[]) => {
             mockDbSelect(table, ...args);
-            return {
-              eq: () => ({
-                single: () => mockDbSingle(),
-              }),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const selectBuilder: any = {
+              eq: () => selectBuilder,
+              neq: () => selectBuilder,
+              single: () => mockDbSingle(),
+              maybeSingle: () => Promise.resolve({ data: null, error: null }),
             };
+            return selectBuilder;
           },
           update: (...args: unknown[]) => {
             mockDbUpdate(...args);

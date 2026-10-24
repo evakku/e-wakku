@@ -5,6 +5,7 @@ import { z } from "zod";
 import { requireAdminAuth } from "@/lib/supabase/auth";
 import { removeIssueAnalytics } from "@/lib/analytics";
 import { validateCoverImageFile, validatePdfDocumentFile } from "@/lib/validation/file-upload";
+import { formatEditionName } from "@/lib/utils/edition";
 
 export type Issue = {
   id: string;
@@ -177,13 +178,21 @@ export async function toggleDraftStatus(
   const newDraft = !currentDraft;
 
   // When moving to draft, preserve existing published_at history.
-  // When publishing from draft, assign new published_at timestamp.
+  // When publishing from draft, assign new published_at timestamp if none existed.
   const updatePayload: { is_draft: boolean; published_at?: string } = {
     is_draft: newDraft,
   };
 
   if (!newDraft) {
-    updatePayload.published_at = new Date().toISOString();
+    const { data: issueRow } = await supabase
+      .from("issues")
+      .select("published_at")
+      .eq("id", id)
+      .single();
+
+    if (!issueRow?.published_at) {
+      updatePayload.published_at = new Date().toISOString();
+    }
   }
 
   const { error } = await supabase
@@ -273,7 +282,7 @@ export async function deleteIssue(id: string): Promise<ActionResult> {
 const updateSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
-  month: z.string().min(1, "Month is required."),
+  month: z.string().regex(/^(0[1-9]|1[0-2]|[1-9])$/, "Select a valid month (01-12)."),
   year: z.coerce.number().min(2000, "Year is required."),
   isDraft: z.string().transform((v) => v === "true"),
 });
@@ -320,20 +329,42 @@ export async function updateIssue(
     return { error: "Issue not found." };
   }
 
+  const normalizedMonth = parsed.data.month.padStart(2, "0");
+  const editionLabel = formatEditionName(normalizedMonth, parsed.data.year);
+
+  // Check if changing month/year to an edition already occupied by another issue
+  if (normalizedMonth !== currentIssue.month || parsed.data.year !== currentIssue.year) {
+    const { data: conflictIssue } = await supabase
+      .from("issues")
+      .select("id")
+      .eq("year", parsed.data.year)
+      .eq("month", normalizedMonth)
+      .neq("id", id)
+      .maybeSingle();
+
+    if (conflictIssue) {
+      return {
+        error: `An issue already exists for ${editionLabel}. Edit the existing issue instead.`,
+      };
+    }
+  }
+
   // Security Guarantee: Updating an issue NEVER touches or overwrites `created_by`.
   // The original creator attribution is immutable and preserved across all edits.
   const updates: Record<string, unknown> = {
     title: parsed.data.title,
     description: parsed.data.description,
-    month: parsed.data.month,
+    month: normalizedMonth,
     year: parsed.data.year,
     is_draft: parsed.data.isDraft,
   };
 
   // If status changed from draft to published, ensure published_at is set.
-  // When moving to draft, preserve existing published_at history.
+  // When moving to draft or updating an already-published issue, preserve existing published_at history.
   if (currentIssue.is_draft && !parsed.data.isDraft) {
-    updates.published_at = new Date().toISOString();
+    if (!currentIssue.published_at) {
+      updates.published_at = new Date().toISOString();
+    }
   }
 
   let newCoverPathToRollback: string | null = null;
@@ -423,6 +454,16 @@ export async function updateIssue(
     if (newPdfPathToRollback) {
       await supabase.storage.from("issue-pdfs").remove([newPdfPathToRollback]);
     }
+
+    // Handle race-condition or database uniqueness violation
+    if (
+      updateErr.code === "23505" ||
+      updateErr.message.toLowerCase().includes("unique") ||
+      updateErr.message.toLowerCase().includes("duplicate")
+    ) {
+      return { error: `An issue already exists for ${editionLabel}. Edit that issue instead.` };
+    }
+
     return { error: `Database update failed: ${updateErr.message}` };
   }
 
