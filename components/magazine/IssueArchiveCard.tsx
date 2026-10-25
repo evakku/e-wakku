@@ -47,43 +47,48 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
   return (
     <motion.article
       variants={fadeUpVariants(shouldReduceMotion)}
-      className={className ?? "w-full h-full max-w-[330px] sm:max-w-none mx-auto"}
+      className={`relative hover:z-20 transition-[z-index] ${className ?? "w-full h-full max-w-[330px] sm:max-w-none mx-auto"}`}
     >
       <Link
         href={issueHref}
         aria-label={`View issue: ${issue.title}`}
-        className="group flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/80 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2"
+        className="group relative flex h-full flex-col rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/80 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2 z-10 hover:z-20"
       >
-        {/* Inner Cover Container — A4 Portrait & object-contain centering */}
-        <div
-          className="relative aspect-[210/297] w-full shrink-0 overflow-hidden rounded-xl bg-[#F8FAFC] border border-slate-200/70 flex items-center justify-center transition-colors duration-300 group-hover:border-slate-300"
-        >
-          {imageUrl && !imageError ? (
-            <>
-              {!imageLoaded && (
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-0 skeleton-shimmer z-0"
+        {/* Outer Layout Slot (holds the space in the card flow, aspect-[210/297]) */}
+        <div className="relative aspect-[210/297] w-full shrink-0">
+          {/* Unclipped Zooming Cover Frame (scales outside layout slot on hover/focus) */}
+          <div
+            className={`absolute inset-0 rounded-xl overflow-hidden bg-[#F8FAFC] border border-slate-200/70 flex items-center justify-center shadow-sm transition-all duration-300 ease-out group-hover:shadow-xl group-hover:border-slate-300 origin-center motion-reduce:transform-none z-10 group-hover:z-20 ${
+              !shouldReduceMotion ? "group-hover:scale-[1.06] group-focus-visible:scale-[1.06]" : ""
+            }`}
+          >
+            {imageUrl && !imageError ? (
+              <>
+                {!imageLoaded && (
+                  <div
+                    aria-hidden="true"
+                    className="absolute inset-0 skeleton-shimmer z-0"
+                  />
+                )}
+                <Image
+                  src={imageUrl}
+                  alt={`Cover of ${issue.title}`}
+                  fill
+                  sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 280px"
+                  onLoad={() => setImageLoaded(true)}
+                  onError={() => setImageError(true)}
+                  className={`object-contain object-center transition-opacity duration-300 ${
+                    imageLoaded ? "opacity-100" : "opacity-0"
+                  }`}
                 />
-              )}
-              <Image
-                src={imageUrl}
-                alt={`Cover of ${issue.title}`}
-                fill
-                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 280px"
-                onLoad={() => setImageLoaded(true)}
-                onError={() => setImageError(true)}
-                className={`object-contain object-center transition-all duration-500 ease-out group-hover:scale-[1.02] ${
-                  imageLoaded ? "opacity-100" : "opacity-0"
-                }`}
-              />
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-xs font-light text-slate-400">
-              <BookOpen className="size-6 text-slate-400 stroke-[1.5]" />
-              <span>No cover image</span>
-            </div>
-          )}
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-2 p-4 text-center text-xs font-light text-slate-400">
+                <BookOpen className="size-6 text-slate-400 stroke-[1.5]" />
+                <span>No cover image</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Card Content Area */}
