@@ -112,7 +112,7 @@ export default function AboutLatestIssue({
                 {heading}
               </HeadlineLg>
 
-              <BodyLg className="text-[#475569] font-light font-sans text-base sm:text-lg mb-6 leading-relaxed">
+              <BodyLg className="text-[#475569] font-light font-sans text-base sm:text-lg mb-6 leading-relaxed text-justify">
                 {description}
               </BodyLg>
 

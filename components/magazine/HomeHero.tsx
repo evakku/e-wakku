@@ -91,7 +91,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
           {issue.title}
         </DisplayXL>
         
-        <BodyLg className="text-muted-foreground mb-8 font-light leading-relaxed max-w-xl">
+        <BodyLg className="text-muted-foreground mb-8 font-light leading-relaxed max-w-xl text-justify">
           {issue.description}
         </BodyLg>
         

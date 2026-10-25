@@ -69,7 +69,7 @@ export default function MissionSection({
         
         <div className="flex flex-col gap-6 text-muted-foreground font-sans leading-relaxed max-w-xl">
           {description.split("\n\n").map((para, index) => (
-            <BodyLg key={index} className="font-light font-sans">
+            <BodyLg key={index} className="font-light font-sans text-justify">
               {para}
             </BodyLg>
           ))}

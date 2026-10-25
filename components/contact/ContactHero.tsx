@@ -38,7 +38,7 @@ export default function ContactHero({ title, description }: ContactHeroProps) {
         <DisplayXL as="h1" className="text-foreground tracking-tight font-heading mb-6 leading-tight text-[clamp(2.5rem,6vw+0.5rem,4rem)]">
           {title}
         </DisplayXL>
-        <BodyLg className="text-muted-foreground font-light max-w-2xl leading-relaxed">
+        <BodyLg className="text-muted-foreground font-light max-w-2xl leading-relaxed text-center">
           {description}
         </BodyLg>
       </motion.div>
