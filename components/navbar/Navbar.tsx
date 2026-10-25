@@ -92,7 +92,8 @@ export default function Navbar({
                   <NavItem
                     label={link.label}
                     href={link.href}
-                    isActive={currentPath === link.href}
+                    external={link.external}
+                    isActive={!link.external && currentPath === link.href}
                   />
                 </li>
               ))}
