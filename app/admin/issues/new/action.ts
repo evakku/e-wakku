@@ -3,11 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireAdminAuth } from "@/lib/supabase/auth";
+import { formatEditionName } from "@/lib/utils/edition";
 import {
   MAX_FILE_SIZE_BYTES,
   validateCoverImageFile,
   validatePdfDocumentFile,
-  isPdfHeader,
   detectCoverImageFormat,
 } from "@/lib/validation/file-upload";
 
@@ -42,6 +42,42 @@ export type CreateIssueState = {
   issueId?: string;
 };
 
+/**
+ * checkEditionExists
+ *
+ * Lightweight server-side check to determine if an issue already exists
+ * for the specified month and year before uploading any files.
+ */
+export async function checkEditionExists(
+  month: string | number,
+  year: number | string
+): Promise<{ exists: boolean; issueTitle?: string; error?: string }> {
+  const auth = await requireAdminAuth();
+  if (!auth.authorized) {
+    return { exists: false, error: auth.error };
+  }
+  const supabase = auth.supabase;
+  const normalizedMonth = String(month).padStart(2, "0");
+  const yearNum = typeof year === "string" ? parseInt(year, 10) : year;
+
+  if (isNaN(yearNum)) {
+    return { exists: false, error: "Invalid year." };
+  }
+
+  const { data, error } = await supabase
+    .from("issues")
+    .select("id, title")
+    .eq("year", yearNum)
+    .eq("month", normalizedMonth)
+    .maybeSingle();
+
+  if (error) {
+    return { exists: false, error: error.message };
+  }
+
+  return { exists: !!data, issueTitle: data?.title };
+}
+
 function sanitizeStorageFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
@@ -56,6 +92,7 @@ function sanitizeStorageFileName(name: string): string {
  *
  * Both paths strictly enforce:
  * - Admin authorization
+ * - Month and Year edition uniqueness (each calendar month can have only 1 edition)
  * - Maximum file size of 7.5 MiB (7,864,320 bytes) per file
  * - File header magic bytes inspection
  * - Safe rollback / deletion of uploaded files on DB failure
@@ -85,6 +122,29 @@ export async function createIssue(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0].message };
+  }
+
+  const normalizedMonth = parsed.data.month.padStart(2, "0");
+  const editionLabel = formatEditionName(normalizedMonth, parsed.data.year);
+
+  // 2. Pre-check: Reject duplicate monthly edition before performing any file operations
+  const { data: existingIssue } = await supabase
+    .from("issues")
+    .select("id")
+    .eq("year", parsed.data.year)
+    .eq("month", normalizedMonth)
+    .maybeSingle();
+
+  if (existingIssue) {
+    // If client used Direct-to-Storage upload, clean up any staged files to avoid orphans
+    const preCoverPath = formData.get("coverStoragePath") as string | null;
+    const prePdfPath = formData.get("pdfStoragePath") as string | null;
+    if (preCoverPath) await supabase.storage.from("covers").remove([preCoverPath]);
+    if (prePdfPath) await supabase.storage.from("issue-pdfs").remove([prePdfPath]);
+
+    return {
+      error: `An issue already exists for ${editionLabel}. Edit the existing issue instead.`,
+    };
   }
 
   let finalCoverUrl = parsed.data.coverUrl;
@@ -147,29 +207,43 @@ export async function createIssue(
       }
 
       const pdfHeader = new Uint8Array(await pdfBlob.slice(0, 5).arrayBuffer());
-      if (!isPdfHeader(pdfHeader)) {
+      const isPdf =
+        pdfHeader[0] === 0x25 && // %
+        pdfHeader[1] === 0x50 && // P
+        pdfHeader[2] === 0x44 && // D
+        pdfHeader[3] === 0x46 && // F
+        pdfHeader[4] === 0x2d; // -
+
+      if (!isPdf) {
         await supabase.storage.from("covers").remove([coverPathToDelete]);
         await supabase.storage.from("issue-pdfs").remove([pdfPathToDelete]);
         return { error: "Please select a valid PDF file." };
       }
-    } catch {
+    } catch (err: unknown) {
       if (coverPathToDelete) await supabase.storage.from("covers").remove([coverPathToDelete]);
       if (pdfPathToDelete) await supabase.storage.from("issue-pdfs").remove([pdfPathToDelete]);
-      return { error: "Failed to verify uploaded files." };
+      const msg = err instanceof Error ? err.message : "File validation failed.";
+      return { error: msg };
     }
   } else {
-    // Path B: Server-side FormData upload (used for fallback or testing)
+    // Path B: Fallback FormData Upload (Server handles direct upload to storage)
     const coverImage = formData.get("coverImage") as File | null;
     const pdfFile = formData.get("pdfFile") as File | null;
 
-    const coverValidation = await validateCoverImageFile(coverImage);
-    if (!coverValidation.valid || !coverImage) {
-      return { error: coverValidation.error || "Cover image is required." };
+    if (!coverImage || !pdfFile) {
+      return { error: "Both cover image and PDF file are required." };
     }
 
+    // Validate cover image
+    const coverValidation = await validateCoverImageFile(coverImage);
+    if (!coverValidation.valid) {
+      return { error: coverValidation.error || "Invalid cover image." };
+    }
+
+    // Validate PDF document
     const pdfValidation = await validatePdfDocumentFile(pdfFile);
-    if (!pdfValidation.valid || !pdfFile) {
-      return { error: pdfValidation.error || "The issue PDF is required." };
+    if (!pdfValidation.valid) {
+      return { error: pdfValidation.error || "Invalid PDF document." };
     }
 
     const safeCoverName = sanitizeStorageFileName(coverImage.name);
@@ -213,7 +287,7 @@ export async function createIssue(
       description: parsed.data.description,
       cover_image_url: finalCoverUrl,
       pdf_url: finalPdfUrl,
-      month: parsed.data.month,
+      month: normalizedMonth,
       year: parsed.data.year,
       is_draft: parsed.data.isDraft,
       published_at: parsed.data.isDraft ? null : new Date().toISOString(),
@@ -226,6 +300,18 @@ export async function createIssue(
     // Rollback both uploads on database failure
     if (coverPathToDelete) await supabase.storage.from("covers").remove([coverPathToDelete]);
     if (pdfPathToDelete) await supabase.storage.from("issue-pdfs").remove([pdfPathToDelete]);
+
+    // Handle race condition or unique constraint violation (PostgreSQL code 23505)
+    if (
+      insertErr.code === "23505" ||
+      insertErr.message.toLowerCase().includes("unique") ||
+      insertErr.message.toLowerCase().includes("duplicate")
+    ) {
+      return {
+        error: `An issue already exists for ${editionLabel}. Edit the existing issue instead.`,
+      };
+    }
+
     return { error: `Failed to save issue: ${insertErr.message}` };
   }
 

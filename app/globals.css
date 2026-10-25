@@ -369,6 +369,8 @@
   font-weight: 400;
   line-height: 1.7;
   letter-spacing: 0;
+  text-align: justify;
+  text-align-last: left;
 }
 
 /**

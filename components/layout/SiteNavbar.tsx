@@ -8,6 +8,8 @@ import { UserCircle } from "lucide-react";
 import logo from "@/src/assets/logo.png";
 import { Suspense } from "react";
 import { useNavigationLoading } from "@/components/navigation/NavigationLoadingContext";
+import { EXTERNAL_BLOG_URL } from "@/lib/constants/navigation";
+import type { NavLink } from "@/components/navbar/types";
 
 /**
  * SiteNavbar
@@ -21,10 +23,11 @@ import { useNavigationLoading } from "@/components/navigation/NavigationLoadingC
  * client-side routing dependency to just this file.
  */
 
-const NAV_LINKS = [
+const NAV_LINKS: readonly NavLink[] = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "All Issues", href: "/allIssues" },
+  { label: "Blog", href: EXTERNAL_BLOG_URL, external: true },
   { label: "Contact", href: "/contact" },
 ] as const;
 

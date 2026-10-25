@@ -54,7 +54,7 @@ export default function AboutNarrative({ data }: AboutNarrativeProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-10 text-[#475569] font-sans leading-relaxed">
           {data.storyParagraphs.map((para, index) => (
-            <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg">
+            <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg text-justify">
               {para}
             </BodyLg>
           ))}
@@ -88,7 +88,7 @@ export default function AboutNarrative({ data }: AboutNarrativeProps) {
 
           <div className="flex flex-col gap-4 text-[#475569] font-sans leading-relaxed">
             {data.missionParagraphs.map((para, index) => (
-              <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg">
+              <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg text-justify">
                 {para}
               </BodyLg>
             ))}
@@ -120,7 +120,7 @@ export default function AboutNarrative({ data }: AboutNarrativeProps) {
 
           <div className="flex flex-col gap-4 text-[#475569] font-sans leading-relaxed">
             {data.communityParagraphs.map((para, index) => (
-              <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg">
+              <BodyLg key={index} className="text-[#475569] font-light text-base sm:text-lg text-justify">
                 {para}
               </BodyLg>
             ))}

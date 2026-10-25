@@ -87,7 +87,7 @@ export default function IssueInformation({ issue }: IssueInformationProps) {
       </DisplayXL>
 
       {/* Description copy in Inter */}
-      <BodyLg className="text-slate-600 mb-8 font-light leading-relaxed text-base sm:text-lg">
+      <BodyLg className="text-slate-600 mb-8 font-light leading-relaxed text-base sm:text-lg text-justify">
         {issue.description}
       </BodyLg>
 

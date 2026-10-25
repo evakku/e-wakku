@@ -1,6 +1,7 @@
 import type { Issue as MagazineIssue } from "@/components/magazine/types";
 import type { Issue as DetailIssue } from "@/data/mockIssue";
 import type { Issue as SupabaseIssueRow } from "./issue";
+import { formatEditionName, MONTH_NAMES } from "@/lib/utils/edition";
 
 /**
  * toMagazineIssue
@@ -21,7 +22,7 @@ export function toMagazineIssue(row: SupabaseIssueRow): MagazineIssue {
   return {
     _id: row.id,
     title: row.title,
-    subtitle: `${row.month} ${row.year}`,
+    subtitle: formatEditionName(row.month, row.year),
     description: row.description,
     coverImage: row.cover_image_url,
     pdfUrl: row.pdf_url,
@@ -37,11 +38,17 @@ export function toMagazineIssue(row: SupabaseIssueRow): MagazineIssue {
  * components (IssueHero, IssueInformation, PDFViewerPlaceholder).
  */
 export function toDetailIssue(row: SupabaseIssueRow): DetailIssue {
+  const idx = parseInt(row.month, 10);
+  const monthName =
+    Number.isFinite(idx) && idx >= 1 && idx <= 12
+      ? MONTH_NAMES[idx - 1]
+      : row.month;
+
   return {
     id: row.id,
     title: row.title,
     issueNumber: String(row.year),
-    season: row.month,
+    season: monthName,
     year: String(row.year),
     description: row.description,
     coverImage: row.cover_image_url ?? "",

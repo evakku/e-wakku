@@ -63,22 +63,47 @@ export default function FooterLinks({
           role="list"
           className="flex flex-wrap gap-x-6 gap-y-2 md:justify-end"
         >
-          {links.map((link) => (
-            <motion.li key={link.href} variants={itemVariants} role="none">
-              <Link
-                href={link.href}
-                className={[
-                  "font-sans text-sm text-slate-500",
-                  "transition-colors duration-300 ease-in-out",
-                  "hover:text-[#059669]",
-                  "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
-                  "focus-visible:ring-offset-2 rounded-sm",
-                ].join(" ")}
-              >
-                {link.label}
-              </Link>
-            </motion.li>
-          ))}
+          {links.map((link) => {
+            const isExternal = Boolean(
+              link.external ||
+              link.href.startsWith("http://") ||
+              link.href.startsWith("https://")
+            );
+
+            return (
+              <motion.li key={link.href} variants={itemVariants} role="none">
+                {isExternal ? (
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={[
+                      "font-sans text-sm text-slate-500",
+                      "transition-colors duration-300 ease-in-out",
+                      "hover:text-[#059669]",
+                      "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+                      "focus-visible:ring-offset-2 rounded-sm",
+                    ].join(" ")}
+                  >
+                    {link.label}
+                  </a>
+                ) : (
+                  <Link
+                    href={link.href}
+                    className={[
+                      "font-sans text-sm text-slate-500",
+                      "transition-colors duration-300 ease-in-out",
+                      "hover:text-[#059669]",
+                      "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+                      "focus-visible:ring-offset-2 rounded-sm",
+                    ].join(" ")}
+                  >
+                    {link.label}
+                  </Link>
+                )}
+              </motion.li>
+            );
+          })}
         </ul>
       </motion.nav>
 

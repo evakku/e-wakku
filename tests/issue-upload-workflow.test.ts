@@ -13,6 +13,7 @@ const mockStorageRemove = vi.fn();
 const mockStorageGetPublicUrl = vi.fn();
 const mockDbInsert = vi.fn();
 const mockDbSingle = vi.fn();
+const mockDbMaybeSingle = vi.fn();
 
 let mockAuthorized = true;
 const mockAuthError = "Unauthorized: Valid admin authentication session required.";
@@ -34,16 +35,25 @@ vi.mock("@/lib/supabase/auth", () => ({
             getPublicUrl: (path: string) => mockStorageGetPublicUrl(bucket, path),
           }),
         },
-        from: () => ({
-          insert: (...args: unknown[]) => {
-            mockDbInsert(...args);
-            return {
-              select: () => ({
-                single: () => mockDbSingle(),
-              }),
-            };
-          },
-        }),
+        from: () => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const queryBuilder: any = {
+            select: () => queryBuilder,
+            eq: () => queryBuilder,
+            neq: () => queryBuilder,
+            maybeSingle: () => mockDbMaybeSingle(),
+            single: () => mockDbSingle(),
+            insert: (...args: unknown[]) => {
+              mockDbInsert(...args);
+              return {
+                select: () => ({
+                  single: () => mockDbSingle(),
+                }),
+              };
+            },
+          };
+          return queryBuilder;
+        },
       },
     };
   }),
@@ -53,6 +63,7 @@ describe("Issue Upload Server Action Workflow (SEC-Upload)", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockAuthorized = true;
+    mockDbMaybeSingle.mockResolvedValue({ data: null, error: null });
 
     mockStorageUpload.mockResolvedValue({ data: { path: "mock-path" }, error: null });
     mockStorageDownload.mockImplementation(async (bucket: string) => {

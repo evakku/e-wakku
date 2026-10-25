@@ -7,7 +7,6 @@ import {
   Check,
   UploadCloud,
   FileText,
-  ImageIcon,
   X,
   Loader2,
   ArrowLeft,
@@ -15,29 +14,22 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
-import { createIssue } from "@/app/admin/issues/new/action";
+import { createIssue, checkEditionExists } from "@/app/admin/issues/new/action";
 import {
   validateCoverImageFile,
   validatePdfDocumentFile,
   formatFileSize,
 } from "@/lib/validation/file-upload";
+import {
+  MONTH_NAMES,
+  getNextEditionMonthAndYear,
+  formatEditionName,
+} from "@/lib/utils/edition";
 
-const MONTHS = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
-const currentYear = new Date().getFullYear();
+export interface AddIssueFormProps {
+  defaultMonth?: string;
+  defaultYear?: string;
+}
 
 type FieldErrors = {
   title?: string;
@@ -52,18 +44,21 @@ function sanitizeFileName(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
-export function AddIssueForm() {
+export function AddIssueForm({ defaultMonth, defaultYear }: AddIssueFormProps = {}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const coverInputRef = useRef<HTMLInputElement>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
 
+  // Default publication edition: next calendar month relative to current date
+  const defaultEdition = getNextEditionMonthAndYear();
+  const [month, setMonth] = useState(defaultMonth ?? defaultEdition.month);
+  const [year, setYear] = useState(defaultYear ?? String(defaultEdition.year));
+
   // Form fields
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [month, setMonth] = useState(String(new Date().getMonth() + 1).padStart(2, "0"));
-  const [year, setYear] = useState(String(currentYear));
   const [isDraft, setIsDraft] = useState(true);
 
   // File states
@@ -74,6 +69,7 @@ export function AddIssueForm() {
   // Validation & Progress states
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [generalError, setGeneralError] = useState<string | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [uploadPercent, setUploadPercent] = useState<number>(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -129,13 +125,13 @@ export function AddIssueForm() {
     if (coverPreview) URL.revokeObjectURL(coverPreview);
     setCoverPreview(null);
     if (coverInputRef.current) coverInputRef.current.value = "";
-    setFieldErrors((prev) => ({ ...prev, coverImage: undefined }));
+    setFieldErrors((prev) => ({ ...prev, coverImage: "Cover image is required." }));
   }
 
   function handleRemovePdf() {
     setPdfFile(null);
     if (pdfInputRef.current) pdfInputRef.current.value = "";
-    setFieldErrors((prev) => ({ ...prev, pdfFile: undefined }));
+    setFieldErrors((prev) => ({ ...prev, pdfFile: "The issue PDF is required." }));
   }
 
   // Pre-submission validation of all required fields
@@ -157,6 +153,21 @@ export function AddIssueForm() {
     const yearNum = Number(year);
     if (!year || isNaN(yearNum) || yearNum < 2000) {
       errors.year = "Please enter a valid publication year (>= 2000).";
+    }
+
+    // Pre-flight check: verify month and year are not already occupied
+    if (month && year && !isNaN(yearNum) && yearNum >= 2000) {
+      try {
+        const editionCheck = await checkEditionExists(month, year);
+        if (editionCheck.exists) {
+          const editionLabel = formatEditionName(month, year);
+          const msg = `An issue already exists for ${editionLabel}. Edit the existing issue instead.`;
+          errors.month = msg;
+          setDuplicateError(msg);
+        }
+      } catch {
+        // Fallback to server action check on submit
+      }
     }
 
     if (!coverImage) {
@@ -186,6 +197,8 @@ export function AddIssueForm() {
     if (isPending) return;
 
     setGeneralError(null);
+    setDuplicateError(null);
+
     const isValid = await validateAllFields();
     if (!isValid) return;
 
@@ -196,8 +209,21 @@ export function AddIssueForm() {
       let uploadedPdfPath: string | null = null;
 
       try {
-        setUploadStatus("Validating files...");
+        setUploadStatus("Validating edition and files...");
         setUploadPercent(10);
+
+        // Pre-check duplicate edition on server before uploading any assets
+        const editionCheck = await checkEditionExists(month, year);
+        if (editionCheck.exists) {
+          const editionLabel = formatEditionName(month, year);
+          const msg = `An issue already exists for ${editionLabel}. Edit the existing issue instead.`;
+          setGeneralError(msg);
+          setDuplicateError(msg);
+          setFieldErrors((prev) => ({ ...prev, month: msg }));
+          setUploadStatus(null);
+          setUploadPercent(0);
+          return;
+        }
 
         // Client-side direct upload to Supabase Storage (Preferred Architecture)
         const supabase = createClient();
@@ -269,6 +295,10 @@ export function AddIssueForm() {
 
         if (result.error) {
           setGeneralError(result.error);
+          if (result.error.toLowerCase().includes("already exists")) {
+            setDuplicateError(result.error);
+            setFieldErrors((prev) => ({ ...prev, month: result.error }));
+          }
           setUploadStatus(null);
           setUploadPercent(0);
           return;
@@ -329,6 +359,10 @@ export function AddIssueForm() {
     const result = await createIssue({}, fullFormData);
     if (result.error) {
       setGeneralError(result.error);
+      if (result.error.toLowerCase().includes("already exists")) {
+        setDuplicateError(result.error);
+        setFieldErrors((prev) => ({ ...prev, month: result.error }));
+      }
       setUploadStatus(null);
       setUploadPercent(0);
       return;
@@ -380,7 +414,7 @@ export function AddIssueForm() {
           Add New Issue
         </h2>
         <p className="mt-1 text-sm text-[#64748B]">
-          Upload the issue cover, publication PDF, and metadata. Each file must be under 7.5 MiB.
+          Upload the issue cover, publication PDF, and metadata. Each calendar month can have exactly one magazine edition.
         </p>
       </div>
 
@@ -394,6 +428,113 @@ export function AddIssueForm() {
             <span>{generalError}</span>
           </div>
         )}
+
+        {/* SECTION 1: Magazine Publication Edition (Month & Year) — Placed FIRST */}
+        <div className="rounded-xl border border-[#CBD5E1] bg-white p-5 shadow-sm flex flex-col gap-4">
+          <div className="flex flex-col">
+            <h3 className="text-sm font-semibold text-[#0F172A] tracking-tight">
+              1. Magazine Edition (Month & Year)
+            </h3>
+            <p className="text-xs text-[#64748B] mt-0.5">
+              E-Wakku is published monthly. Defaults to next calendar month ({formatEditionName(defaultEdition.month, defaultEdition.year)}).
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Month Select */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="month-select" className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
+                Publication Month <span className="text-red-500">*</span>
+              </label>
+              <select
+                id="month-select"
+                name="month"
+                disabled={isPending}
+                value={month}
+                onChange={(e) => {
+                  setMonth(e.target.value);
+                  if (fieldErrors.month) setFieldErrors((prev) => ({ ...prev, month: undefined }));
+                  if (duplicateError) setDuplicateError(null);
+                  if (generalError?.includes("already exists")) setGeneralError(null);
+                }}
+                className={`rounded-lg border bg-white px-3.5 py-2.5 text-sm text-[#0F172A] focus:outline-none focus:ring-1 ${
+                  fieldErrors.month || duplicateError
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+                    : "border-[#CBD5E1] focus:border-[#059669] focus:ring-[#059669]"
+                }`}
+              >
+                {MONTH_NAMES.map((m, i) => {
+                  const val = String(i + 1).padStart(2, "0");
+                  return (
+                    <option key={m} value={val}>
+                      {m}
+                    </option>
+                  );
+                })}
+              </select>
+              {fieldErrors.month && (
+                <p id="month-error" role="alert" className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  <span>{fieldErrors.month}</span>
+                </p>
+              )}
+            </div>
+
+            {/* Year Input */}
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor="year-input" className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
+                Publication Year <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                id="year-input"
+                name="year"
+                required
+                disabled={isPending}
+                placeholder="e.g. 2026"
+                value={year}
+                aria-invalid={!!fieldErrors.year}
+                aria-describedby={fieldErrors.year ? "year-error" : undefined}
+                onChange={(e) => {
+                  setYear(e.target.value);
+                  if (fieldErrors.year) setFieldErrors((prev) => ({ ...prev, year: undefined }));
+                  if (duplicateError) setDuplicateError(null);
+                  if (generalError?.includes("already exists")) setGeneralError(null);
+                }}
+                className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-1 ${
+                  fieldErrors.year
+                    ? "border-red-400 focus:border-red-500 focus:ring-red-500"
+                    : "border-[#CBD5E1] focus:border-[#059669] focus:ring-[#059669]"
+                }`}
+              />
+              {fieldErrors.year && (
+                <p id="year-error" role="alert" className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
+                  <AlertCircle size={12} className="shrink-0" />
+                  <span>{fieldErrors.year}</span>
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Inline Duplicate Edition Conflict Warning & Action Link */}
+          {duplicateError && (
+            <div className="rounded-lg bg-amber-50 border border-amber-200 p-3.5 text-xs text-amber-900 flex items-start gap-2.5 animate-fade-in">
+              <AlertCircle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold">{duplicateError}</span>
+                <p className="text-[#64748B]">
+                  Each calendar month can have only one magazine issue. If you need to make changes, please edit the existing edition.
+                </p>
+                <Link
+                  href="/admin/issues/manage"
+                  className="text-[#059669] font-medium underline hover:text-[#047857] inline-flex items-center gap-1 mt-0.5"
+                >
+                  Go to Manage Issues to edit this edition &rarr;
+                </Link>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* ALWAYS-MOUNTED FILE INPUTS */}
         <input
@@ -418,7 +559,7 @@ export function AddIssueForm() {
           onChange={handlePdfChange}
         />
 
-        {/* Uploads Grid */}
+        {/* SECTION 2: Uploads Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Cover Image Upload Area */}
           <div className="flex flex-col gap-1.5">
@@ -481,13 +622,13 @@ export function AddIssueForm() {
                   className="flex flex-col items-center justify-center cursor-pointer w-full h-full text-center py-4 focus:outline-none disabled:opacity-50"
                 >
                   <div className="rounded-full bg-slate-100 p-3 text-slate-500 mb-2">
-                    <ImageIcon size={22} />
+                    <UploadCloud size={22} />
                   </div>
                   <span className="text-xs font-medium text-[#0F172A]">
-                    Click to upload Cover
+                    Click to upload cover image
                   </span>
                   <span className="text-[11px] text-[#94A3B8] mt-0.5">
-                    PNG, JPG, or WebP up to 7.5 MiB
+                    PNG, JPEG, WebP up to 7.5 MiB
                   </span>
                 </button>
               )}
@@ -576,7 +717,7 @@ export function AddIssueForm() {
           </div>
         </div>
 
-        {/* Title */}
+        {/* SECTION 3: Metadata (Title & Description) */}
         <div className="flex flex-col gap-1.5">
           <label htmlFor="title-input" className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
             Issue Title <span className="text-red-500">*</span>
@@ -639,73 +780,6 @@ export function AddIssueForm() {
               <span>{fieldErrors.description}</span>
             </p>
           )}
-        </div>
-
-        {/* Month & Year Picker */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="month-select" className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
-              Publication Month <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="month-select"
-              name="month"
-              disabled={isPending}
-              value={month}
-              onChange={(e) => {
-                setMonth(e.target.value);
-                if (fieldErrors.month) setFieldErrors((prev) => ({ ...prev, month: undefined }));
-              }}
-              className="rounded-lg border border-[#CBD5E1] bg-white px-3.5 py-2.5 text-sm text-[#0F172A] focus:border-[#059669] focus:outline-none focus:ring-1 focus:ring-[#059669]"
-            >
-              {MONTHS.map((m, i) => {
-                const val = String(i + 1).padStart(2, "0");
-                return (
-                  <option key={m} value={val}>
-                    {m}
-                  </option>
-                );
-              })}
-            </select>
-            {fieldErrors.month && (
-              <p id="month-error" role="alert" className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
-                <AlertCircle size={12} className="shrink-0" />
-                <span>{fieldErrors.month}</span>
-              </p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label htmlFor="year-input" className="text-xs font-semibold text-[#475569] uppercase tracking-wider">
-              Publication Year <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="number"
-              id="year-input"
-              name="year"
-              required
-              disabled={isPending}
-              placeholder="eg: 2026"
-              value={year}
-              aria-invalid={!!fieldErrors.year}
-              aria-describedby={fieldErrors.year ? "year-error" : undefined}
-              onChange={(e) => {
-                setYear(e.target.value);
-                if (fieldErrors.year) setFieldErrors((prev) => ({ ...prev, year: undefined }));
-              }}
-              className={`w-full rounded-lg border bg-white px-3.5 py-2.5 text-sm text-[#0F172A] placeholder:text-[#94A3B8] focus:outline-none focus:ring-1 ${
-                fieldErrors.year
-                  ? "border-red-400 focus:border-red-500 focus:ring-red-500"
-                  : "border-[#CBD5E1] focus:border-[#059669] focus:ring-[#059669]"
-              }`}
-            />
-            {fieldErrors.year && (
-              <p id="year-error" role="alert" className="text-xs text-red-600 flex items-center gap-1 mt-0.5">
-                <AlertCircle size={12} className="shrink-0" />
-                <span>{fieldErrors.year}</span>
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Draft toggle */}

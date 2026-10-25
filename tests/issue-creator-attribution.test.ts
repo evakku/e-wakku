@@ -67,41 +67,37 @@ vi.mock("@/lib/supabase/auth", () => ({
             getPublicUrl: (path: string) => mockStorageGetPublicUrl(bucket, path),
           }),
         },
-        from: (table: string) => ({
-          select: (...args: unknown[]) => {
-            mockDbSelect(table, ...args);
-            return {
-              ilike: () => ({
-                order: () => ({
-                  range: (...rArgs: unknown[]) => mockDbRange(...rArgs),
+        from: (table: string) => {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const queryBuilder: any = {
+            select: (...args: unknown[]) => {
+              mockDbSelect(table, ...args);
+              return queryBuilder;
+            },
+            eq: () => queryBuilder,
+            neq: () => queryBuilder,
+            ilike: () => queryBuilder,
+            order: () => queryBuilder,
+            range: (...rArgs: unknown[]) => mockDbRange(...rArgs),
+            maybeSingle: () => Promise.resolve({ data: null, error: null }),
+            single: () => mockDbSingle(),
+            insert: (...args: unknown[]) => {
+              mockDbInsert(...args);
+              return {
+                select: () => ({
+                  single: () => mockDbSingle(),
                 }),
-              }),
-              eq: () => ({
-                single: () => mockDbSingle(),
-                order: () => ({
-                  range: (...rArgs: unknown[]) => mockDbRange(...rArgs),
-                }),
-              }),
-              order: () => ({
-                range: (...rArgs: unknown[]) => mockDbRange(...rArgs),
-              }),
-            };
-          },
-          insert: (...args: unknown[]) => {
-            mockDbInsert(...args);
-            return {
-              select: () => ({
-                single: () => mockDbSingle(),
-              }),
-            };
-          },
-          update: (...args: unknown[]) => {
-            mockDbUpdate(...args);
-            return {
-              eq: () => ({ error: null }),
-            };
-          },
-        }),
+              };
+            },
+            update: (...args: unknown[]) => {
+              mockDbUpdate(...args);
+              return {
+                eq: () => ({ error: null }),
+              };
+            },
+          };
+          return queryBuilder;
+        },
       },
     };
   }),

@@ -6,6 +6,7 @@ import type { ReactNode } from "react";
 export interface FooterLink {
   label: string;
   href: string;
+  external?: boolean;
 }
 
 /**

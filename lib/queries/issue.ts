@@ -33,8 +33,11 @@ export async function getLatestIssue(): Promise<Issue | null> {
     .from("issues")
     .select("*")
     .eq("is_draft", false)
+    .order("year", { ascending: false })
+    .order("month", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
+    .order("id", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -48,7 +51,7 @@ export async function getLatestIssue(): Promise<Issue | null> {
 
 /**
  * getPastIssues
- * Published issues ordered by newest first.
+ * Published issues ordered by newest editorial edition first.
  * Supports pagination via limit and offset (BE-05).
  * Throws on database failure instead of returning mock data (CQ-03).
  */
@@ -63,8 +66,11 @@ export async function getPastIssues(
     .from("issues")
     .select("*")
     .eq("is_draft", false)
+    .order("year", { ascending: false })
+    .order("month", { ascending: false })
     .order("published_at", { ascending: false, nullsFirst: false })
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .order("id", { ascending: false });
 
   if (excludeId && isUuid(excludeId)) {
     query = query.neq("id", excludeId);
