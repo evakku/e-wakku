@@ -54,9 +54,9 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
         aria-label={`View issue: ${issue.title}`}
         className="group flex h-full flex-col overflow-hidden rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/80 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-[#059669] focus-visible:ring-offset-2"
       >
-        {/* Inner Cover Container — Generous Padding & object-contain centering */}
+        {/* Inner Cover Container — A4 Portrait & object-contain centering */}
         <div
-          className="relative aspect-[4/3] w-full shrink-0 overflow-hidden rounded-xl bg-[#F8FAFC] border border-slate-200/70 flex items-center justify-center p-3 transition-colors duration-300 group-hover:border-slate-300"
+          className="relative aspect-[210/297] w-full shrink-0 overflow-hidden rounded-xl bg-[#F8FAFC] border border-slate-200/70 flex items-center justify-center transition-colors duration-300 group-hover:border-slate-300"
         >
           {imageUrl && !imageError ? (
             <>
@@ -70,10 +70,10 @@ export default function IssueArchiveCard({ issue, className, from }: IssueArchiv
                 src={imageUrl}
                 alt={`Cover of ${issue.title}`}
                 fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 380px"
+                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 280px"
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageError(true)}
-                className={`object-contain object-center p-2 transition-all duration-500 ease-out group-hover:scale-[1.03] ${
+                className={`object-contain object-center transition-all duration-500 ease-out group-hover:scale-[1.02] ${
                   imageLoaded ? "opacity-100" : "opacity-0"
                 }`}
               />
