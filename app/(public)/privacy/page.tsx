@@ -12,14 +12,14 @@ export default function PrivacyPolicyPage() {
                     Last Updated: August 31, 2026
                 </p>
 
-                <div className="space-y-10 text-sm leading-7 text-gray-600 sm:text-base">
+                <div className="space-y-10 text-sm leading-7 text-gray-600 sm:text-base text-justify">
                     {/* 01 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             1. Information We Collect
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             E-Wakku is a digital publication platform that allows users to
                             browse, view, and read novels and other published issues without
                             creating an account or logging in. We do not intentionally
@@ -33,11 +33,11 @@ export default function PrivacyPolicyPage() {
 
                     {/* 02 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             2. How We Use Information
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             Any information collected through the website may be used to
                             maintain and improve E-Wakku, understand how visitors interact
                             with the website, identify technical problems, improve website
@@ -51,11 +51,11 @@ export default function PrivacyPolicyPage() {
 
                     {/* 03 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             3. Cookies and Third-Party Services
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             E-Wakku may use cookies or similar technologies to support
                             website functionality, security, preferences, or analytics. The
                             website may also use third-party services such as hosting
@@ -69,11 +69,11 @@ export default function PrivacyPolicyPage() {
 
                     {/* 04 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             4. Data Security and Retention
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             We take reasonable measures to protect information associated
                             with the operation and security of E-Wakku. However, no online
                             service can guarantee complete security of information transmitted
@@ -86,11 +86,11 @@ export default function PrivacyPolicyPage() {
 
                     {/* 05 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             5. Changes and Contact
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             This Privacy Policy may be updated from time to time to reflect
                             changes to the E-Wakku website, services, or applicable
                             requirements. Any changes will be published on this page with an

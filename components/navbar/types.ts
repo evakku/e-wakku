@@ -8,6 +8,8 @@ export interface NavLink {
   label: string;
   /** href the link navigates to */
   href: string;
+  /** Whether this link points to an external site (opens in a new tab) */
+  external?: boolean;
 }
 
 /**

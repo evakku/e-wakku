@@ -20,11 +20,42 @@ import Spinner from "@/components/ui/spinner";
 export default function NavItem({
   label,
   href,
+  external,
   isActive,
   onClick,
 }: NavItemProps) {
   const { isHrefPending, handleLinkClick } = useNavigationLoading();
-  const isPending = isHrefPending(href);
+  const isExternal = Boolean(external || href.startsWith("http://") || href.startsWith("https://"));
+  const isPending = !isExternal && isHrefPending(href);
+
+  if (isExternal) {
+    return (
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+        className={[
+          "relative inline-flex flex-col items-center py-1",
+          "text-sm font-normal text-[#334155] hover:text-[#059669]",
+          "transition-colors duration-300 ease-in-out",
+          "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+          "focus-visible:ring-offset-2 rounded-sm",
+        ].join(" ")}
+      >
+        <span className="relative">{label}</span>
+
+        {/* Hover underline */}
+        <motion.span
+          aria-hidden="true"
+          className="absolute bottom-0 left-0 right-0 h-px bg-[#059669] origin-left pointer-events-none"
+          initial={{ scaleX: 0 }}
+          whileHover={{ scaleX: 1 }}
+          transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] as [number, number, number, number] }}
+        />
+      </a>
+    );
+  }
 
   return (
     <Link

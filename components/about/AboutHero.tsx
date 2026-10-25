@@ -58,7 +58,7 @@ export default function AboutHero({
         {/* Paragraph splits by newlines to render editorial paragraph styling */}
         <div className="flex flex-col gap-6 text-[#475569] font-sans leading-relaxed max-w-2xl mx-auto">
           {description.split("\n\n").map((para, index) => (
-            <BodyLg key={index} className="text-[#475569] font-light font-sans text-base sm:text-lg">
+            <BodyLg key={index} className="text-[#475569] font-light font-sans text-base sm:text-lg text-justify">
               {para}
             </BodyLg>
           ))}

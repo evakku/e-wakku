@@ -53,7 +53,7 @@ export default async function AllIssuesPage() {
                     key={idx}
                     className="flex flex-col rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm gap-4"
                   >
-                    <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+                    <Skeleton className="aspect-[210/297] w-full rounded-xl" />
                     <Skeleton className="h-6 w-4/5 mt-1" />
                     <div className="flex flex-col gap-2">
                       <Skeleton className="h-3.5 w-full" />

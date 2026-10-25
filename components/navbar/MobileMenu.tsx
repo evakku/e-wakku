@@ -80,8 +80,13 @@ export default function MobileMenu({
         >
           <ul role="list" className="flex flex-col px-4 py-3 gap-0.5">
             {links.map((link) => {
-              const isActive = currentPath === link.href;
-              const isPending = isHrefPending(link.href);
+              const isExternal = Boolean(
+                link.external ||
+                link.href.startsWith("http://") ||
+                link.href.startsWith("https://")
+              );
+              const isActive = !isExternal && currentPath === link.href;
+              const isPending = !isExternal && isHrefPending(link.href);
 
               return (
                 <motion.li
@@ -89,62 +94,88 @@ export default function MobileMenu({
                   variants={itemVariants}
                   role="none"
                 >
-                  <Link
-                    href={link.href}
-                    onClick={(e) => {
-                      if (isActive) {
-                        onClose();
-                        return;
-                      }
-                      handleLinkClick(e, link.href, () => {
-                        // Brief delay allows the user to see the loading feedback before closing
-                        setTimeout(onClose, 120);
-                      });
-                    }}
-                    aria-current={isActive ? "page" : undefined}
-                    aria-busy={isPending ? "true" : undefined}
-                    aria-label={isPending ? `${link.label} (loading...)` : undefined}
-                    className={[
-                      "flex items-center justify-between w-full px-3 py-3",
-                      "text-sm font-normal rounded-md",
-                      "transition-colors duration-200 ease-in-out",
-                      "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
-                      "focus-visible:ring-inset",
-                      isActive
-                        ? "text-[#059669] bg-[#059669]/5 font-medium"
-                        : isPending
+                  {isExternal ? (
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onClose}
+                      className={[
+                        "flex items-center justify-between w-full px-3 py-3",
+                        "text-sm font-normal rounded-md",
+                        "transition-colors duration-200 ease-in-out",
+                        "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+                        "focus-visible:ring-inset",
+                        "text-[#334155] hover:text-[#059669] hover:bg-[#F8FAFC]",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center">
+                        {/* Dot spacer matching inactive state */}
+                        <span
+                          aria-hidden="true"
+                          className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full bg-transparent"
+                        />
+                        <span>{link.label}</span>
+                      </div>
+                    </a>
+                  ) : (
+                    <Link
+                      href={link.href}
+                      onClick={(e) => {
+                        if (isActive) {
+                          onClose();
+                          return;
+                        }
+                        handleLinkClick(e, link.href, () => {
+                          // Brief delay allows the user to see the loading feedback before closing
+                          setTimeout(onClose, 120);
+                        });
+                      }}
+                      aria-current={isActive ? "page" : undefined}
+                      aria-busy={isPending ? "true" : undefined}
+                      aria-label={isPending ? `${link.label} (loading...)` : undefined}
+                      className={[
+                        "flex items-center justify-between w-full px-3 py-3",
+                        "text-sm font-normal rounded-md",
+                        "transition-colors duration-200 ease-in-out",
+                        "outline-none focus-visible:ring-2 focus-visible:ring-[#059669]",
+                        "focus-visible:ring-inset",
+                        isActive
                           ? "text-[#059669] bg-[#059669]/5 font-medium"
-                          : "text-[#334155] hover:text-[#059669] hover:bg-[#F8FAFC]",
-                    ].join(" ")}
-                  >
-                    <div className="flex items-center">
-                      {/* Active indicator dot */}
-                      <motion.span
-                        aria-hidden="true"
-                        className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full"
-                        animate={{
-                          backgroundColor:
-                            isActive || isPending
-                              ? "rgba(5, 150, 105, 1)"
-                              : "rgba(5, 150, 105, 0)",
-                          scale: isActive || isPending ? 1 : 0.6,
-                        }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 400,
-                          damping: 20,
-                        }}
-                      />
-                      <span>{link.label}</span>
-                    </div>
+                          : isPending
+                            ? "text-[#059669] bg-[#059669]/5 font-medium"
+                            : "text-[#334155] hover:text-[#059669] hover:bg-[#F8FAFC]",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center">
+                        {/* Active indicator dot */}
+                        <motion.span
+                          aria-hidden="true"
+                          className="inline-block w-1.5 h-1.5 mr-2.5 shrink-0 rounded-full"
+                          animate={{
+                            backgroundColor:
+                              isActive || isPending
+                                ? "rgba(5, 150, 105, 1)"
+                                : "rgba(5, 150, 105, 0)",
+                            scale: isActive || isPending ? 1 : 0.6,
+                          }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 400,
+                            damping: 20,
+                          }}
+                        />
+                        <span>{link.label}</span>
+                      </div>
 
-                    {/* Inline spinner for pending state */}
-                    {isPending && (
-                      <span className="flex items-center text-[#059669] shrink-0" aria-hidden="true">
-                        <Spinner size="xs" color="emerald" />
-                      </span>
-                    )}
-                  </Link>
+                      {/* Inline spinner for pending state */}
+                      {isPending && (
+                        <span className="flex items-center text-[#059669] shrink-0" aria-hidden="true">
+                          <Spinner size="xs" color="emerald" />
+                        </span>
+                      )}
+                    </Link>
+                  )}
                 </motion.li>
               );
             })}

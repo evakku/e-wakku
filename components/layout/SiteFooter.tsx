@@ -2,6 +2,8 @@
 
 import Footer from "@/components/footer/Footer";
 import type { ReactNode } from "react";
+import { EXTERNAL_BLOG_URL } from "@/lib/constants/navigation";
+import type { FooterLink } from "@/components/footer/types";
 
 /**
  * SiteFooter
@@ -11,10 +13,11 @@ import type { ReactNode } from "react";
  * leave components/footer/ untouched.
  */
 
-const FOOTER_LINKS = [
+const FOOTER_LINKS: readonly FooterLink[] = [
   { label: "Privacy Policy", href: "/privacy" },
   { label: "Terms of Service", href: "/terms" },
   { label: "All Issues", href: "/allIssues" },
+  { label: "Blog", href: EXTERNAL_BLOG_URL, external: true },
 ] as const;
 
 const CURRENT_YEAR = new Date().getFullYear();

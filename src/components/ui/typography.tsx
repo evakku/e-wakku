@@ -121,7 +121,7 @@ export function BodyLg<E extends React.ElementType = 'p'>({
   const Tag = (as ?? 'p') as React.ElementType
   return (
     <Tag
-      className={cn('type-body-lg', className)}
+      className={cn('type-body-lg text-justify', className)}
       {...props}
     />
   )

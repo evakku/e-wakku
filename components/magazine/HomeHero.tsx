@@ -91,7 +91,7 @@ export default function HomeHero({ issue }: HomeHeroProps) {
           {issue.title}
         </DisplayXL>
         
-        <BodyLg className="text-muted-foreground mb-8 font-light leading-relaxed max-w-xl">
+        <BodyLg className="text-muted-foreground mb-8 font-light leading-relaxed max-w-xl text-justify">
           {issue.description}
         </BodyLg>
         
@@ -134,37 +134,48 @@ export default function HomeHero({ issue }: HomeHeroProps) {
         variants={fadeUpVariants(shouldReduceMotion)}
         className="lg:col-span-7 order-2 lg:order-2 flex justify-center items-center py-4 sm:py-6 lg:py-8"
       >
-        <Link href={`/issue/${slugStr}?from=home`} className="group block focus:outline-none w-full max-w-[250px] sm:max-w-[290px] lg:max-w-[320px] mx-auto">
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-2xl bg-slate-100 shadow-md group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-all duration-500 ease-out group-hover:shadow-xl">
-            {imageUrl && !imageError ? (
-              <>
-                {!imageLoaded && (
-                  <div
-                    aria-hidden="true"
-                    className="absolute inset-0 skeleton-shimmer z-0"
+        <Link
+          href={`/issue/${slugStr}?from=home`}
+          className="group relative block focus:outline-none w-full max-w-[230px] sm:max-w-[260px] lg:max-w-[280px] mx-auto z-10 hover:z-20 focus-visible:z-20"
+        >
+          {/* Fixed Layout Slot defining exact A4 dimensions in page flow */}
+          <div className="relative aspect-[210/297] w-full">
+            {/* Unclipped Zooming Cover Frame (scales outside layout slot on hover/focus) */}
+            <div
+              className={`absolute inset-0 rounded-xl overflow-hidden bg-slate-100 shadow-md group-focus-visible:ring-3 group-focus-visible:ring-accent/40 transition-all duration-300 ease-out group-hover:shadow-2xl origin-center motion-reduce:transform-none ${
+                !shouldReduceMotion ? "group-hover:scale-[1.06] group-focus-visible:scale-[1.06]" : ""
+              }`}
+            >
+              {imageUrl && !imageError ? (
+                <>
+                  {!imageLoaded && (
+                    <div
+                      aria-hidden="true"
+                      className="absolute inset-0 skeleton-shimmer z-0"
+                    />
+                  )}
+                  <Image
+                    src={imageUrl}
+                    alt={`Cover of ${issue.title}`}
+                    fill
+                    priority
+                    sizes="(max-width: 640px) 230px, (max-width: 1024px) 260px, 280px"
+                    onLoad={() => setImageLoaded(true)}
+                    onError={() => setImageError(true)}
+                    className={`object-contain object-center transition-opacity duration-300 ${
+                      imageLoaded ? "opacity-100" : "opacity-0"
+                    }`}
                   />
-                )}
-                <Image
-                  src={imageUrl}
-                  alt={`Cover of ${issue.title}`}
-                  fill
-                  priority
-                  sizes="(max-width: 768px) 290px, 320px"
-                  onLoad={() => setImageLoaded(true)}
-                  onError={() => setImageError(true)}
-                  className={`object-cover transition-all duration-700 ease-out group-hover:scale-[1.03] ${
-                    imageLoaded ? "opacity-100" : "opacity-0"
-                  }`}
-                />
-              </>
-            ) : (
-              <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-light">
-                No Cover Image
-              </div>
-            )}
-            
-            {/* Subtle ambient gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-60 pointer-events-none" />
+                </>
+              ) : (
+                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground text-sm font-light">
+                  No Cover Image
+                </div>
+              )}
+
+              {/* Subtle ambient gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/5 via-transparent to-transparent opacity-60 pointer-events-none rounded-xl" />
+            </div>
           </div>
         </Link>
       </motion.div>

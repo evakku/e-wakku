@@ -32,7 +32,7 @@ export default function LoadingSkeleton() {
 
         {/* Right Column Cover Image container */}
         <div className="lg:col-span-7 order-2 lg:order-2 flex justify-center items-center py-4 sm:py-6">
-          <Skeleton className="aspect-[3/4] w-full max-w-[250px] sm:max-w-[290px] lg:max-w-[320px] rounded-2xl shadow-md" />
+          <Skeleton className="aspect-[210/297] w-full max-w-[230px] sm:max-w-[260px] lg:max-w-[280px] rounded-xl shadow-md" />
         </div>
       </div>
 
@@ -51,8 +51,8 @@ export default function LoadingSkeleton() {
               key={idx}
               className="flex flex-col rounded-[20px] border border-[#E2E8F0] bg-white p-4 sm:p-5 shadow-sm gap-4"
             >
-              {/* Inner Cover Aspect-4/3 */}
-              <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+              {/* Inner Cover Aspect-210/297 */}
+              <Skeleton className="aspect-[210/297] w-full rounded-xl" />
               {/* Title */}
               <Skeleton className="h-6 w-3/4 mt-1" />
               {/* Description */}

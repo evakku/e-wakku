@@ -12,14 +12,14 @@ export default function TermsOfUsePage() {
                     Last Updated: August 31, 2026
                 </p>
 
-                <div className="space-y-10 text-sm leading-7 text-gray-600 sm:text-base">
+                <div className="space-y-10 text-sm leading-7 text-gray-600 sm:text-base text-justify">
                     {/* 01 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             1. About E-Wakku
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             E-Wakku is a digital publication platform that provides users
                             with access to novels, issues, and other published materials
                             through the website. Users can browse, view, and read publicly
@@ -32,11 +32,11 @@ export default function TermsOfUsePage() {
 
                     {/* 02 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             2. Acceptable Use
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             Users must not use E-Wakku for illegal, harmful, or unauthorized
                             activities. You must not attempt to gain unauthorized access to
                             the website or its systems, interfere with the normal operation
@@ -50,11 +50,11 @@ export default function TermsOfUsePage() {
 
                     {/* 03 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             3. Intellectual Property
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             Novels, articles, images, issue covers, logos, graphics, text,
                             website design, and other materials available on E-Wakku may be
                             protected by copyright or other intellectual property laws.
@@ -68,11 +68,11 @@ export default function TermsOfUsePage() {
 
                     {/* 04 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             4. Content and Availability
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             Content published on E-Wakku may be provided by authors,
                             contributors, editors, administrators, or other authorized
                             individuals. The opinions and views expressed in individual
@@ -86,11 +86,11 @@ export default function TermsOfUsePage() {
 
                     {/* 05 */}
                     <div>
-                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl">
+                        <h2 className="mb-3 text-xl font-bold text-gray-900 sm:text-2xl text-left">
                             5. Changes and Contact
                         </h2>
 
-                        <p>
+                        <p className="text-justify">
                             E-Wakku may modify these Terms of Use when necessary to reflect
                             changes to the website, services, or applicable requirements.
                             Updated terms will be published on this page with a revised date.
